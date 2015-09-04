@@ -73,6 +73,9 @@ bool R_Rules0(int n,int &m,int *X,set<int> *C){
 		//----处理出现在三个F且都相同的
 		if (find(C[p[0]],i) && find(C[p[1]],i) && find(C[p[2]],i)){
 			X[i]=1; 
+			swap(C[p[0]],C[m--]);
+			swap(C[p[1]],C[m--]);
+			swap(C[p[2]],C[m--]);
 			return true;
 		}
 	}
