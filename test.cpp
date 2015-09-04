@@ -7,9 +7,9 @@
 #include<set>
 #include<queue>
 #include<stack>
+#include"lemma6.h"
 using namespace std;
 const int MAXN=1005;
-set<int>::iterator it;
 bool isNum(char c){
 	if (c>='0' && c<='9') return true;
 	if (c=='-') return true;
@@ -41,6 +41,7 @@ void initial(int &n,int &m,int *ans,set<int> *C){ //读取数据
     }
 }
 bool reNew(int n,int &m,int &num,int *ans,set<int> *C){
+	set<int>::iterator it;
 	for (int i=1;i<=m;i++)
 		for (it=C[i].begin();it!=C[i].end();it++){
 			if (ans[ABS(*it)]==-1) continue;
@@ -56,6 +57,7 @@ bool reNew(int n,int &m,int &num,int *ans,set<int> *C){
 	return false;
 }
 bool R_Rules(int n,int &m,int &num,int *ans,set<int> *C){
+	set<int>::iterator it;
 	while (reNew(n,m,num,ans,C));
 	for (int x=1;x<=n;x++){
 		if (ans[x]!=-1) continue;
@@ -112,31 +114,6 @@ bool singletons(int x,int m,set<int> *C){
 		if (find(C[i],x) && C[i].size()==1) return true;
 	return false;
 }
-void dfs(int x,int m,int &num,int *ans,set<int> *C){
-	if (!x){
-		int t=0;
-		for (int i=1;i<=m;i++)
-			for (it=C[i].begin();it!=C[i].end();it++)
-				if (ans[*it]){
-					t++;
-					break;
-				}
-		num=max(num,t);
-		return;
-	}
-	if (ans[x]==-1){
-		ans[x]=0;
-		dfs(x-1,m,num,ans,C);
-		ans[x]=1;
-		dfs(x-1,m,num,ans,C);
-	}else
-		dfs(x-1,m,num,ans,C);
-}
-int Lemma6(int n,int m,int *ans,set<int> *C){
-	int num=0;
-	dfs(n,m,num,ans,C);
-	return num;
-}
 void copy(int *ans,set<int> *C,int *tans,set<int> *tC,int n,int m,int &tn,int &tm){
 	tn=n,tm=m;
 	for (int i=1;i<=n;i++) tans[i]=ans[i];
@@ -149,6 +126,7 @@ void back(int *ans,set<int> *C,int *tans,set<int> *tC,int &n,int &m,int tn,int t
 }
 int n3MaxSAT(int n,int m,int *ans,set<int> *C){
 	int num=0,x;
+	set<int>::iterator it;
 	while (R_Rules(n,m,num,ans,C));
 	for (x=1;x<=n;x++)
 		if (ans[x]==-1 && !singletons(x,m,C)) break;
