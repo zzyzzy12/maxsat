@@ -8,7 +8,6 @@
 #include<queue>
 #include<stack>
 using namespace std;
-const int MAXN=1005;
 bool find(set<int> C,int x){
 	return C.find(x)!=C.end();
 }

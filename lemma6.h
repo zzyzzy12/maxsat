@@ -14,7 +14,7 @@ void dfs(int x,int m,int &num,int *ans,set<int> *C){
 		int t=0;
 		for (int i=1;i<=m;i++)
 			for (it=C[i].begin();it!=C[i].end();it++)
-				if (ans[*it]){
+				if ((*it>0 && ans[*it]==1) || (*it<0 && ans[-*it]==0)){
 					t++;
 					break;
 				}
