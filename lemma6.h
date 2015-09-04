@@ -8,34 +8,33 @@
 #include<queue>
 #include<stack>
 using namespace std;
-void dfs(int x,int n,int m,int &num,int* now,int *ans,set<int> *C){
+void dfs(int x,int n,int m,int* now,int *ans,int &maxNum,set<int> *C0){
 	set<int>::iterator it;
 	if (!x){
 		int t=0;
 		for (int i=1;i<=m;i++)
-			for (it=C[i].begin();it!=C[i].end();it++)
+			for (it=C0[i].begin();it!=C0[i].end();it++)
 				if ((*it>0 && now[*it]==1) || (*it<0 && now[-*it]==0)){
 					t++;
 					break;
 				}
-		if (t>num){
-			num=t;
+		if (t>maxNum){
+			maxNum=t;
 			for (int i=1;i<=n;i++) ans[i]=now[i];
 		}
 		return;
 	}
 	if (now[x]==-1){
 		now[x]=0;
-		dfs(x-1,n,m,num,now,ans,C);
+		dfs(x-1,n,m,now,ans,maxNum,C0);
 		now[x]=1;
-		dfs(x-1,n,m,num,now,ans,C);
+		dfs(x-1,n,m,now,ans,maxNum,C0);
 	}else
-		dfs(x-1,n,m,num,now,ans,C);
+		dfs(x-1,n,m,now,ans,maxNum,C0);
 }
-int Lemma6(int n,int m,int *ans,set<int> *C){
-	int num=0;
+void Lemma6(int n,int m,int *X,int *ans,int &maxNum,set<int> *C0){ 
 	int now[1005];
-	for (int i=1;i<=n;i++) now[i]=ans[i];
-	dfs(n,n,m,num,now,ans,C);
-	return num;
+	for (int i=1;i<=n;i++) now[i]=X[i];
+	dfs(n,n,m,now,ans,maxNum,C0);
+	return;
 }
