@@ -27,6 +27,14 @@ void back(int *ans,set<int> *C,int *tans,set<int> *tC,int &n,int &m,int tn,int t
 	for (int i=1;i<=n;i++) ans[i]=tans[i];
 	for (int i=1;i<=m;i++) C[i]=tC[i];
 }
+bool legalRule4(set<int> c,int x,int m,set<int> *C){
+	set<int>::iterator it;
+	for (it=c.begin();it!=c.end();it++){
+		if (*it==x || singletons(ABS(*it),m,C)) continue;
+		return true;
+	}
+	return false;
+}
 int n3MaxSAT(int n,int m,int *ans,set<int> *C){
 	int num=0,x;
 	set<int>::iterator it;
@@ -47,7 +55,7 @@ int n3MaxSAT(int n,int m,int *ans,set<int> *C){
 				D=C[t].size()-1;
 				break;
 			}
-		if (D==2){
+		if (D==2 && legalRule4(C[t],x,m,C)){
 			int t1,t2,tn,tm;
 			int tans[MAXN];
 			set<int> tC[MAXN];

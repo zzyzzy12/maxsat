@@ -17,7 +17,11 @@ int ABS(int x){
 }
 bool reNew(int n,int &m,int &num,int *ans,set<int> *C){
 	set<int>::iterator it;
-	for (int i=1;i<=m;i++)
+	for (int i=1;i<=m;i++){
+		if (C[i].size()==0){
+			swap(C[i],C[m--]);
+			return true;
+		}
 		for (it=C[i].begin();it!=C[i].end();it++){
 			if (ans[ABS(*it)]==-1) continue;
 			if (ans[ABS(*it)]==1){
@@ -29,6 +33,7 @@ bool reNew(int n,int &m,int &num,int *ans,set<int> *C){
 			}
 			return true;
 		}
+	}
 	return false;
 }
 bool R_Rules0(int n,int &m,int &num,int *ans,set<int> *C){
