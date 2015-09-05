@@ -3,12 +3,13 @@ bool rule1(int n,int &m,int *X,set<int> *C){
 	bool f=false;
 	for (int i=1;i<=m;i++)
 		for (it=C[i].begin();it!=C[i].end();it++){
-			if (find(C[i],1-*it)) continue;
+			if (!find(C[i],-*it)) continue; // -x x 别和X[i]=0,1弄混
 			X[ABS(*it)]=0; 
 			f=true;
 			break;
 		}
 	for (int i=1;i<=n;i++){
+		if (X[i]!=-1) continue;
 		int p1,p2;
 		for (p1=1;p1<=m;p1++)
 			if (find(C[p1],i) && C[p1].size()==1) break;

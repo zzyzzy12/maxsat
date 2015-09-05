@@ -29,7 +29,6 @@ bool legalRule4(set<int> c,int x,int m,set<int> *C){
 	return false;
 }
 void n3MaxSAT(int n,int m,int m0,int *X,int *ans,int &maxNum,set<int> *C,set<int> *C0){
-	int i;
 	set<int>::iterator it;
 	while (1){
 		while (reNew(m,X,C));
@@ -40,9 +39,10 @@ void n3MaxSAT(int n,int m,int m0,int *X,int *ans,int &maxNum,set<int> *C,set<int
 		if (rule6(n,m,X,C)) continue;
 		if (rule7(n,m,X,C)) continue;
 		if (rule8(n,m,X,C)) continue;
-		if (rule9(n,m,X,C)) continue;
+		if (rule9(n,m,C))   continue;
 		break;
 	}
+	int i;
 	for (i=1;i<=n;i++)
 		if (X[i]==-1 && !singletons(i,m,C)) break;
 	if (!m || i>n){

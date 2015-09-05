@@ -25,7 +25,7 @@ bool rule3(int n,int &m,int *X,set<int> *C){
 				X[i]=1;
 				return true;
 			}
-			X[i]=1;
+			X[i]=0;
 			for (it=C[p[1]].begin();it!=C[p[1]].end();it++)
 				C[p[0]].insert(*it);
 			C[p[0]].erase(-i),C[p[0]].erase(i);
