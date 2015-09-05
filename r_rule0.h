@@ -15,7 +15,7 @@ int ABS(int x){
 	if (x<0) return -x;
 	return x;
 }
-bool reNew(int n,int &m,int *X,set<int> *C){
+bool reNew(int &m,int *X,set<int> *C){
 	set<int>::iterator it;
 	for (int i=1;i<=m;i++){
 		if (C[i].size()==0){
@@ -38,7 +38,7 @@ bool reNew(int n,int &m,int *X,set<int> *C){
 }
 bool R_Rules0(int n,int &m,int *X,set<int> *C){
 	set<int>::iterator it;
-	while (reNew(n,m,X,C));
+	while (reNew(m,X,C));
 	for (int i=1;i<=n;i++){
 		if (X[i]!=-1) continue;
 		int p[3];
@@ -49,13 +49,13 @@ bool R_Rules0(int n,int &m,int *X,set<int> *C){
 			if (find(C[p[1]],i) || find(C[p[1]],-i)) break;
 		for (p[2]=p[1]+1;p[2]<=m;p[2]++)
 			if (find(C[p[2]],i) || find(C[p[2]],-i)) break;
-		if (p[0]>m){
+		if (p[0]>m){ //clause中无i,任意赋值
 			X[i]=0;
 			return true;
 		}
 		if (p[1]>m){ //----处理只出现在一个F的
 			if (find(C[p[0]],i)) X[i]=1;
-						   else  X[i]=0; 
+						   else  X[i]=0;  
 			return true;
 		}
 		if (p[2]>m){  //----处理只出现在两个F的
@@ -72,10 +72,7 @@ bool R_Rules0(int n,int &m,int *X,set<int> *C){
 		}
 		//----处理出现在三个F且都相同的
 		if (find(C[p[0]],i) && find(C[p[1]],i) && find(C[p[2]],i)){
-			X[i]=1; 
-			swap(C[p[0]],C[m--]);
-			swap(C[p[1]],C[m--]);
-			swap(C[p[2]],C[m--]);
+			X[i]=1;  
 			return true;
 		}
 	}

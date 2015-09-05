@@ -97,7 +97,7 @@ int main(){
     		if (C0[i].find(x)!=C0[i].end()) m1++;
     		if (C0[i].find(-x)!=C0[i].end()) m2++;
     	}
-    	if (m2>m1){ // -x比x多 
+    	if (m2>m1){ // -x比x多，则交换-x,x
     		t[x]=1;
     		for (int i=1;i<=m;i++){
     			if (C0[i].find(x)!=C0[i].end()){
