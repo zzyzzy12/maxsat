@@ -7,27 +7,19 @@
 #include<set>
 #include<queue>
 #include<stack>
+#include"head.h"
 #include"initial.h"
 #include"lemma6.h"
-#include"r_rule0.h"
+#include"rule1.h"
+#include"rule2.h"
+#include"rule3.h"
+#include"rule5.h"
+#include"rule6.h"
+#include"rule7.h"
+#include"rule8.h"
+#include"rule9.h"
 using namespace std;
 const int MAXN=1005;
-bool singletons(int x,int m,set<int> *C){ //严格来说是-x只出现在一个clause中
-	for (int i=1;i<=m;i++){
-		if (find(C[i],-x) && C[i].size()==1) return true; 
-	}
-	return false;
-}
-void copy(int *X,set<int> *C,int *tX,set<int> *tC,int n,int m,int &tn,int &tm){
-	tn=n,tm=m;
-	for (int i=1;i<=n;i++) tX[i]=X[i];
-	for (int i=1;i<=m;i++) tC[i]=C[i];
-}
-void back(int *X,set<int> *C,int *tX,set<int> *tC,int &n,int &m,int tn,int tm){
-	n=tn,m=tm;
-	for (int i=1;i<=n;i++) X[i]=tX[i];
-	for (int i=1;i<=m;i++) C[i]=tC[i];
-}
 bool legalRule4(set<int> c,int x,int m,set<int> *C){
 	set<int>::iterator it;
 	for (it=c.begin();it!=c.end();it++){
@@ -39,7 +31,18 @@ bool legalRule4(set<int> c,int x,int m,set<int> *C){
 void n3MaxSAT(int n,int m,int m0,int *X,int *ans,int &maxNum,set<int> *C,set<int> *C0){
 	int i;
 	set<int>::iterator it;
-	while (R_Rules0(n,m,X,C));
+	while (1){
+		while (reNew(m,X,C));
+		if (rule1(n,m,X,C)) continue;
+		if (rule2(n,m,X,C)) continue;
+		if (rule3(n,m,X,C)) continue;
+		if (rule5(n,m,X,C)) continue;
+		if (rule6(n,m,X,C)) continue;
+		if (rule7(n,m,X,C)) continue;
+		if (rule8(n,m,X,C)) continue;
+		if (rule9(n,m,X,C)) continue;
+		break;
+	}
 	for (i=1;i<=n;i++)
 		if (X[i]==-1 && !singletons(i,m,C)) break;
 	if (!m || i>n){
