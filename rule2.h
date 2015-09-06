@@ -1,6 +1,6 @@
-bool rule2(int n,int &m,int *X,set<int> *C){ 
+bool rule2(int n,int &m,int *X,node *H,set<int> *C){ 
 	for (int z=1;z<=n;z++){
-		if (X[z]!=-1) continue;
+		if (H[z].fx!=-1) continue;
 		int i,j,t;
 		i=j=t=0;
 		for (int k=1;k<=m;k++){
@@ -12,6 +12,7 @@ bool rule2(int n,int &m,int *X,set<int> *C){
 		}
 		if (t<j) continue; 
 		X[z]=1;
+		H[z].fx=0;
 		return true;
 	} 
 	return false;

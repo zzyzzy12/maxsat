@@ -28,17 +28,17 @@ bool legalRule4(set<int> c,int x,int m,set<int> *C){
 	}
 	return false;
 }
-void n3MaxSAT(int n,int m,int m0,int *X,int *ans,int &maxNum,set<int> *C,set<int> *C0){
+void n3MaxSAT(int n,int n0,int m,int m0,int *X,int *ans,int &maxNum,set<int> *C,set<int> *C0,node *H){
 	set<int>::iterator it;
 	while (1){
-		while (reNew(m,X,C));
-		if (rule1(n,m,X,C)) continue; //done
-		if (rule2(n,m,X,C)) continue; //done
-		if (rule3(n,m,X,C)) continue; //done
-		if (rule5(n,m,X,C)) continue; //done
-		if (rule6(n,m,X,C)) continue;
-		if (rule7(n,m,X,C)) continue;
-		if (rule8(n,m,X,C)) continue;
+		while (reNew(m,X,H,C));
+		if (rule1(n,m,X,H,C)) continue; //done
+		if (rule2(n,m,X,H,C)) continue; //done
+		if (rule3(n,m,X,H,C)) continue; //done
+		if (rule5(n,m,X,H,C)) continue; //done
+		if (rule6(n,m,X,H,C)) continue;
+		if (rule7(n,m,X,H,C)) continue;
+		if (rule8(n,m,X,H,C)) continue;
 		if (rule9(n,m,C))   continue; //done
 		break;
 	}
@@ -57,42 +57,43 @@ void n3MaxSAT(int n,int m,int m0,int *X,int *ans,int &maxNum,set<int> *C,set<int
 		}
 	if (D>=2 && legalRule4(C[t],i,m,C)){ // |D|=2
 		int tn,tm;
-		int tX[MAXN];
+		node tH[MAXN];
 		set<int> tC[MAXN];
-		copy(X,C,tX,tC,n,m,tn,tm);
+		copy(H,C,tH,tC,n,m,tn,tm);
 		X[i]=1; //-----n3MaxSAT(F[x])
-		n3MaxSAT(n,m,m0,X,ans,maxNum,C,C0);
-		back(X,C,tX,tC,n,m,tn,tm);
+		n3MaxSAT(n,n0,m,m0,X,ans,maxNum,C,C0,H);
+		back(H,C,tH,tC,n,m,tn,tm);
 		X[i]=0; //-----n3MaxSAT(F[-x,-y1,-y2....])
 		for (it=C[t].begin();it!=C[t].end();it++){
 			if (X[ABS(*it)]!=-1) continue;
 			if (*it>0) X[*it]=0;
 				else   X[-*it]=1;
 		} 
-		n3MaxSAT(n,m,m0,X,ans,maxNum,C,C0);
-		back(X,C,tX,tC,n,m,tn,tm);
+		n3MaxSAT(n,n0,m,m0,X,ans,maxNum,C,C0,H);
+		back(H,C,tH,tC,n,m,tn,tm);
 		return; 
 	}else{
 		int tn,tm;
-		int tX[MAXN];
+		node tH[MAXN];
 		set<int> tC[MAXN];
-		copy(X,C,tX,tC,n,m,tn,tm);
+		copy(H,C,tH,tC,n,m,tn,tm);
 		X[i]=1;  //-----n3MaxSAT(F[x])
-		n3MaxSAT(n,m,m0,X,ans,maxNum,C,C0);
-		back(X,C,tX,tC,n,m,tn,tm);
+		n3MaxSAT(n,n0,m,m0,X,ans,maxNum,C,C0,H);
+		back(H,C,tH,tC,n,m,tn,tm);
 		X[i]=0;  //-----n3MaxSAT(F[-x])
-		n3MaxSAT(n,m,m0,X,ans,maxNum,C,C0);
-		back(X,C,tX,tC,n,m,tn,tm);
+		n3MaxSAT(n,n0,m,m0,X,ans,maxNum,C,C0,H);
+		back(H,C,tH,tC,n,m,tn,tm);
 		return; 
 	}    
 }
 int main(){
     freopen("input.txt","r",stdin);
     freopen("output.txt","w",stdout);
-    int n,m,m0;
+    int n,m;
 	set<int> C[MAXN],C0[MAXN];
+	node H[MAXN];
 	int ans[MAXN],X[MAXN],t[MAXN],maxNum=0;
-    initial(n,m,ans,C0),m0=m;
+    initial(n,m,ans,C0);
     memset(t,0,sizeof(t)); // 都转为x x -x
     for (int x=1;x<=n;x++){
     	int m1=0,m2=0;
@@ -114,7 +115,8 @@ int main(){
     }
     for (int i=1;i<=m;i++) C[i]=C0[i]; 
     memset(X,-1,sizeof(X));  
-    n3MaxSAT(n,m,m0,X,ans,maxNum,C,C0);  
+	for (int i=0;i<MAXN;i++) H[i].fx=-1;
+    n3MaxSAT(n,n,m,m,X,ans,maxNum,C,C0,H);  
 	printf("%d\n",maxNum);
     for (int i=1;i<=n;i++)
     	printf("%d ",ans[i]^t[i]); 
