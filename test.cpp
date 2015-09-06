@@ -32,14 +32,14 @@ void n3MaxSAT(int n,int m,int m0,int *X,int *ans,int &maxNum,set<int> *C,set<int
 	set<int>::iterator it;
 	while (1){
 		while (reNew(m,X,C));
-		if (rule1(n,m,X,C)) continue;
-		if (rule2(n,m,X,C)) continue;
-		if (rule3(n,m,X,C)) continue;
-		if (rule5(n,m,X,C)) continue;
+		if (rule1(n,m,X,C)) continue; //done
+		if (rule2(n,m,X,C)) continue; //done
+		if (rule3(n,m,X,C)) continue; //done
+		if (rule5(n,m,X,C)) continue; //done
 		if (rule6(n,m,X,C)) continue;
 		if (rule7(n,m,X,C)) continue;
 		if (rule8(n,m,X,C)) continue;
-		if (rule9(n,m,C))   continue;
+		if (rule9(n,m,C))   continue; //done
 		break;
 	}
 	int i;
