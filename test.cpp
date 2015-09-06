@@ -46,7 +46,7 @@ void n3MaxSAT(int n,int n0,int m,int m0,int *X,int *ans,int &maxNum,set<int> *C,
 	for (i=1;i<=n;i++)
 		if (X[i]==-1 && !singletons(i,m,C)) break;
 	if (!m || i>n){
-		Lemma6(n,m0,X,ans,maxNum,C0); 
+		Lemma6(n0,m0,X,ans,maxNum,H,C0); //注意n0,m0,C0带入都是初始值
 		return;
 	}
 	int D=0,t;

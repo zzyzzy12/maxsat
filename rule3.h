@@ -29,8 +29,7 @@ bool rule3(int n,int &m,int *X,node *H,set<int> *C){
 			} 
 			if (find(C[p[1]],i)) swap(p[0],p[1]);
 
-			H[i].fx=1,H[i].F=C[p[1]]; //值由H[i].F决定，而不看H[i].fx
-
+			H[i].fx=1,H[i].F=C[p[1]],H[i].F.erase(-i); //值由H[i].F决定，而不看H[i].fx
 
 			for (it=C[p[1]].begin();it!=C[p[1]].end();it++)
 				C[p[0]].insert(*it);

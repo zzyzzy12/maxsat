@@ -12,7 +12,7 @@ bool rule2(int n,int &m,int *X,node *H,set<int> *C){
 		}
 		if (t<j) continue; 
 		X[z]=1;
-		H[z].fx=0;
+		H[z].fx=0; //z值确定
 		return true;
 	} 
 	return false;
