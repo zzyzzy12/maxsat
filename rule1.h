@@ -4,7 +4,7 @@ bool rule1(int n,int &m,int *X,node *H,set<int> *C){
 	for (int i=1;i<=m;i++)
 		for (it=C[i].begin();it!=C[i].end();it++){
 			if (!find(C[i],-*it)) continue; // -x x 别和X[i]=0,1弄混
-			X[ABS(*it)]=0; 
+			X[ABS(*it)]=1; 
 			H[ABS(*it)].fx=0;
 			f=true;
 			break;
@@ -18,7 +18,7 @@ bool rule1(int n,int &m,int *X,node *H,set<int> *C){
 		for (p2=1;p2<=m;p2++)
 			if (find(C[p2],-i) && C[p2].size()==1) break;
 		if (p2>m) continue;
-		X[i]=0;
+		X[i]=1;
 		H[i].fx=0;
 		f=true;
 	}

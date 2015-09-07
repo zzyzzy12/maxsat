@@ -11,7 +11,7 @@ bool rule3(int n,int &m,int *X,node *H,set<int> *C){
 		for (p[2]=p[1]+1;p[2]<=m;p[2]++)
 			if (find(C[p[2]],i) || find(C[p[2]],-i)) break;
 		if (p[0]>m){ //clause中无i,任意赋值
-			X[i]=0;
+			X[i]=1;
 			H[i].fx=0; //值为0/1
 			return true;
 		}

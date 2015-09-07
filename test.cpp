@@ -28,7 +28,7 @@ bool legalRule4(set<int> c,int x,int m,set<int> *C){
 	}
 	return false;
 }
-void n3MaxSAT(int n,int n0,int m,int m0,int *X,int *ans,int &maxNum,set<int> *C,set<int> *C0,node *H){
+void branch(int n,int n0,int m,int m0,int *X,int *ans,int &maxNum,set<int> *C,set<int> *C0,node *H){
 	set<int>::iterator it;
 	while (1){
 		while (reNew(m,X,H,C));
@@ -37,7 +37,7 @@ void n3MaxSAT(int n,int n0,int m,int m0,int *X,int *ans,int &maxNum,set<int> *C,
 		if (rule3(n,m,X,H,C)) continue; //done
 		if (rule5(n,m,X,H,C)) continue; //done
 		if (rule6(n,m,X,H,C)) continue;
-		if (rule7(n,m,X,H,C)) continue;
+		if (rule7(n,m,X,H,C)) continue; //done
 		if (rule8(n,m,X,H,C)) continue;
 		if (rule9(n,m,C))   continue; //done
 		break;
@@ -61,7 +61,7 @@ void n3MaxSAT(int n,int n0,int m,int m0,int *X,int *ans,int &maxNum,set<int> *C,
 		set<int> tC[MAXN];
 		copy(H,C,tH,tC,n,m,tn,tm);
 		X[i]=1; //-----n3MaxSAT(F[x])
-		n3MaxSAT(n,n0,m,m0,X,ans,maxNum,C,C0,H);
+		branch(n,n0,m,m0,X,ans,maxNum,C,C0,H);
 		back(H,C,tH,tC,n,m,tn,tm);
 		X[i]=0; //-----n3MaxSAT(F[-x,-y1,-y2....])
 		for (it=C[t].begin();it!=C[t].end();it++){
@@ -69,7 +69,7 @@ void n3MaxSAT(int n,int n0,int m,int m0,int *X,int *ans,int &maxNum,set<int> *C,
 			if (*it>0) X[*it]=0;
 				else   X[-*it]=1;
 		} 
-		n3MaxSAT(n,n0,m,m0,X,ans,maxNum,C,C0,H);
+		branch(n,n0,m,m0,X,ans,maxNum,C,C0,H);
 		back(H,C,tH,tC,n,m,tn,tm);
 		return; 
 	}else{
@@ -78,10 +78,10 @@ void n3MaxSAT(int n,int n0,int m,int m0,int *X,int *ans,int &maxNum,set<int> *C,
 		set<int> tC[MAXN];
 		copy(H,C,tH,tC,n,m,tn,tm);
 		X[i]=1;  //-----n3MaxSAT(F[x])
-		n3MaxSAT(n,n0,m,m0,X,ans,maxNum,C,C0,H);
+		branch(n,n0,m,m0,X,ans,maxNum,C,C0,H);
 		back(H,C,tH,tC,n,m,tn,tm);
 		X[i]=0;  //-----n3MaxSAT(F[-x])
-		n3MaxSAT(n,n0,m,m0,X,ans,maxNum,C,C0,H);
+		branch(n,n0,m,m0,X,ans,maxNum,C,C0,H);
 		back(H,C,tH,tC,n,m,tn,tm);
 		return; 
 	}    
@@ -116,7 +116,7 @@ int main(){
     for (int i=1;i<=m;i++) C[i]=C0[i]; 
     memset(X,-1,sizeof(X));  
 	for (int i=0;i<MAXN;i++) H[i].fx=-1;
-    n3MaxSAT(n,n,m,m,X,ans,maxNum,C,C0,H);  
+    branch(n,n,m,m,X,ans,maxNum,C,C0,H);  
 	printf("%d\n",maxNum);
     for (int i=1;i<=n;i++)
     	printf("%d ",ans[i]^t[i]); 
