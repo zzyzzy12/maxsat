@@ -36,9 +36,9 @@ void branch(int n,int n0,int m,int m0,int *X,int *ans,int &maxNum,set<int> *C,se
 		if (rule2(n,m,X,H,C)) continue; //done
 		if (rule3(n,m,X,H,C)) continue; //done
 		if (rule5(n,m,X,H,C)) continue; //done
-		if (rule6(n,m,X,H,C)) continue;
+		if (rule6(n,m,X,H,C)) continue; //done
 		if (rule7(n,m,X,H,C)) continue; //done
-		if (rule8(n,m,X,H,C)) continue;
+		if (rule8(n,m,X,H,C)) continue; //done
 		if (rule9(n,m,C))   continue; //done
 		break;
 	}

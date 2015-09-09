@@ -14,7 +14,7 @@ void searchH(int i,node *H,int *now){
 	if (H[i].fx>1){ //其值依赖于H[i].fx与H[i].F的值
 		searchH(H[i].fx,H,now);
 		if (now[H[i].fx]==0){
-			H[i].fx=0,now[i]=0; //根据第八条规则
+			H[i].fx=0,now[i]=0; //根据rule8规则
 			return;
 		}
 	}
