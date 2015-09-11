@@ -8,10 +8,31 @@
 #include<queue>
 #include<stack>
 #include"head.h"
-#include"initial.h"
-#include"lemma6.h"
 using namespace std;
 const int MAXN=1005;
+bool isNum(char c){
+  if (c>='0' && c<='9') return true;
+  if (c=='-') return true;
+  return false;
+} 
+void initial(int &n,int &m,int *ans,set<int> *C){ //读取数据
+  char s[1005];
+  scanf("%d%d\n",&n,&m);
+  for (int t=1;t<=m;t++){
+    gets(s);
+    int len=strlen(s);
+    C[t].clear();
+    for (int i=0;i<len;i++){
+      if (!isNum(s[i])) continue;
+      int k=1;
+      if (s[i]=='-') k=-1,i++;
+      int x=0;
+      while (isNum(s[i])) x=x*10+s[i++]-'0';
+      x*=k;
+      C[t].insert(x);
+    }
+  }
+}
 bool legalRule4(set<int> c,int x,int m,set<int> *C){
 	set<int>::iterator it;
 	for (it=c.begin();it!=c.end();it++){
@@ -131,25 +152,24 @@ bool rule5(int n,int &m,int *X,node *H,set<int> *C){ //在实现的时候只需�
 	}
 	return false;
 }
-bool rule6(int &n,int &m,int *X,node *H,set<int> *C){ //把(~x,~y,C2)中的x去掉 x=(~y,C2) 
+bool rule6(int n,int m,node *H,set<int> *C){ //把(~x,~y,C2)中的x去掉 x=(~y,C2) 
 	for (int x=1;x<=n;x++){
 		if (H[x].fx!=-1) continue;
 		for (int y=1;y<=n;y++){
 			if (H[y].fx!=-1) continue;
-			int p1,p2;
-			p1=p2=0;
+			int p1=0,p2=0; 
 			for (int i=1;i<=m;i++){
 				if (find(C[i],x) && find(C[i],y)) p1=i;
-				if (find(C[i],-x) && find(C[i],-x)) p2=i;
+				if (find(C[i],-x) && find(C[i],-y)) p2=i;
 			}
 			if (!p1 || !p2) continue;
-			C[p1].erase(x);
+			C[p2].erase(-x);
 			return true;
 		}
 	}
 	return false;
 }
-bool rule7(int &n,int &m,int *X,node *H,set<int> *C){
+bool rule7(int n,int &m,int *X,node *H,set<int> *C){
 	int p[2][2];
 	for (int x=1;x<=n;x++){
 		if (H[x].fx!=-1) continue;
@@ -258,7 +278,7 @@ void reH(int n,node *H,node *H0){
 void dfs(int x,int n,int m,int* now,int *ans,int &maxNum,node *H,set<int> *C0){ 
 	if (!x){
 		node H0[1005];
-		consH(n,H,H0,now);
+		consH(n,H,H0,now); //展开H
 		int t=0; 
 		set<int>::iterator it;
 		for (int i=1;i<=m;i++)
@@ -292,15 +312,15 @@ void Lemma6(int n,int m,int *X,int *ans,int &maxNum,node *H,set<int> *C0){
 void branch(int n,int n0,int m,int m0,int *X,int *ans,int &maxNum,set<int> *C,set<int> *C0,node *H){
 	set<int>::iterator it;
 	while (1){
-		while (reNew(m,X,H,C));
+		while (reNew(m,X,H,C)); //梳理clause
 		if (rule1(n,m,X,H,C)) continue; //done
 		if (rule2(n,m,X,H,C)) continue; //done
 		if (rule3(n,m,X,H,C)) continue; //done
 		if (rule5(n,m,X,H,C)) continue; //done
-		if (rule6(n,m,X,H,C)) continue; //done
+		if (rule6(n,m,H,C))   continue; //done
 		if (rule7(n,m,X,H,C)) continue; //done
 		if (rule8(n,m,X,H,C)) continue; //done
-		if (rule9(n,m,C))   continue; //done
+		if (rule9(n,m,C))     continue; //done
 		break;
 	}
 	int i;
