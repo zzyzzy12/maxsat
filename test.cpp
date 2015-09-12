@@ -15,7 +15,7 @@ bool isNum(char c){
   if (c=='-') return true;
   return false;
 } 
-void initial(int &n,int &m,int *ans,set<int> *C){ //读取数据
+void initial(int &n,int &m,set<int> *C){ //读取数据
   char s[1005];
   scanf("%d%d\n",&n,&m);
   for (int t=1;t<=m;t++){
@@ -367,15 +367,10 @@ void branch(int n,int n0,int m,int m0,int *X,int *ans,int &maxNum,set<int> *C,se
 		return; 
 	}    
 }
-int main(){
-    freopen("input.txt","r",stdin);
-    freopen("output.txt","w",stdout);
-    int n,m;
-	set<int> C[MAXN],C0[MAXN];
-	node H[MAXN];
-	int ans[MAXN],X[MAXN],t[MAXN],maxNum=0;
-    initial(n,m,ans,C0);
-    memset(t,0,sizeof(t)); // 都转为x x -x
+void n3MaxSAT(int n,int m,int *X,int *ans,set<int> *C0,node *H){
+    int t[MAXN],maxNum=0;
+    set<int> C[MAXN];
+ 	memset(t,0,sizeof(t)); // 都转为x x -x
     for (int x=1;x<=n;x++){
     	int m1=0,m2=0;
     	for (int i=1;i<=m;i++){
@@ -395,12 +390,22 @@ int main(){
     	}
     }
     for (int i=1;i<=m;i++) C[i]=C0[i]; 
-    memset(X,-1,sizeof(X));  
-	for (int i=0;i<MAXN;i++) H[i].fx=-1;
     branch(n,n,m,m,X,ans,maxNum,C,C0,H);  
 	printf("%d\n",maxNum);
-    for (int i=1;i<=n;i++)
-    	printf("%d ",ans[i]^t[i]); 
-    puts("");
+    for (int i=1;i<=n;i++) ans[i]^=t[i]; 
+}
+int main(){
+    freopen("input.txt","r",stdin);
+    freopen("output.txt","w",stdout);
+    int n,m;
+	set<int> C0[MAXN];
+	int ans[MAXN],X[MAXN];
+    node H[MAXN];
+    initial(n,m,C0);
+    memset(X,-1,sizeof(X));  
+	for (int i=0;i<MAXN;i++) H[i].fx=-1;
+    n3MaxSAT(n,m,X,ans,C0,H);
+	for (int i=0;i<n;i++) printf("%d ",ans[i]);
+	puts("");
     return 0;
 }
