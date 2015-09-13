@@ -367,8 +367,8 @@ void branch(int n,int n0,int m,int m0,int *X,int *ans,int &maxNum,set<int> *C,se
 		return; 
 	}    
 }
-void n3MaxSAT(int n,int m,int *X,int *ans,set<int> *C0,node *H){
-    int t[MAXN],maxNum=0;
+void n3MaxSAT(int n,int m,int *X,int &maxNum,int *ans,set<int> *C0,node *H){
+    int t[MAXN];
     set<int> C[MAXN];
  	memset(t,0,sizeof(t)); // 都转为x x -x
     for (int x=1;x<=n;x++){
@@ -390,21 +390,38 @@ void n3MaxSAT(int n,int m,int *X,int *ans,set<int> *C0,node *H){
     	}
     }
     for (int i=1;i<=m;i++) C[i]=C0[i]; 
-    branch(n,n,m,m,X,ans,maxNum,C,C0,H);  
-	printf("%d\n",maxNum);
+    branch(n,n,m,m,X,ans,maxNum,C,C0,H);
     for (int i=1;i<=n;i++) ans[i]^=t[i]; 
+}
+void mainWork(int k,int n,int m,int *X,int &maxNum,int *ans,set<int> *C0,node* H){
+	if (k>n){
+		n3MaxSAT(n,m,X,maxNum,ans,C0,H);
+		return;
+	}
+	int num=0;
+	for (int i=1;i<=m;i++)
+		if (find(C0[i],k) || find(C0[i],-k)) num++; 
+	if (num>3){ 
+		H[k].fx=0; //值确定
+		X[k]=0;
+		mainWork(k+1,n,m,X,maxNum,ans,C0,H);
+		X[k]=1;
+		mainWork(k+1,n,m,X,maxNum,ans,C0,H);
+	}else
+		mainWork(k+1,n,m,X,maxNum,ans,C0,H); 
 }
 int main(){
     freopen("input.txt","r",stdin);
     freopen("output.txt","w",stdout);
-    int n,m;
+    int n,m,maxNum=0;
 	set<int> C0[MAXN];
 	int ans[MAXN],X[MAXN];
     node H[MAXN];
     initial(n,m,C0);
     memset(X,-1,sizeof(X));  
 	for (int i=0;i<MAXN;i++) H[i].fx=-1;
-    n3MaxSAT(n,m,X,ans,C0,H);
+	mainWork(1,n,m,X,maxNum,ans,C0,H);
+	printf("%d\n",maxNum);
 	for (int i=0;i<n;i++) printf("%d ",ans[i]);
 	puts("");
     return 0;
