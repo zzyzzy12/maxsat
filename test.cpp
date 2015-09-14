@@ -16,20 +16,26 @@ bool isNum(char c){
   return false;
 } 
 void initial(int &n,int &m,set<int> *C){ //读取数据
-  char s[1005];
   scanf("%d%d\n",&n,&m);
-  for (int t=1;t<=m;t++){
-    gets(s);
-    int len=strlen(s);
+  for (int t=1;t<=m;t++){ 
+  	char ch='0';
     C[t].clear();
-    for (int i=0;i<len;i++){
-      if (!isNum(s[i])) continue;
+    while (1){
+      if (ch=='\n' || ch=='\0') break;
+      ch=getchar();
+      if (!isNum(ch)) continue;
       int k=1;
-      if (s[i]=='-') k=-1,i++;
+      if (ch=='-') {
+      	k=-1;
+      	ch=getchar();
+      }
       int x=0;
-      while (isNum(s[i])) x=x*10+s[i++]-'0';
-      x*=k;
-      C[t].insert(x);
+      while (isNum(ch)) {
+      	x=x*10+ch-'0';
+      	ch=getchar();
+      }
+      x*=k; 
+      C[t].insert(x); 
     }
   }
 }
@@ -336,7 +342,7 @@ void branch(int n,int n0,int m,int m0,int *X,int *ans,int &maxNum,set<int> *C,se
 			D=C[t].size()-1;
 			break;
 		}
-	if (D>=2 && legalRule4(C[t],i,m,C)){ // |D|=2
+	if (D>=2 && legalRule4(C[t],i,m,C)){ // |D|>=2
 		int tn,tm;
 		node tH[MAXN];
 		set<int> tC[MAXN];
@@ -401,7 +407,7 @@ void mainWork(int k,int n,int m,int *X,int &maxNum,int *ans,set<int> *C0,node* H
 	int num=0;
 	for (int i=1;i<=m;i++)
 		if (find(C0[i],k) || find(C0[i],-k)) num++; 
-	if (num>3){ 
+	if (num>3){ //degree>3的先分支
 		H[k].fx=0; //值确定
 		X[k]=0;
 		mainWork(k+1,n,m,X,maxNum,ans,C0,H);
@@ -420,7 +426,7 @@ int main(){
     initial(n,m,C0);
     memset(X,-1,sizeof(X));  
 	for (int i=0;i<MAXN;i++) H[i].fx=-1;
-	mainWork(1,n,m,X,maxNum,ans,C0,H);
+	mainWork(1,n,m,X,maxNum,ans,C0,H); //将实例转为n3-Max-SAT
 	printf("%d\n",maxNum);
 	for (int i=0;i<n;i++) printf("%d ",ans[i]);
 	puts("");

@@ -34,7 +34,7 @@ bool reNew(int &m,int *X,node *H,set<int> *C){
 			return true;
 		}
 		for (it=C[i].begin();it!=C[i].end();it++){
-			if (H[ABS(*it)].fx==-1) continue;
+			if (H[ABS(*it)].fx!=0) continue; //要值确定了才
 			if (X[ABS(*it)]==1){
 				if (*it>0) C[i]=C[m--];
 					  else C[i].erase(*it); 
