@@ -6,10 +6,57 @@
 #include<map>
 #include<set>
 #include<queue>
-#include<stack>
-#include"head.h"
+#include<stack> 
 using namespace std;
-const int MAXN=1005;
+const int MAXN=1005; 
+struct node{
+	set<int> F;
+	int fx;
+};
+bool find(set<int> C,int x){
+	return C.find(x)!=C.end();
+}
+int ABS(int x){
+	if (x<0) return -x;
+	return x;
+}
+bool singletons(int x,int m,set<int> *C){ //严格来说是-x只出现在一个clause中
+	for (int i=1;i<=m;i++){
+		if (find(C[i],-x) && C[i].size()==1) return true; 
+	}
+	return false;
+}
+void copy(node *H,set<int> *C,node *tH,set<int> *tC,int n,int m,int &tn,int &tm){
+	tn=n,tm=m;
+	for (int i=1;i<=n;i++) tH[i]=H[i];
+	for (int i=1;i<=m;i++) tC[i]=C[i];
+}
+void back(node *H,set<int> *C,node *tH,set<int> *tC,int &n,int &m,int tn,int tm){
+	n=tn,m=tm;
+	for (int i=1;i<=n;i++) H[i]=tH[i];
+	for (int i=1;i<=m;i++) C[i]=tC[i];
+}
+bool reNew(int &m,int *X,node *H,set<int> *C){
+	set<int>::iterator it;
+	for (int i=1;i<=m;i++){
+		if (C[i].size()==0){
+			C[i]=C[m--];
+			return true;
+		}
+		for (it=C[i].begin();it!=C[i].end();it++){
+			if (H[ABS(*it)].fx!=0) continue; //要值确定了才
+			if (X[ABS(*it)]==1){
+				if (*it>0) C[i]=C[m--];
+					  else C[i].erase(*it); 
+			}else{
+				if (*it<0) C[i]=C[m--];
+					  else C[i].erase(*it); 
+			}
+			return true;
+		}
+	}
+	return false;
+}
 bool isNum(char c){
   if (c>='0' && c<='9') return true;
   if (c=='-') return true;
@@ -283,7 +330,7 @@ void reH(int n,node *H,node *H0){
 }
 void dfs(int x,int n,int m,int* now,int *ans,int &maxNum,node *H,set<int> *C0){ 
 	if (!x){
-		node H0[1005];
+		node H0[MAXN];
 		consH(n,H,H0,now); //展开H
 		int t=0; 
 		set<int>::iterator it;
@@ -298,7 +345,7 @@ void dfs(int x,int n,int m,int* now,int *ans,int &maxNum,node *H,set<int> *C0){
 			maxNum=t; 
 			for (int i=1;i<=n;i++) ans[i]=now[i];
 		}
-		reH(n,H,H0);
+		reH(n,H,H0); //还原H
 		return;
 	}
 	if (H[x].fx==-1){
@@ -309,7 +356,7 @@ void dfs(int x,int n,int m,int* now,int *ans,int &maxNum,node *H,set<int> *C0){
 	}else
 		dfs(x-1,n,m,now,ans,maxNum,H,C0);
 }
-void Lemma6(int n,int m,int *X,int *ans,int &maxNum,node *H,set<int> *C0){ 
+void Lemma6(int n,int m,int *X,int *ans,int &maxNum,node *H,set<int> *C0){  //正确的用Matching来写
 	int now[1005];
 	for (int i=1;i<=n;i++) now[i]=X[i];  
 	dfs(n,n,m,now,ans,maxNum,H,C0);
@@ -378,6 +425,7 @@ void n3MaxSAT(int n,int m,int *X,int &maxNum,int *ans,set<int> *C0,node *H){
     set<int> C[MAXN];
  	memset(t,0,sizeof(t)); // 都转为x x -x
     for (int x=1;x<=n;x++){
+    	if (H[x].fx!=-1) continue;
     	int m1=0,m2=0;
     	for (int i=1;i<=m;i++){
     		if (C0[i].find(x)!=C0[i].end()) m1++;
