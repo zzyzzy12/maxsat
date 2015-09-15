@@ -333,7 +333,7 @@ void dfs(int x,int n,int m,int* now,int *ans,int &maxNum,node *H,set<int> *C0){
 		node H0[MAXN];
 		consH(n,H,H0,now); //展开H
 		int t=0; 
-		set<int>::iterator it;
+		set<int>::iterator it; 
 		for (int i=1;i<=m;i++)
 			for (it=C0[i].begin();it!=C0[i].end();it++){ 
 				if ((*it>0 && now[*it]==1) || (*it<0 && now[-*it]==0)){
@@ -343,7 +343,7 @@ void dfs(int x,int n,int m,int* now,int *ans,int &maxNum,node *H,set<int> *C0){
 			}
 		if (t>maxNum){
 			maxNum=t; 
-			for (int i=1;i<=n;i++) ans[i]=now[i];
+			for (int i=1;i<=n;i++) ans[i]=now[i]; 
 		}
 		reH(n,H,H0); //还原H
 		return;
@@ -379,10 +379,10 @@ void branch(int n,int n0,int m,int m0,int *X,int *ans,int &maxNum,set<int> *C,se
 	int i;
 	for (i=1;i<=n;i++)
 		if (X[i]==-1 && !singletons(i,m,C)) break;
-	if (!m || i>n){
+	if (!m || i>n){ 
 		Lemma6(n0,m0,X,ans,maxNum,H,C0); //注意n0,m0,C0带入都是初始值
 		return;
-	}
+	} 
 	int D=0,t;
 	for (t=1;t<=m;t++)
 		if (find(C[t],-i)){
@@ -418,7 +418,7 @@ void branch(int n,int n0,int m,int m0,int *X,int *ans,int &maxNum,set<int> *C,se
 		branch(n,n0,m,m0,X,ans,maxNum,C,C0,H);
 		back(H,C,tH,tC,n,m,tn,tm);
 		return; 
-	}    
+	}  
 }
 void n3MaxSAT(int n,int m,int *X,int &maxNum,int *ans,set<int> *C0,node *H){
     int t[MAXN];
@@ -444,7 +444,7 @@ void n3MaxSAT(int n,int m,int *X,int &maxNum,int *ans,set<int> *C0,node *H){
     	}
     }
     for (int i=1;i<=m;i++) C[i]=C0[i]; 
-    branch(n,n,m,m,X,ans,maxNum,C,C0,H);
+    branch(n,n,m,m,X,ans,maxNum,C,C0,H); 
     for (int i=1;i<=n;i++) ans[i]^=t[i]; 
 }
 void mainWork(int k,int n,int m,int *X,int &maxNum,int *ans,set<int> *C0,node* H){
@@ -476,7 +476,7 @@ int main(){
 	for (int i=0;i<MAXN;i++) H[i].fx=-1;
 	mainWork(1,n,m,X,maxNum,ans,C0,H); //将实例转为n3-Max-SAT
 	printf("%d\n",maxNum);
-	for (int i=0;i<n;i++) printf("%d ",ans[i]);
+	for (int i=1;i<=n;i++) printf("%d ",ans[i]);
 	puts("");
     return 0;
 }
