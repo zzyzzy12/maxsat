@@ -8,7 +8,7 @@
 #include<queue>
 #include<stack> 
 using namespace std;
-const int MAXN=1005; 
+const int MAXN=5005; 
 struct node{
 	set<int> F;
 	int fx;
@@ -63,28 +63,16 @@ bool isNum(char c){
   return false;
 } 
 void initial(int &n,int &m,set<int> *C){ //读取数据
-  scanf("%d%d\n",&n,&m);
+  char s[20];
+  scanf("%s%s%s%s",s,s,s,s); 
+  scanf("%d%d",&n,&m); 
   for (int t=1;t<=m;t++){ 
-  	char ch='0';
+  	int x;
     C[t].clear();
-    while (1){
-      if (ch=='\n' || ch=='\0') break;
-      ch=getchar();
-      if (!isNum(ch)) continue;
-      int k=1;
-      if (ch=='-') {
-      	k=-1;
-      	ch=getchar();
-      }
-      int x=0;
-      while (isNum(ch)) {
-      	x=x*10+ch-'0';
-      	ch=getchar();
-      }
-      x*=k; 
+    while (~scanf("%d",&x) && x){ 
       C[t].insert(x); 
     }
-  }
+  } 
 }
 bool legalRule4(set<int> c,int x,int m,set<int> *C){
 	set<int>::iterator it;
@@ -379,7 +367,7 @@ void branch(int n,int n0,int m,int m0,int *X,int *ans,int &maxNum,set<int> *C,se
 	int i;
 	for (i=1;i<=n;i++)
 		if (X[i]==-1 && !singletons(i,m,C)) break;
-	if (!m || i>n){ 
+	if (!m || i>n){  
 		Lemma6(n0,m0,X,ans,maxNum,H,C0); //注意n0,m0,C0带入都是初始值
 		return;
 	} 
@@ -418,7 +406,7 @@ void branch(int n,int n0,int m,int m0,int *X,int *ans,int &maxNum,set<int> *C,se
 		branch(n,n0,m,m0,X,ans,maxNum,C,C0,H);
 		back(H,C,tH,tC,n,m,tn,tm);
 		return; 
-	}  
+	}   
 }
 void n3MaxSAT(int n,int m,int *X,int &maxNum,int *ans,set<int> *C0,node *H){
     int t[MAXN];
@@ -465,7 +453,7 @@ void mainWork(int k,int n,int m,int *X,int &maxNum,int *ans,set<int> *C0,node* H
 		mainWork(k+1,n,m,X,maxNum,ans,C0,H); 
 }
 int main(){
-    freopen("input.txt","r",stdin);
+    freopen("scpclr11_maxsat.cnf","r",stdin);
     freopen("output.txt","w",stdout);
     int n,m,maxNum=0;
 	set<int> C0[MAXN];
