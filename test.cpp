@@ -142,20 +142,34 @@ bool rule3(int n,int &m,int *X,node *H,set<int> *C){
 	return false;
 }
 bool rule5(int n,int &m,int *X,node *H,set<int> *C){ //在实现的时候只需要让x=1 
-	for (int x=1;x<=n;x++){   //复杂度太高
-		if (H[x].fx!=-1) continue; 
-		for (int y=1;y<=n;y++){
-			if (H[y].fx!=-1) continue;
-			int count=0;
-			for (int i=1;i<=m;i++){
-				if (!find(C[i],x) && !find(C[i],-x)) continue;
-				if (!find(C[i],y) && !find(C[i],-y)) break;
-			}
-			if (count!=3) continue;
-			X[x]=1;
-			H[x].fx=0;
-			return true;
+	int degree[MAXN];
+	for (int x=1;x<=n;x++){
+		degree[x]=0;
+		for (int i=1;i<=m;i++)
+			if (find(C[i],x) || find(C[i],-x)) degree[x]++;
+	}
+	for (int x=1;x<=n;x++){  
+		if (H[x].fx!=-1 || degree[x]!=3) continue;  
+		int c1,c2,c3;
+		for (c1=1;c1<=m;c1++)
+			if (find(C[c1],x) || find(C[c1],-x)) break;
+		for (c2=c1+1;c2<=m;c2++)
+			if (find(C[c2],x) || find(C[c2],-x)) break;
+		for (c3=c2+1;c3<=m;c3++)
+			if (find(C[c3],x) || find(C[c3],-x)) break;
+		int y=0;
+		set<int>::iterator it;
+		for (it=C[c1].begin();it!=C[c1].end();it++){
+			if (!find(C[c2],*it) && !find(C[c2],-*it)) continue;
+			if (!find(C[c3],*it) && !find(C[c3],-*it)) continue;
+			y=ABS(*it);
+			break;
 		}
+		if (!y || degree[y]!=3) continue;
+		/*
+		待完善
+		*/
+		return true;
 	}
 	return false;
 }
