@@ -174,75 +174,51 @@ bool rule5(int n,int &m,int *X,node *H,set<int> *C){ //在实现的时候只需�
 	return false;
 }
 bool rule6(int n,int m,node *H,set<int> *C){ //把(~x,~y,C2)中的x去掉 x=(~y,C2) 
+	int degree[MAXN];
 	for (int x=1;x<=n;x++){
-		if (H[x].fx!=-1) continue;
-		for (int y=1;y<=n;y++){
-			if (H[y].fx!=-1) continue;
-			int p1=0,p2=0; 
-			for (int i=1;i<=m;i++){
-				if (find(C[i],x) && find(C[i],y)) p1=i;
-				if (find(C[i],-x) && find(C[i],-y)) p2=i;
-			}
-			if (!p1 || !p2) continue;
-			C[p2].erase(-x);
-			return true;
-		}
+		degree[x]=0;
+		for (int i=1;i<=m;i++)
+			if (find(C[i],x) || find(C[i],-x)) degree[x]++;
+	}
+	for (int x=1;x<=n;x++){
+		if (H[x].fx!=-1 || degree[x]!=3) continue;
+		/*
+		待完善
+		*/
+		return true;
 	}
 	return false;
 }
 bool rule7(int n,int &m,int *X,node *H,set<int> *C){
-	int p[2][2];
+	int degree[MAXN];
 	for (int x=1;x<=n;x++){
-		if (H[x].fx!=-1) continue;
-		int t1,t2;
-		t1=t2=0;
-		for (int i=1;i<=m;i++){
-			if (find(C[i],x)) p[0][t1++]=i;
-			if (find(C[i],-x)) p[1][t2++]=i;
-		}
-		if (t1!=2 || t2!=1) continue;
-		for (int y=1;y<=n;y++){
-			if (H[y].fx!=-1) continue;
-			if (find(C[p[1][0]],y)) continue; //小改 交换了y -y
-			if (find(C[p[0][0]],-y) && find(C[p[0][1]],y)){
-				C[p[0][1]].erase(x);
-				return true;
-			}
-			if (find(C[p[0][0]],y) && find(C[p[0][1]],-y)){
-				C[p[0][0]].erase(x);
-				return true;
-			}
-		}
+		degree[x]=0;
+		for (int i=1;i<=m;i++)
+			if (find(C[i],x) || find(C[i],-x)) degree[x]++;
+	}
+	for (int x=1;x<=n;x++){
+		if (H[x].fx!=-1 || degree[x]!=3) continue;
+		/*
+		待完善
+		*/
+		return true;
 	}
 	return false;
 }
 bool rule8(int &n,int &m,int *X,node *H,set<int> *C){ // (~x',D1,D2)
-    set<int>::iterator it;
-    for (int x=1;x<=n;x++){
-    	if (H[x].fx!=-1) continue;
-    	for (int y=1;y<=n;y++){
-    		if (H[y].fx!=-1) continue;
-    		int c[2],cn,d[2];
-    		cn=0;
-    		for (int i=1;i<=m;i++){
-    			if (find(C[i],x) && find(C[i],y)) c[cn++]=i;
-    			if (find(C[i],-x)) d[0]=i;
-    			if (find(C[i],-y)) d[1]=i; 
-    		}
-    		if (cn!=2) continue;
-    		H[y].F.clear(),H[y].F.insert(-x);
-    		H[x].F=C[d[0]],H[x].F.erase(-x);
-    		H[++n].fx=-1;
-    		H[x].fx=n,H[y].fx=n;
-    		C[c[0]].erase(x),C[c[0]].erase(y),C[c[0]].insert(n);
-    		C[c[1]].erase(x),C[c[1]].erase(y),C[c[1]].insert(n);
-    		for (it=C[d[1]].begin();it!=C[d[1]].end();it++)
-    			C[d[0]].insert(*it);
-    		C[d[1]]=C[m--];
-    		C[d[0]].erase(-x),C[d[0]].erase(-y),C[d[0]].insert(-n);
-    		return true;
-    	}
-    }
+	int degree[MAXN];
+	for (int x=1;x<=n;x++){
+		degree[x]=0;
+		for (int i=1;i<=m;i++)
+			if (find(C[i],x) || find(C[i],-x)) degree[x]++;
+	}
+	for (int x=1;x<=n;x++){
+		if (H[x].fx!=-1 || degree[x]!=3) continue;
+		/*
+		待完善
+		*/
+		return true;
+	}
 	return false;
 }
 bool rule9(int n,int &m,set<int> *C){
@@ -344,8 +320,8 @@ void branch(int k,int &n,int &m,int *X,int &maxNum,int *ans,set<int> *C,set<int>
 	//	if (rule6(n,m,H,C))   continue; 
 	//	if (rule7(n,m,X,H,C)) continue; //判断dgree x,y同时出现在两个clause用O(n)的
 	//	if (rule8(n,m,X,H,C)) continue; 
-	//	if (rule9(n,m,C))     continue; 
-	//	break;
+		if (rule9(n,m,C))     continue; 
+		break;
 	} 
 	int num=0;
 	set<int> tC[MAXN];
