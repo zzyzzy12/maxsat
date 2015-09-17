@@ -8,14 +8,14 @@
 #include<queue>
 #include<stack> 
 using namespace std;
-const int MAXN=5005; 
+const int MAXN=205; 
 struct node{
 	set<int> F;
 	int fx;
 };
 bool find(set<int> C,int x){
 	return C.find(x)!=C.end();
-}
+} 
 int ABS(int x){
 	if (x<0) return -x;
 	return x;
@@ -26,23 +26,25 @@ bool singletons(int x,int m,set<int> *C){ //严格来说是-x只出现在一个c
 	}
 	return false;
 }
-void copy(node *H,set<int> *C,node *tH,set<int> *tC,int n,int m,int &tn,int &tm){
+void copy(node *H,int *T,set<int> *C,node *tH,int *tT,set<int> *tC,int n,int m,int &tn,int &tm){
 	tn=n,tm=m;
-	for (int i=1;i<=n;i++) tH[i]=H[i];
-	for (int i=1;i<=m;i++) tC[i]=C[i];
+	for (int i=1;i<MAXN;i++) tH[i]=H[i];
+	for (int i=1;i<MAXN;i++) tT[i]=T[i];
+	for (int i=1;i<MAXN;i++) tC[i]=C[i];
 }
-void back(node *H,set<int> *C,node *tH,set<int> *tC,int &n,int &m,int tn,int tm){
+void back(node *H,int *T,set<int> *C,node *tH,int *tT,set<int> *tC,int &n,int &m,int tn,int tm){
 	n=tn,m=tm;
-	for (int i=1;i<=n;i++) H[i]=tH[i];
-	for (int i=1;i<=m;i++) C[i]=tC[i];
+	for (int i=1;i<MAXN;i++) H[i]=tH[i];
+	for (int i=1;i<MAXN;i++) T[i]=tT[i];
+	for (int i=1;i<MAXN;i++) C[i]=tC[i];
 }
-bool reNew(int &m,int *X,node *H,set<int> *C){
+bool reFrash(int n,int &m,int *X,node *H,int *T,set<int> *C){
 	set<int>::iterator it;
 	for (int i=1;i<=m;i++){
 		if (C[i].size()==0){
 			C[i]=C[m--];
 			return true;
-		}
+		} 
 		for (it=C[i].begin();it!=C[i].end();it++){
 			if (H[ABS(*it)].fx!=0) continue; //要值确定了才
 			if (X[ABS(*it)]==1){
@@ -55,16 +57,25 @@ bool reNew(int &m,int *X,node *H,set<int> *C){
 			return true;
 		}
 	}
+	for (int x=1;x<=n;x++){ // 负的比正的多，交换正负
+		int num0=0,num1=0;
+		for (int i=1;i<=m;i++){
+			if (find(C[i],x)) num0++;
+			if (find(C[i],-x)) num1++;
+		}
+		if (num0>=num1) continue;
+		T[x]=1-T[x];
+		for (int i=1;i<=m;i++){
+			if (find(C[i],x)) C[i].erase(x),C[i].insert(-x);
+			else
+			if (find(C[i],-x)) C[i].erase(-x),C[i].insert(x);
+		}
+	}
 	return false;
 }
-bool isNum(char c){
-  if (c>='0' && c<='9') return true;
-  if (c=='-') return true;
-  return false;
-} 
 void initial(int &n,int &m,set<int> *C){ //读取数据
   char s[20];
-  scanf("%s%s%s%s",s,s,s,s); 
+  //scanf("%s%s%s%s",s,s,s,s); 
   scanf("%d%d",&n,&m); 
   for (int t=1;t<=m;t++){ 
   	int x;
@@ -73,15 +84,7 @@ void initial(int &n,int &m,set<int> *C){ //读取数据
       C[t].insert(x); 
     }
   } 
-}
-bool legalRule4(set<int> c,int x,int m,set<int> *C){
-	set<int>::iterator it;
-	for (it=c.begin();it!=c.end();it++){
-		if (*it==x || singletons(ABS(*it),m,C)) continue;
-		return true;
-	}
-	return false;
-}
+} 
 bool rule1(int n,int &m,int *X,node *H,set<int> *C){
 	set<int>::iterator it;
 	bool f=false;
@@ -92,10 +95,13 @@ bool rule1(int n,int &m,int *X,node *H,set<int> *C){
 			H[ABS(*it)].fx=0;
 			f=true;
 			break;
-		}
+		} //done
 	for (int i=1;i<=n;i++){
 		if (H[i].fx!=-1) continue;
-		int p1,p2;
+		int p1,p2,num=0;
+		for (int j=1;j<=m;j++)
+			if (find(C[j],i) || find(C[j],-i)) num++;
+		if (num>3) continue;
 		for (p1=1;p1<=m;p1++)
 			if (find(C[p1],i) && C[p1].size()==1) break;
 		if (p1>m) continue;
@@ -308,7 +314,7 @@ void searchH(int i,node *H,int *now){
 		}
 	}
 	H[i].fx=0,now[i]=t; 
-}
+} 
 void consH(int n,node *H,node *H0,int *now){
 	for (int i=1;i<=n;i++) H0[i]=H[i];
 	for (int i=1;i<=n;i++) searchH(i,H,now);
@@ -316,155 +322,90 @@ void consH(int n,node *H,node *H0,int *now){
 void reH(int n,node *H,node *H0){
 	for (int i=1;i<=n;i++) H[i]=H0[i];
 }
-void dfs(int x,int n,int m,int* now,int *ans,int &maxNum,node *H,set<int> *C0){ 
+
+void dfs(int x,int n,int m,int* X,int *ans,int &maxNum,node *H,int *T,set<int> *C0){ 
 	if (!x){
 		node H0[MAXN];
-		consH(n,H,H0,now); //展开H
+		consH(n,H,H0,X); //展开H
 		int t=0; 
 		set<int>::iterator it; 
 		for (int i=1;i<=m;i++)
 			for (it=C0[i].begin();it!=C0[i].end();it++){ 
-				if ((*it>0 && now[*it]==1) || (*it<0 && now[-*it]==0)){
+				if ((*it>0 && X[*it]==1) || (*it<0 && X[-*it]==0)){
 					t++;
 					break;
 				}
 			}
 		if (t>maxNum){
 			maxNum=t; 
-			for (int i=1;i<=n;i++) ans[i]=now[i]; 
+			for (int i=1;i<=n;i++) ans[i]=X[i]; 
 		}
 		reH(n,H,H0); //还原H
 		return;
 	}
 	if (H[x].fx==-1){
-		now[x]=0;
-		dfs(x-1,n,m,now,ans,maxNum,H,C0);
-		now[x]=1;
-		dfs(x-1,n,m,now,ans,maxNum,H,C0);
+		X[x]=0;
+		H[x].fx=0;
+		dfs(x-1,n,m,X,ans,maxNum,H,T,C0);
+		X[x]=1;
+		dfs(x-1,n,m,X,ans,maxNum,H,T,C0);
+		H[x].fx=-1;
 	}else
-		dfs(x-1,n,m,now,ans,maxNum,H,C0);
-}
-void Lemma6(int n,int m,int *X,int *ans,int &maxNum,node *H,set<int> *C0){  //正确的用Matching来写
-	int now[1005];
-	for (int i=1;i<=n;i++) now[i]=X[i];  
-	dfs(n,n,m,now,ans,maxNum,H,C0);
-	return;
-}
-void branch(int n,int n0,int m,int m0,int *X,int *ans,int &maxNum,set<int> *C,set<int> *C0,node *H){
-	set<int>::iterator it;
-	while (1){
-		while (reNew(m,X,H,C)); //梳理clause
-		if (rule1(n,m,X,H,C)) continue; //done
-		if (rule2(n,m,X,H,C)) continue; //done
-		if (rule3(n,m,X,H,C)) continue; //done
-		if (rule5(n,m,X,H,C)) continue; //done
-		if (rule6(n,m,H,C))   continue; //done
-		if (rule7(n,m,X,H,C)) continue; //done
-		if (rule8(n,m,X,H,C)) continue; //done
-		if (rule9(n,m,C))     continue; //done
-		break;
-	}
-	int i;
-	for (i=1;i<=n;i++)
-		if (X[i]==-1 && !singletons(i,m,C)) break;
-	if (!m || i>n){  
-		Lemma6(n0,m0,X,ans,maxNum,H,C0); //注意n0,m0,C0带入都是初始值
+		dfs(x-1,n,m,X,ans,maxNum,H,T,C0);
+}  
+void branch(int k,int &n,int &m,int *X,int &maxNum,int *ans,int *T,set<int> *C,set<int> *C0,node* H){
+	if (k>n){
+		dfs(n,n,m,X,ans,maxNum,H,T,C0);  //注意带入的T
 		return;
 	} 
-	int D=0,t;
-	for (t=1;t<=m;t++)
-		if (find(C[t],-i)){
-			D=C[t].size()-1;
-			break;
-		}
-	if (D>=2 && legalRule4(C[t],i,m,C)){ // |D|>=2
-		int tn,tm;
-		node tH[MAXN];
-		set<int> tC[MAXN];
-		copy(H,C,tH,tC,n,m,tn,tm);
-		X[i]=1; //-----n3MaxSAT(F[x])
-		branch(n,n0,m,m0,X,ans,maxNum,C,C0,H);
-		back(H,C,tH,tC,n,m,tn,tm);
-		X[i]=0; //-----n3MaxSAT(F[-x,-y1,-y2....])
-		for (it=C[t].begin();it!=C[t].end();it++){
-			if (X[ABS(*it)]!=-1) continue;
-			if (*it>0) X[*it]=0;
-				else   X[-*it]=1;
-		} 
-		branch(n,n0,m,m0,X,ans,maxNum,C,C0,H);
-		back(H,C,tH,tC,n,m,tn,tm);
-		return; 
-	}else{
-		int tn,tm;
-		node tH[MAXN];
-		set<int> tC[MAXN];
-		copy(H,C,tH,tC,n,m,tn,tm);
-		X[i]=1;  //-----n3MaxSAT(F[x])
-		branch(n,n0,m,m0,X,ans,maxNum,C,C0,H);
-		back(H,C,tH,tC,n,m,tn,tm);
-		X[i]=0;  //-----n3MaxSAT(F[-x])
-		branch(n,n0,m,m0,X,ans,maxNum,C,C0,H);
-		back(H,C,tH,tC,n,m,tn,tm);
-		return; 
-	}   
-}
-void n3MaxSAT(int n,int m,int *X,int &maxNum,int *ans,set<int> *C0,node *H){
-    int t[MAXN];
-    set<int> C[MAXN];
- 	memset(t,0,sizeof(t)); // 都转为x x -x
-    for (int x=1;x<=n;x++){
-    	if (H[x].fx!=-1) continue;
-    	int m1=0,m2=0;
-    	for (int i=1;i<=m;i++){
-    		if (C0[i].find(x)!=C0[i].end()) m1++;
-    		if (C0[i].find(-x)!=C0[i].end()) m2++;
-    	}
-    	if (m2>m1){ // -x比x多，则交换-x,x
-    		t[x]=1;
-    		for (int i=1;i<=m;i++){
-    			if (C0[i].find(x)!=C0[i].end()){
-    				C0[i].erase(x),C0[i].insert(-x);
-    			}else
-    			if (C0[i].find(-x)!=C0[i].end()){
-    				C0[i].erase(-x),C0[i].insert(x);
-    			}
-    		}
-    	}
-    }
-    for (int i=1;i<=m;i++) C[i]=C0[i]; 
-    branch(n,n,m,m,X,ans,maxNum,C,C0,H); 
-    for (int i=1;i<=n;i++) ans[i]^=t[i]; 
-}
-void mainWork(int k,int n,int m,int *X,int &maxNum,int *ans,set<int> *C0,node* H){
-	if (k>n){
-		n3MaxSAT(n,m,X,maxNum,ans,C0,H);
-		return;
-	}
+	while (1){
+		while (reFrash(n,m,X,H,T,C)); //done
+		//if (rule1(n,m,X,H,C)) continue; //done
+		//if (rule2(n,m,X,H,C)) continue; 
+	//	if (rule3(n,m,X,H,C)) continue; 
+	//	if (rule5(n,m,X,H,C)) continue; 
+	//	if (rule6(n,m,H,C))   continue; 
+	//	if (rule7(n,m,X,H,C)) continue; 
+	//	if (rule8(n,m,X,H,C)) continue; 
+	//	if (rule9(n,m,C))     continue; 
+	//	break;
+	} 
 	int num=0;
+	set<int> tC[MAXN];
+	node tH[MAXN];
+	int tn,tm,tT[MAXN];
 	for (int i=1;i<=m;i++)
 		if (find(C0[i],k) || find(C0[i],-k)) num++; 
-	if (num>3){ //degree>3的先分支
+	if (num>3 && H[k].fx==-1){ //degree>3的先分支 
+		copy(H,T,C,tH,tT,tC,n,m,tn,tm); //保护现场
 		H[k].fx=0; //值确定
 		X[k]=0;
-		mainWork(k+1,n,m,X,maxNum,ans,C0,H);
+		branch(k+1,n,m,X,maxNum,ans,T,C,C0,H);
+		back(H,T,C,tH,tT,tC,n,m,tn,tm); //还原现场
 		X[k]=1;
-		mainWork(k+1,n,m,X,maxNum,ans,C0,H);
-	}else
-		mainWork(k+1,n,m,X,maxNum,ans,C0,H); 
+		branch(k+1,n,m,X,maxNum,ans,T,C,C0,H);
+		back(H,T,C,tH,tT,tC,n,m,tn,tm);
+	}else{
+		copy(H,T,C,tH,tT,tC,n,m,tn,tm); //保护现场
+		branch(k+1,n,m,X,maxNum,ans,T,C,C0,H); 
+		back(H,T,C,tH,tT,tC,n,m,tn,tm); //还原现场
+	}
 }
 int main(){
-    freopen("scpclr11_maxsat.cnf","r",stdin);
+    freopen("sgen1-unsat-61-100.cnf","r",stdin);
     freopen("output.txt","w",stdout);
     int n,m,maxNum=0;
-	set<int> C0[MAXN];
-	int ans[MAXN],X[MAXN];
-    node H[MAXN];
+	set<int> C[MAXN],C0[MAXN];
+	int ans[MAXN],X[MAXN],T[MAXN];
+    node H[MAXN]; 
     initial(n,m,C0);
     memset(X,-1,sizeof(X));  
 	for (int i=0;i<MAXN;i++) H[i].fx=-1;
-	mainWork(1,n,m,X,maxNum,ans,C0,H); //将实例转为n3-Max-SAT
+	for (int i=1;i<=m;i++) C[i]=C0[i];
+	memset(T,0,sizeof(T));
+	branch(1,n,m,X,maxNum,ans,T,C,C0,H); //将实例转为n3-Max-SAT 
 	printf("%d\n",maxNum);
 	for (int i=1;i<=n;i++) printf("%d ",ans[i]);
-	puts("");
+	puts(""); 
     return 0;
 }
