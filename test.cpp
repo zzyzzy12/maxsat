@@ -261,10 +261,10 @@ bool rule8(int &n,int &m,int *X,node *H,set<int> *C){ // (~x',D1,D2)
 	}
 	for (int x=1;x<=n;x++){
 		if (H[x].fx!=-1 || degree[x]!=3) continue;
-		int c1,c2,c3;
-		find3clause(c1,c2,c3,x,m,C);
-		if (find(C[c3],x)){ //x,y为(2,1)
-			swap(c2,c3);
+		int c1,c2,d1,d2;
+		find3clause(c1,c2,d1,x,m,C);
+		if (find(C[d1],x)){ //x,y为(2,1)
+			swap(c2,d1);
 			set<int>::iterator it;
 			int y=0;
 			for (it=C[c1].begin();it!=C[c1].end();it++){
@@ -274,12 +274,20 @@ bool rule8(int &n,int &m,int *X,node *H,set<int> *C){ // (~x',D1,D2)
 					break;
 				}
 			}
-			if (!y) continue;
-			/*
-				待完善
-			*/
+			if (!y || degree[y]!=3) continue;
+			int yc1,yc2;
+			find3clause(yc1,d2,yc2,y,m,C);
+			H[y].F.clear(),H[y].F.insert(-x);
+			H[x].F=C[d1],H[x].F.erase(-x);
+			H[++n].fx=-1;
+			H[x].fx=H[y].fx=n;  //x,y的值将由n来决定
+			C[c1].erase(x),C[c1].erase(y),C[c1].insert(n);
+			C[c2].erase(x),C[c2].erase(y),C[c2].insert(n);
+			C[d1].insert(C[d2].begin(),C[d2].end());
+			C[d1].erase(-x),C[d1].erase(-y),C[d1].insert(-n);
+			C[d2]=C[m--];
 		}else{				//x,y为(1,2)
-			swap(c1,c3);
+			swap(c1,d1);
 			set<int>::iterator it;
 			int y=0;
 			for (it=C[c1].begin();it!=C[c1].end();it++){
@@ -289,10 +297,24 @@ bool rule8(int &n,int &m,int *X,node *H,set<int> *C){ // (~x',D1,D2)
 					break;
 				}
 			}
-			if (!y) continue;
-			/*
-				待完善
-			*/
+			if (!y || degree[y]!=3) continue;
+			int yc1,yc2;
+			find3clause(d2,yc2,yc1,y,m,C);
+			//------待讨论------
+			H[y].F.clear(),H[y].F.insert(-x);
+			H[x].F.clear();
+			for (it=C[d1].begin();it!=C[d1].end();it++){
+				if (*it==x) continue;
+				H[x].F.insert(-*it);
+			} // x= ~D1
+			H[++n].fx=-1;
+			H[x].fx=H[y].fx=n;  //x,y的值将由n来决定,会出错？
+			C[c1].erase(x),C[c1].erase(y),C[c1].insert(n);
+			C[c2].erase(x),C[c2].erase(y),C[c2].insert(n);
+			C[d1].insert(C[d2].begin(),C[d2].end());
+			C[d1].erase(x),C[d1].erase(y),C[d1].insert(-n);
+			C[d2]=C[m--]; 
+			//------待讨论------
 		}
 		return true;
 	}
@@ -381,9 +403,6 @@ void dfs(int x,int n,int m,int* X,int *ans,int &maxNum,node *H,set<int> *C0){
 		dfs(x-1,n,m,X,ans,maxNum,H,C0);
 }  
 void branch(int k,int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<int> *C,set<int> *C0,node* H){
-	/*
-		注意x与-x个个数多少不做限制了
-	*/
 	if (k>n){
 		dfs(n0,n0,m0,X,ans,maxNum,H,C0); //n0,m0为输入时的n,m
 		return;
@@ -396,7 +415,7 @@ void branch(int k,int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<in
 		if (rule5(n,m,X,H,C)) continue; //done
 		if (rule6(n,m,H,C))   continue; //done
 		if (rule7(n,m,X,H,C)) continue; //done
-	//	if (rule8(n,m,X,H,C)) continue; 
+		if (rule8(n,m,X,H,C)) continue; //正确性有待讨论
 		if (rule9(n,m,C))     continue; //done
 		break;
 	}  
