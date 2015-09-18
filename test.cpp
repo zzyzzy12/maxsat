@@ -8,7 +8,7 @@
 #include<queue>
 #include<stack> 
 using namespace std;
-const int MAXN=205; 
+const int MAXN=505; 
 struct node{
 	set<int> F;
 	int fx;
@@ -194,7 +194,7 @@ bool rule6(int n,int m,node *H,set<int> *C){ //对于y有没有degree=3的限制
 		find3clause(c1,c2,c3,x,m,C); //找到这三个clause
 		set<int>::iterator it;
 		for (it=C[c1].begin();it!=C[c1].end();it++){
-			if (*it<0) continue;
+			if (*it<0 || degree[*it]!=3) continue; //注意限制y的degree=3
 			if (find(C[c2],-*it)){
 				y=*it;
 				break;
@@ -205,7 +205,7 @@ bool rule6(int n,int m,node *H,set<int> *C){ //对于y有没有degree=3的限制
 				break;
 			}
 		}
-		if (!y || degree[y]!=3) continue; //找不到对应的y
+		if (!y) continue; //找不到对应的y
 		if (find(C[c3],x)){ //x为(2,1)
 			H[x].fx=1;
 			H[x].F=C[c2],H[x].F.erase(-x);
@@ -263,9 +263,37 @@ bool rule8(int &n,int &m,int *X,node *H,set<int> *C){ // (~x',D1,D2)
 		if (H[x].fx!=-1 || degree[x]!=3) continue;
 		int c1,c2,c3;
 		find3clause(c1,c2,c3,x,m,C);
-		/*
-		待完善
-		*/
+		if (find(C[c3],x)){ //x,y为(2,1)
+			swap(c2,c3);
+			set<int>::iterator it;
+			int y=0;
+			for (it=C[c1].begin();it!=C[c1].end();it++){
+				if (*it<0) continue;
+				if (find(C[c2],*it)){
+					y=*it;
+					break;
+				}
+			}
+			if (!y) continue;
+			/*
+				待完善
+			*/
+		}else{				//x,y为(1,2)
+			swap(c1,c3);
+			set<int>::iterator it;
+			int y=0;
+			for (it=C[c1].begin();it!=C[c1].end();it++){
+				if (*it>0) continue;
+				if (find(C[c2],*it)){
+					y=*it;
+					break;
+				}
+			}
+			if (!y) continue;
+			/*
+				待完善
+			*/
+		}
 		return true;
 	}
 	return false;
@@ -293,30 +321,30 @@ bool rule9(int n,int &m,set<int> *C){
 	}
 	return false;
 }
-void searchH(int i,node *H,int *now){
+void searchH(int i,node *H,int *X){
 	set<int>::iterator it;
     if (H[i].fx<=0) return; //值是确定的
 	if (H[i].fx>1){ //其值依赖于H[i].fx与H[i].F的值
-		searchH(H[i].fx,H,now);
-		if (now[H[i].fx]==0){
-			H[i].fx=0,now[i]=0; //根据rule8规则
+		searchH(H[i].fx,H,X);
+		if (X[H[i].fx]==0){
+			H[i].fx=0,X[i]=0; //根据rule8规则
 			return;
 		}
 	}
 	int t=0;  //只看H[i].F的值
 	for (it=H[i].F.begin();it!=H[i].F.end();it++){
 		int x=*it;
-		searchH(ABS(x),H,now);
-		if ((x>0 && now[x]==1) || (x<0 && now[-x]==0)){
+		searchH(ABS(x),H,X);
+		if ((x>0 && X[x]==1) || (x<0 && X[-x]==0)){
 			t=1;
 			break;
 		}
 	}
-	H[i].fx=0,now[i]=t; 
+	H[i].fx=0,X[i]=t; 
 } 
-void consH(int n,node *H,node *H0,int *now){
+void consH(int n,node *H,node *H0,int *X){
 	for (int i=1;i<=n;i++) H0[i]=H[i];
-	for (int i=1;i<=n;i++) searchH(i,H,now);
+	for (int i=1;i<=n;i++) searchH(i,H,X);
 }
 void reH(int n,node *H,node *H0){
 	for (int i=1;i<=n;i++) H[i]=H0[i];
