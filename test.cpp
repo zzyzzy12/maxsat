@@ -36,6 +36,14 @@ void back(node *H,set<int> *C,node *tH,set<int> *tC,int &n,int &m,int tn,int tm)
 	for (int i=1;i<MAXN;i++) H[i]=tH[i]; 
 	for (int i=1;i<MAXN;i++) C[i]=tC[i];
 }
+void find3clause(int &c1,int &c2,int &c3,int x,int m,set<int> *C){
+	for (c1=1;c1<=m;c1++)
+		if (find(C[c1],x)) break;
+	for (c2=1;c2<=m;c2++)
+		if (find(C[c2],-x)) break;
+	for (c3=1;c3<=m;c3++)
+		if (c3!=c1 && c3!=c2 && (find(C[c3],x) || find(C[c3],-x))) break;		
+}
 bool reFrash(int &m,int *X,node *H,set<int> *C){
 	set<int>::iterator it;
 	for (int i=1;i<=m;i++){
@@ -67,7 +75,7 @@ void initial(int &n,int &m,set<int> *C){ //读取数据
     while (~scanf("%d",&x) && x){ 
       C[t].insert(x); 
     }
-  } 
+  }  
 } 
 bool rule1(int n,int &m,int *X,node *H,set<int> *C){
 	set<int>::iterator it;
@@ -97,7 +105,8 @@ bool rule1(int n,int &m,int *X,node *H,set<int> *C){
 bool rule2(int n,int &m,int *X,node *H,set<int> *C){  //不用管dgree
 	for (int z=1;z<=n;z++){
 		if (H[z].fx!=-1) continue;
-		int p1,p2,h1,h2; //p1= x个数   p2= -x个数  h1 = x unit  h2 = -x unit
+		int p1=0,p2=0,h1=0,h2=0; //p1= x个数   p2= -x个数  h1= x unit  h2= -x unit
+		//注意赋初值
 		for (int i=1;i<=m;i++){
 			if (find(C[i],z)) {
 				p1++;
@@ -151,12 +160,7 @@ bool rule5(int n,int &m,int *X,node *H,set<int> *C){ //在实现的时候只需�
 	for (int x=1;x<=n;x++){  
 		if (H[x].fx!=-1 || degree[x]!=3) continue;  
 		int c1,c2,c3;
-		for (c1=1;c1<=m;c1++)
-			if (find(C[c1],x) || find(C[c1],-x)) break;
-		for (c2=c1+1;c2<=m;c2++)
-			if (find(C[c2],x) || find(C[c2],-x)) break;
-		for (c3=c2+1;c3<=m;c3++)
-			if (find(C[c3],x) || find(C[c3],-x)) break;
+		find3clause(c1,c2,c3,x,m,C); //找到这三个clause
 		int y=0;
 		set<int>::iterator it;
 		for (it=C[c1].begin();it!=C[c1].end();it++){
@@ -166,14 +170,18 @@ bool rule5(int n,int &m,int *X,node *H,set<int> *C){ //在实现的时候只需�
 			break;
 		}
 		if (!y || degree[y]!=3) continue;
-		/*
-		待完善
-		*/
+		if (find(C[c3],x)){ // x x -x
+			H[x].fx=0;
+			X[x]=1;
+		}else{		// x -x -x
+			H[x].fx=0;
+			X[x]=0;
+		}
 		return true;
 	}
 	return false;
 }
-bool rule6(int n,int m,node *H,set<int> *C){ //把(~x,~y,C2)中的x去掉 x=(~y,C2) 
+bool rule6(int n,int m,node *H,set<int> *C){ //对于y有没有degree=3的限制
 	int degree[MAXN];
 	for (int x=1;x<=n;x++){
 		degree[x]=0;
@@ -182,9 +190,35 @@ bool rule6(int n,int m,node *H,set<int> *C){ //把(~x,~y,C2)中的x去掉 x=(~y,
 	}
 	for (int x=1;x<=n;x++){
 		if (H[x].fx!=-1 || degree[x]!=3) continue;
-		/*
-		待完善
-		*/
+		int c1,c2,c3,y=0;
+		find3clause(c1,c2,c3,x,m,C); //找到这三个clause
+		set<int>::iterator it;
+		for (it=C[c1].begin();it!=C[c1].end();it++){
+			if (*it<0) continue;
+			if (find(C[c2],-*it)){
+				y=*it;
+				break;
+			}
+			if (find(C[c3],-x) && find(C[c3],-*it)){ //注意C3必须是包含-x的才可以
+				y=*it;
+				swap(c2,c3);
+				break;
+			}
+		}
+		if (!y || degree[y]!=3) continue; //找不到对应的y
+		if (find(C[c3],x)){ //x为(2,1)
+			H[x].fx=1;
+			H[x].F=C[c2],H[x].F.erase(-x);
+			C[c2].insert(C[c3].begin(),C[c3].end());
+			C[c2].erase(x),C[c2].erase(-x);
+			C[c1]=C[m--]; //注意先改clause再删除clause
+		}else{				//x为(1,2)
+			H[x].fx=1;
+			H[x].F=C[c1],H[x].F.erase(x);
+			C[c1].insert(C[c3].begin(),C[c3].end());
+			C[c1].erase(x),C[c1].erase(-x);
+			C[c2]=C[m--]; //注意先改clause再删除clause
+		}
 		return true;
 	}
 	return false;
@@ -196,11 +230,24 @@ bool rule7(int n,int &m,int *X,node *H,set<int> *C){
 		for (int i=1;i<=m;i++)
 			if (find(C[i],x) || find(C[i],-x)) degree[x]++;
 	}
-	for (int x=1;x<=n;x++){
-		if (H[x].fx!=-1 || degree[x]!=3) continue;
-		/*
-		待完善
-		*/
+	for (int z2=1;z2<=n;z2++){
+		if (H[z2].fx!=-1 || degree[z2]!=3) continue;
+		int c1,c2,c3;
+		find3clause(c1,c2,c3,z2,m,C); //找到这三个clause
+		//找到了degree=3的z2三个clause c1,c2,c3
+		set<int>::iterator it;
+		int z1=0;
+		for (it=C[c1].begin();it!=C[c1].end();it++)
+			if (find(C[c2],*it)){
+				z1=*it;
+				break;
+			}
+		if (!z1) continue;
+		if (find(C[c3],z2)){ //(2,1)
+			C[c1].erase(z1);
+		}else{				 //(1,2)
+			C[c2].erase(z1);
+		}
 		return true;
 	}
 	return false;
@@ -214,6 +261,8 @@ bool rule8(int &n,int &m,int *X,node *H,set<int> *C){ // (~x',D1,D2)
 	}
 	for (int x=1;x<=n;x++){
 		if (H[x].fx!=-1 || degree[x]!=3) continue;
+		int c1,c2,c3;
+		find3clause(c1,c2,c3,x,m,C);
 		/*
 		待完善
 		*/
@@ -287,7 +336,7 @@ void dfs(int x,int n,int m,int* X,int *ans,int &maxNum,node *H,set<int> *C0){
 				}
 			}
 		if (t>maxNum){
-			maxNum=t; 
+			maxNum=t;
 			for (int i=1;i<=n;i++) ans[i]=X[i]; 
 		}
 		reH(n,H,H0); //还原H
@@ -303,12 +352,12 @@ void dfs(int x,int n,int m,int* X,int *ans,int &maxNum,node *H,set<int> *C0){
 	}else
 		dfs(x-1,n,m,X,ans,maxNum,H,C0);
 }  
-void branch(int k,int &n,int &m,int *X,int &maxNum,int *ans,set<int> *C,set<int> *C0,node* H){
+void branch(int k,int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<int> *C,set<int> *C0,node* H){
 	/*
 		注意x与-x个个数多少不做限制了
 	*/
 	if (k>n){
-		dfs(n,n,m,X,ans,maxNum,H,C0);  
+		dfs(n0,n0,m0,X,ans,maxNum,H,C0); //n0,m0为输入时的n,m
 		return;
 	} 
 	while (1){
@@ -316,13 +365,13 @@ void branch(int k,int &n,int &m,int *X,int &maxNum,int *ans,set<int> *C,set<int>
 		if (rule1(n,m,X,H,C)) continue; //done
 		if (rule2(n,m,X,H,C)) continue; //done
 		if (rule3(n,m,X,H,C)) continue; //done
-	//	if (rule5(n,m,X,H,C)) continue; 
-	//	if (rule6(n,m,H,C))   continue; 
-	//	if (rule7(n,m,X,H,C)) continue; //判断dgree x,y同时出现在两个clause用O(n)的
+		if (rule5(n,m,X,H,C)) continue; //done
+		if (rule6(n,m,H,C))   continue; //done
+		if (rule7(n,m,X,H,C)) continue; //done
 	//	if (rule8(n,m,X,H,C)) continue; 
-		if (rule9(n,m,C))     continue; 
+		if (rule9(n,m,C))     continue; //done
 		break;
-	} 
+	}  
 	int num=0;
 	set<int> tC[MAXN];
 	node tH[MAXN];
@@ -333,19 +382,20 @@ void branch(int k,int &n,int &m,int *X,int &maxNum,int *ans,set<int> *C,set<int>
 		copy(H,C,tH,tC,n,m,tn,tm); //保护现场
 		H[k].fx=0; //值确定
 		X[k]=0;
-		branch(k+1,n,m,X,maxNum,ans,C,C0,H);
+		branch(k+1,n,m,n0,m0,X,maxNum,ans,C,C0,H);
 		back(H,C,tH,tC,n,m,tn,tm); //还原现场
 		X[k]=1;
-		branch(k+1,n,m,X,maxNum,ans,C,C0,H);
+		branch(k+1,n,m,n0,m0,X,maxNum,ans,C,C0,H);
 		back(H,C,tH,tC,n,m,tn,tm);
 	}else{
 		copy(H,C,tH,tC,n,m,tn,tm); //保护现场
-		branch(k+1,n,m,X,maxNum,ans,C,C0,H); 
+		branch(k+1,n,m,n0,m0,X,maxNum,ans,C,C0,H); 
 		back(H,C,tH,tC,n,m,tn,tm); //还原现场
 	}
 }
-int main(){
+int main(int argc,char **arg){
     freopen("sgen1-unsat-61-100.cnf","r",stdin);
+	//freopen("input.txt","r",stdin);
     freopen("output.txt","w",stdout);
     int n,m,maxNum=0;
 	set<int> C[MAXN],C0[MAXN];
@@ -355,7 +405,7 @@ int main(){
     memset(X,-1,sizeof(X));  
 	for (int i=0;i<MAXN;i++) H[i].fx=-1;
 	for (int i=1;i<=m;i++) C[i]=C0[i]; 
-	branch(1,n,m,X,maxNum,ans,C,C0,H); //将实例转为n3-Max-SAT 
+	branch(1,n,m,n,m,X,maxNum,ans,C,C0,H); 
 	printf("%d\n",maxNum);
 	for (int i=1;i<=n;i++) printf("%d ",ans[i]);
 	puts(""); 
