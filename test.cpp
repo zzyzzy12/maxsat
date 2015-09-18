@@ -11,7 +11,7 @@ using namespace std;
 const int MAXN=505; 
 struct node{
 	set<int> F;
-	int fx;
+	int fx,fd;
 };
 bool find(set<int> C,int x){
 	return C.find(x)!=C.end();
@@ -280,7 +280,8 @@ bool rule8(int &n,int &m,int *X,node *H,set<int> *C){ // (~x',D1,D2)
 			H[y].F.clear(),H[y].F.insert(-x);
 			H[x].F=C[d1],H[x].F.erase(-x);
 			H[++n].fx=-1;
-			H[x].fx=H[y].fx=n;  //x,y的值将由n来决定
+			H[x].fx=H[y].fx=n;  
+			H[x].fd=H[y].fd=0;//x,y的值将由n来决定
 			C[c1].erase(x),C[c1].erase(y),C[c1].insert(n);
 			C[c2].erase(x),C[c2].erase(y),C[c2].insert(n);
 			C[d1].insert(C[d2].begin(),C[d2].end());
@@ -299,8 +300,7 @@ bool rule8(int &n,int &m,int *X,node *H,set<int> *C){ // (~x',D1,D2)
 			}
 			if (!y || degree[y]!=3) continue;
 			int yc1,yc2;
-			find3clause(d2,yc2,yc1,y,m,C);
-			//------待讨论------
+			find3clause(d2,yc2,yc1,y,m,C); 
 			H[y].F.clear(),H[y].F.insert(-x);
 			H[x].F.clear();
 			for (it=C[d1].begin();it!=C[d1].end();it++){
@@ -308,13 +308,13 @@ bool rule8(int &n,int &m,int *X,node *H,set<int> *C){ // (~x',D1,D2)
 				H[x].F.insert(-*it);
 			} // x= ~D1
 			H[++n].fx=-1;
-			H[x].fx=H[y].fx=n;  //x,y的值将由n来决定,会出错？
+			H[x].fx=H[y].fx=n;  
+			H[x].fd=H[y].fd=1;//x,y的值将由n来决定
 			C[c1].erase(x),C[c1].erase(y),C[c1].insert(n);
 			C[c2].erase(x),C[c2].erase(y),C[c2].insert(n);
 			C[d1].insert(C[d2].begin(),C[d2].end());
 			C[d1].erase(x),C[d1].erase(y),C[d1].insert(-n);
-			C[d2]=C[m--]; 
-			//------待讨论------
+			C[d2]=C[m--];  
 		}
 		return true;
 	}
@@ -349,7 +349,7 @@ void searchH(int i,node *H,int *X){
 	if (H[i].fx>1){ //其值依赖于H[i].fx与H[i].F的值
 		searchH(H[i].fx,H,X);
 		if (X[H[i].fx]==0){
-			H[i].fx=0,X[i]=0; //根据rule8规则
+			H[i].fx=0,X[i]=H[i].fd; //根据rule8规则
 			return;
 		}
 	}
