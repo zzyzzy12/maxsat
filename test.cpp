@@ -15,17 +15,7 @@ struct node{
 };
 bool find(set<int> C,int x){
 	return C.find(x)!=C.end();
-} 
-int ABS(int x){
-	if (x<0) return -x;
-	return x;
-}
-bool singletons(int x,int m,set<int> *C){ //严格来说是-x只出现在一个clause中
-	for (int i=1;i<=m;i++){
-		if (find(C[i],-x) && C[i].size()==1) return true; 
-	}
-	return false;
-}
+}  
 void copy(node *H,set<int> *C,node *tH,set<int> *tC,int n,int m,int &tn,int &tm){
 	tn=n,tm=m;
 	for (int i=1;i<MAXN;i++) tH[i]=H[i]; 
@@ -46,14 +36,14 @@ void find3clause(int &c1,int &c2,int &c3,int x,int m,set<int> *C){
 }
 bool reFrash(int &m,int *X,node *H,set<int> *C){
 	set<int>::iterator it;
-	for (int i=1;i<=m;i++){
+	for (int i=1;i<=m;i++){ //一个个clause看，是否为空，是否有值确定了
 		if (C[i].size()==0){
 			C[i]=C[m--];
 			return true;
 		} 
 		for (it=C[i].begin();it!=C[i].end();it++){
-			if (H[ABS(*it)].fx!=0) continue; //要值确定了才
-			if (X[ABS(*it)]==1){
+			if (H[abs(*it)].fx!=0) continue; //要值确定了才
+			if (X[abs(*it)]==1){
 				if (*it>0) C[i]=C[m--];
 					  else C[i].erase(*it); 
 			}else{
@@ -66,8 +56,6 @@ bool reFrash(int &m,int *X,node *H,set<int> *C){
 	return false;
 }
 void initial(int &n,int &m,set<int> *C){ //读取数据
-  char s[20];
-  //scanf("%s%s%s%s",s,s,s,s); 
   scanf("%d%d",&n,&m); 
   for (int t=1;t<=m;t++){ 
   	int x;
@@ -83,8 +71,8 @@ bool rule1(int n,int &m,int *X,node *H,set<int> *C){
 	for (int i=1;i<=m;i++)
 		for (it=C[i].begin();it!=C[i].end();it++){
 			if (!find(C[i],-*it)) continue; // -x x 别和X[i]=0,1弄混
-			X[ABS(*it)]=1; 
-			H[ABS(*it)].fx=0;
+			X[abs(*it)]=1; 
+			H[abs(*it)].fx=0;
 			f=true;
 			break;
 		} 
@@ -166,7 +154,7 @@ bool rule5(int n,int &m,int *X,node *H,set<int> *C){ //在实现的时候只需�
 		for (it=C[c1].begin();it!=C[c1].end();it++){
 			if (!find(C[c2],*it) && !find(C[c2],-*it)) continue;
 			if (!find(C[c3],*it) && !find(C[c3],-*it)) continue;
-			y=ABS(*it);
+			y=abs(*it);
 			break;
 		}
 		if (!y || degree[y]!=3) continue;
@@ -356,7 +344,7 @@ void searchH(int i,node *H,int *X){
 	int t=0;  //只看H[i].F的值
 	for (it=H[i].F.begin();it!=H[i].F.end();it++){
 		int x=*it;
-		searchH(ABS(x),H,X);
+		searchH(abs(x),H,X);
 		if ((x>0 && X[x]==1) || (x<0 && X[-x]==0)){
 			t=1;
 			break;
@@ -415,7 +403,7 @@ void branch(int k,int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<in
 		if (rule5(n,m,X,H,C)) continue; //done
 		if (rule6(n,m,H,C))   continue; //done
 		if (rule7(n,m,X,H,C)) continue; //done
-		if (rule8(n,m,X,H,C)) continue; //正确性有待讨论
+		if (rule8(n,m,X,H,C)) continue; //done
 		if (rule9(n,m,C))     continue; //done
 		break;
 	}  
