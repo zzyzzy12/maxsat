@@ -8,22 +8,22 @@
 #include<queue>
 #include<stack> 
 using namespace std;
-const int MAXN=305; 
+const int MAXN=505; 
 struct node{
 	set<int> F;
-	int fx,fd;
+	int fd;
 };
 bool find(set<int> C,int x){
 	return C.find(x)!=C.end();
 }  
-void copy(node *H,set<int> *C,node *tH,set<int> *tC,int n,int m,int &tn,int &tm){
+void copy(int *tTP,set<int> *C,int *TP,set<int> *tC,int n,int m,int &tn,int &tm){
 	tn=n,tm=m;
-	for (int i=1;i<MAXN;i++) tH[i]=H[i]; 
+	for (int i=1;i<MAXN;i++) tTP[i]=TP[i]; 
 	for (int i=1;i<MAXN;i++) tC[i]=C[i];
 }
-void back(node *H,set<int> *C,node *tH,set<int> *tC,int &n,int &m,int tn,int tm){
+void back(int *tTP,set<int> *C,int *TP,set<int> *tC,int &n,int &m,int tn,int tm){
 	n=tn,m=tm;
-	for (int i=1;i<MAXN;i++) H[i]=tH[i]; 
+	for (int i=1;i<MAXN;i++) tTP[i]=TP[i]; 
 	for (int i=1;i<MAXN;i++) C[i]=tC[i];
 }
 void find3clause(int &c1,int &c2,int &c3,int x,int m,set<int> *C){
@@ -34,7 +34,7 @@ void find3clause(int &c1,int &c2,int &c3,int x,int m,set<int> *C){
 	for (c3=1;c3<=m;c3++)
 		if (c3!=c1 && c3!=c2 && (find(C[c3],x) || find(C[c3],-x))) break;		
 }
-bool reFrash(int &m,int *X,node *H,set<int> *C){
+bool reFrash(int &m,int *X,int *TP,node *H,set<int> *C){
 	set<int>::iterator it; 
 	for (int i=1;i<=m;i++){ //一个个clause看，是否为空，是否有值确定了
 		if (C[i].size()==0){
@@ -42,7 +42,7 @@ bool reFrash(int &m,int *X,node *H,set<int> *C){
 			return true;
 		} 
 		for (it=C[i].begin();it!=C[i].end();it++){
-			if (H[abs(*it)].fx!=0) continue; //要值确定了才
+			if (TP[abs(*it)]!=0) continue; //要值确定了才
 			if (X[abs(*it)]==1){
 				if (*it>0) C[i]=C[m--];
 					  else C[i].erase(*it); 
@@ -65,7 +65,7 @@ void initial(int &n,int &m,set<int> *C){ //读取数据
     }
   }  
 } 
-bool rule1(int n,int &m,int *X,node *H,set<int> *C){ 
+bool rule1(int n,int &m,int *X,int *TP,node *H,set<int> *C){ 
 	set<int>::iterator it;
 	bool f=false;
 	for (int i=1;i<=m;i++)
@@ -76,7 +76,7 @@ bool rule1(int n,int &m,int *X,node *H,set<int> *C){
 			break;
 		} 
 	for (int x=1;x<=n;x++){
-		if (H[x].fx!=-1) continue;  
+		if (TP[x]!=-1) continue;  
 		int p1=0,p2=0;
 		for (int i=1;i<=m;i++){
 			if (C[i].size()!=1) continue;
@@ -90,9 +90,9 @@ bool rule1(int n,int &m,int *X,node *H,set<int> *C){
 	}
 	return f;
 }
-bool rule2(int n,int &m,int *X,node *H,set<int> *C){  //不用管dgree 
+bool rule2(int n,int &m,int *X,int *TP,node *H,set<int> *C){  //不用管dgree 
 	for (int z=1;z<=n;z++){
-		if (H[z].fx!=-1) continue;
+		if (TP[z]!=-1) continue;
 		int p1=0,p2=0,h1=0,h2=0; //p1= x个数   p2= -x个数  h1= x unit  h2= -x unit
 		//注意赋初值
 		for (int i=1;i<=m;i++){
@@ -106,21 +106,22 @@ bool rule2(int n,int &m,int *X,node *H,set<int> *C){  //不用管dgree
 			}
 		}
 		if (h1>=p2){
-			H[z].fx=0; //z可以直接赋值
+			TP[z]=0; //z可以直接赋值
 			X[z]=1;
 			return true;
 		}
 		if (h2>=p1){
-			H[z].fx=0; //z可以直接赋值
+			TP[z]=0; //z可以直接赋值
 			X[z]=0;
 			return true;
 		}
 	} 
 	return false;
 }
-bool rule3(int n,int &m,int *X,node *H,set<int> *C){ 
+bool rule3(int n,int &m,int *X,int *TP,node *H,set<int> *C){ 
 	set<int>::iterator it;
 	for (int x=1;x<=n;x++){ 
+		if (TP[x]!=-1) continue;
 		int degree=0;
 		for (int i=1;i<=m;i++)
 			if (find(C[i],x) || find(C[i],-x)) degree++;
@@ -132,56 +133,54 @@ bool rule3(int n,int &m,int *X,node *H,set<int> *C){
 		} 
 		C[c1].insert(C[c2].begin(),C[c2].end()); //合并set
 		C[c1].erase(x),C[c1].erase(-x);
-		H[x].fx=1,H[x].F=C[c2],H[x].F.erase(-x); // x由c2得来
+		TP[x]=1,H[x].F=C[c2],H[x].F.erase(-x); // x由c2得来
 		C[c2]=C[m--];
 		return true;
 	}
 	return false;
 }
-bool rule5(int n,int &m,int *X,node *H,set<int> *C){ //在实现的时候只需要让x=1  
+bool rule5(int n,int &m,int *X,int *TP,node *H,set<int> *C){ //在实现的时候只需要让x=1  
 	int degree[MAXN];
-	for (int x=1;x<=n;x++){
-		degree[x]=0;
-		for (int i=1;i<=m;i++)
-			if (find(C[i],x) || find(C[i],-x)) degree[x]++;
-	}
-	bool f=false;
+	set<int>::iterator it;
+	memset(degree,0,sizeof(degree));
+    for (int i=1;i<=m;i++)
+    	for (it=C[i].begin();it!=C[i].end();it++)
+			degree[abs(*it)]++; 
 	for (int x=1;x<=n;x++){  
-		if (H[x].fx!=-1 || degree[x]!=3) continue;  
+		if (TP[x]!=-1 || degree[x]!=3) continue;  
 		int c1,c2,c3;
 		find3clause(c1,c2,c3,x,m,C); //找到这三个clause
-		int y=0;
-		set<int>::iterator it;
+		int y=0; 
 		for (it=C[c1].begin();it!=C[c1].end();it++){
+			if (degree[abs(*it)]!=3) continue;
 			if (!find(C[c2],*it) && !find(C[c2],-*it)) continue;
 			if (!find(C[c3],*it) && !find(C[c3],-*it)) continue;
 			y=abs(*it);
 			break;
 		}
-		if (!y || degree[y]!=3) continue; //是否出问题
+		if (!y) continue; //是否出问题
 		if (find(C[c3],x)){ // x为(2,1)
-			H[x].fx=0;
+			TP[x]=0;
 			X[x]=1;
 		}else{		// x为(1,2)
-			H[x].fx=0;
+			TP[x]=0;
 			X[x]=0;
 		}
-		f=true;
+		return true;
 	}
-	return f;
+	return false;
 }
-bool rule6(int n,int m,node *H,set<int> *C){ //对于y有没有degree=3的限制 
+bool rule6(int n,int m,int *TP,node *H,set<int> *C){
 	int degree[MAXN];
+	set<int>::iterator it;
+	memset(degree,0,sizeof(degree));
+    for (int i=1;i<=m;i++)
+    	for (it=C[i].begin();it!=C[i].end();it++)
+			degree[abs(*it)]++;
 	for (int x=1;x<=n;x++){
-		degree[x]=0;
-		for (int i=1;i<=m;i++)
-			if (find(C[i],x) || find(C[i],-x)) degree[x]++;
-	}
-	for (int x=1;x<=n;x++){
-		if (H[x].fx!=-1 || degree[x]!=3) continue;
+		if (TP[x]!=-1 || degree[x]!=3) continue;
 		int c1,c2,c3,y=0;
 		find3clause(c1,c2,c3,x,m,C); //找到这三个clause
-		set<int>::iterator it;
 		for (it=C[c1].begin();it!=C[c1].end();it++){
 			if (*it<0 || degree[*it]!=3) continue; //注意限制y的degree=3
 			if (find(C[c2],-*it)){
@@ -196,13 +195,13 @@ bool rule6(int n,int m,node *H,set<int> *C){ //对于y有没有degree=3的限制
 		}
 		if (!y) continue; //找不到对应的y
 		if (find(C[c3],x)){ //x为(2,1)
-			H[x].fx=1;
+			TP[x]=1;
 			H[x].F=C[c2],H[x].F.erase(-x);
 			C[c2].insert(C[c3].begin(),C[c3].end());
 			C[c2].erase(x),C[c2].erase(-x);
 			C[c1]=C[m--]; //注意先改clause再删除clause
 		}else{				//x为(1,2)
-			H[x].fx=1;
+			TP[x]=1;
 			H[x].F=C[c1],H[x].F.erase(x);
 			C[c1].insert(C[c3].begin(),C[c3].end());
 			C[c1].erase(x),C[c1].erase(-x);
@@ -212,19 +211,18 @@ bool rule6(int n,int m,node *H,set<int> *C){ //对于y有没有degree=3的限制
 	}
 	return false;
 }
-bool rule7(int n,int &m,int *X,node *H,set<int> *C){ 
+bool rule7(int n,int &m,int *X,int *TP,node *H,set<int> *C){ 
 	int degree[MAXN];
-	for (int x=1;x<=n;x++){
-		degree[x]=0;
-		for (int i=1;i<=m;i++)
-			if (find(C[i],x) || find(C[i],-x)) degree[x]++;
-	}
+	set<int>::iterator it;
+	memset(degree,0,sizeof(degree));
+    for (int i=1;i<=m;i++)
+    	for (it=C[i].begin();it!=C[i].end();it++)
+			degree[abs(*it)]++;
 	for (int z2=1;z2<=n;z2++){
-		if (H[z2].fx!=-1 || degree[z2]!=3) continue;
+		if (TP[z2]!=-1 || degree[z2]!=3) continue;
 		int c1,c2,c3;
 		find3clause(c1,c2,c3,z2,m,C); //找到这三个clause
-		//找到了degree=3的z2三个clause c1,c2,c3
-		set<int>::iterator it;
+		//找到了degree=3的z2三个clause c1,c2,c3 
 		int z1=0;
 		for (it=C[c1].begin();it!=C[c1].end();it++)
 			if (find(C[c2],*it)){
@@ -241,20 +239,19 @@ bool rule7(int n,int &m,int *X,node *H,set<int> *C){
 	}
 	return false;
 }
-bool rule8(int &n,int &m,int *X,node *H,set<int> *C){ // (~x',D1,D2) 
+bool rule8(int &n,int &m,int *X,int *TP,node *H,set<int> *C){ // (~x',D1,D2) 
 	int degree[MAXN];
+	set<int>::iterator it;
+	memset(degree,0,sizeof(degree));
+    for (int i=1;i<=m;i++)
+    	for (it=C[i].begin();it!=C[i].end();it++)
+			degree[abs(*it)]++;
 	for (int x=1;x<=n;x++){
-		degree[x]=0;
-		for (int i=1;i<=m;i++)
-			if (find(C[i],x) || find(C[i],-x)) degree[x]++;
-	}
-	for (int x=1;x<=n;x++){
-		if (H[x].fx!=-1 || degree[x]!=3) continue;
+		if (TP[x]!=-1 || degree[x]!=3) continue;
 		int c1,c2,d1,d2;
 		find3clause(c1,c2,d1,x,m,C);
 		if (find(C[d1],x)){ //x,y为(2,1)
-			swap(c2,d1);
-			set<int>::iterator it;
+			swap(c2,d1); 
 			int y=0;
 			for (it=C[c1].begin();it!=C[c1].end();it++){
 				if (*it<0) continue;
@@ -268,8 +265,8 @@ bool rule8(int &n,int &m,int *X,node *H,set<int> *C){ // (~x',D1,D2)
 			find3clause(yc1,d2,yc2,y,m,C);
 			H[y].F.clear(),H[y].F.insert(-x);
 			H[x].F=C[d1],H[x].F.erase(-x);
-			H[++n].fx=-1;
-			H[x].fx=H[y].fx=n;  
+			TP[++n]=-1;
+			TP[x]=TP[y]=n;  
 			H[x].fd=H[y].fd=0;//x,y的值将由n来决定
 			C[c1].erase(x),C[c1].erase(y),C[c1].insert(n);
 			C[c2].erase(x),C[c2].erase(y),C[c2].insert(n);
@@ -296,8 +293,8 @@ bool rule8(int &n,int &m,int *X,node *H,set<int> *C){ // (~x',D1,D2)
 				if (*it==x) continue;
 				H[x].F.insert(-*it);
 			} // x= ~D1
-			H[++n].fx=-1;
-			H[x].fx=H[y].fx=n;  
+			TP[++n]=-1;
+			TP[x]=TP[y]=n;  
 			H[x].fd=H[y].fd=1;//x,y的值将由n来决定
 			C[c1].erase(x),C[c1].erase(y),C[c1].insert(n);
 			C[c2].erase(x),C[c2].erase(y),C[c2].insert(n);
@@ -309,13 +306,12 @@ bool rule8(int &n,int &m,int *X,node *H,set<int> *C){ // (~x',D1,D2)
 	}
 	return false;
 }
-bool rule9(int n,int &m,set<int> *C){ 
+bool rule9(int &m,set<int> *C){
 	set<int>::iterator it;
 	for (int i=1;i<=m;i++){
 		if (C[i].size()!=2) continue;
 		int x[2],t=0;
-		for (it=C[i].begin();it!=C[i].end();it++)
-			x[t++]=*it;
+		for (it=C[i].begin();it!=C[i].end();it++) x[t++]=*it;
 		int p0=0,p1=0;
 		for (int j=1;j<=m;j++){
 			if (C[j].size()!=1) continue;
@@ -324,50 +320,47 @@ bool rule9(int n,int &m,set<int> *C){
 		}
 		if (!p0 || !p1) continue;
 		C[i]=C[m--];
-		C[p0]=C[m--];
-		C[p1]=C[m--];
-		C[++m].clear();
-		C[m].insert(1-x[0]),C[m].insert(1-x[1]);
+		C[p0]=C[m--]; 
+		C[p1].insert(-x[0]); //注意
 		return true;
 	}
 	return false;
 }
-void searchH(int i,node *H,int *X){
+void searchH(int i,int *TP,node *H,int *X){
 	set<int>::iterator it;
-    if (H[i].fx<=0) return; //值是确定的
-	if (H[i].fx>1){ //其值依赖于H[i].fx与H[i].F的值
-		searchH(H[i].fx,H,X);
-		if (X[H[i].fx]==0){
-			H[i].fx=0,X[i]=H[i].fd; //根据rule8规则
+    if (TP[i]<=0) return; //值是确定的
+	if (TP[i]>1){ //其值依赖于H[i].fx与H[i].F的值
+		searchH(TP[i],TP,H,X);
+		if (X[TP[i]]==0){
+			TP[i]=0,X[i]=H[i].fd; //根据rule8规则
 			return;
 		}
 	}
 	int t=0;  //只看H[i].F的值
 	for (it=H[i].F.begin();it!=H[i].F.end();it++){
 		int x=*it;
-		searchH(abs(x),H,X);
+		searchH(abs(x),TP,H,X);
 		if ((x>0 && X[x]==1) || (x<0 && X[-x]==0)){
 			t=1;
 			break;
 		}
 	}
-	H[i].fx=0,X[i]=t; 
+	TP[i]=0,X[i]=t; 
 } 
-void consH(int n,node *H,node *H0,int *X){
-	for (int i=1;i<=n;i++) H0[i]=H[i];
-	for (int i=1;i<=n;i++) searchH(i,H,X);
+void consH(int n,int *TP,node *H,int *tTP,int *X){
+	for (int i=1;i<=n;i++) tTP[i]=TP[i];
+	for (int i=1;i<=n;i++) searchH(i,TP,H,X);
 }
-void reH(int n,node *H,node *H0){
-	for (int i=1;i<=n;i++) H[i]=H0[i];
-}
-
-void dfs(int x,int n,int m,int* X,int *ans,int &maxNum,node *H,set<int> *C0){ 
-	if (!x){
-		node H0[MAXN];
-		consH(n,H,H0,X); //展开H
+void reTP(int n,int *TP,int *tTP){
+	for (int i=1;i<=n;i++) TP[i]=tTP[i];
+} 
+void branch(int k,int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<int> *C,set<int> *C0,int *TP,node* H){
+	if (k>n || !m){ //分支结束，计算结果
+		int tTP[MAXN];
+		consH(n0,TP,H,tTP,X); //展开递推关系TP,H
 		int t=0; 
 		set<int>::iterator it; 
-		for (int i=1;i<=m;i++)
+		for (int i=1;i<=m0;i++)
 			for (it=C0[i].begin();it!=C0[i].end();it++){ 
 				if ((*it>0 && X[*it]==1) || (*it<0 && X[-*it]==0)){
 					t++;
@@ -376,72 +369,53 @@ void dfs(int x,int n,int m,int* X,int *ans,int &maxNum,node *H,set<int> *C0){
 			}
 		if (t>maxNum){
 			maxNum=t;
-			for (int i=1;i<=n;i++) ans[i]=X[i]; 
+			for (int i=1;i<=n0;i++) ans[i]=X[i]; 
 		}
-		reH(n,H,H0); //还原H
-		return;
-	}
-	if (H[x].fx==-1){
-		X[x]=0;
-		H[x].fx=0;
-		dfs(x-1,n,m,X,ans,maxNum,H,C0);
-		X[x]=1;
-		dfs(x-1,n,m,X,ans,maxNum,H,C0);
-		H[x].fx=-1;
-	}else
-		dfs(x-1,n,m,X,ans,maxNum,H,C0);
-}  
-void branch(int k,int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<int> *C,set<int> *C0,node* H){
-	if (k>n || !m){
-		dfs(n0,n0,m0,X,ans,maxNum,H,C0); //n0,m0为输入时的n,m
+		reTP(n0,TP,tTP); //还原TP
 		return;
 	} 
 	while (1){
-		while (reFrash(m,X,H,C)); //done
-		if (rule1(n,m,X,H,C)) { puts("rule1"); continue; }//done
-		if (rule2(n,m,X,H,C)) { puts("rule2"); continue; }//done
-		if (rule3(n,m,X,H,C)) { puts("rule3"); continue; }//done
-		if (rule5(n,m,X,H,C)) { puts("rule5"); continue; }//done
-		if (rule6(n,m,H,C))   { puts("rule6"); continue; }//done
-		if (rule7(n,m,X,H,C)) { puts("rule7"); continue; }//done
-		if (rule8(n,m,X,H,C)) { puts("rule8"); continue; }//done
-		if (rule9(n,m,C))     { puts("rule9"); continue; }//done
+		while (reFrash(m,X,TP,H,C)); //done
+		if (rule1(n,m,X,TP,H,C)) continue; //done
+		if (rule2(n,m,X,TP,H,C)) continue; //done
+		if (rule3(n,m,X,TP,H,C)) continue; //done
+		if (rule5(n,m,X,TP,H,C)) continue; //done
+		if (rule6(n,m,TP,H,C))   continue; //done
+		if (rule7(n,m,X,TP,H,C)) continue; //done
+		if (rule8(n,m,X,TP,H,C)) continue; //done
+		if (rule9(m,C))          continue; //done
 		break;
-	}  
-	int num=0;
-	set<int> tC[MAXN];
-	node tH[MAXN];
-	int tn,tm;
-	for (int i=1;i<=m;i++)
-		if (find(C0[i],k) || find(C0[i],-k)) num++; 
-	if (num>3 && H[k].fx==-1){ //degree>3的先分支 
-		copy(H,C,tH,tC,n,m,tn,tm); //保护现场
-		H[k].fx=0; //值确定
+	}   
+	set<int> tC[MAXN]; 
+	int tn,tm,tTP[MAXN]; 
+	if (TP[k]==-1){ //值为未知的进行分支
+		copy(tTP,C,TP,tC,n,m,tn,tm); //保护现场
+		TP[k]=0; //值确定
 		X[k]=0;
-		branch(k+1,n,m,n0,m0,X,maxNum,ans,C,C0,H);
-		back(H,C,tH,tC,n,m,tn,tm); //还原现场
+		branch(k+1,n,m,n0,m0,X,maxNum,ans,C,C0,TP,H);
+		back(tTP,C,TP,tC,n,m,tn,tm); //还原现场
 		X[k]=1;
-		branch(k+1,n,m,n0,m0,X,maxNum,ans,C,C0,H);
-		back(H,C,tH,tC,n,m,tn,tm);
+		branch(k+1,n,m,n0,m0,X,maxNum,ans,C,C0,TP,H);
+		back(tTP,C,TP,tC,n,m,tn,tm);
 	}else{
-		copy(H,C,tH,tC,n,m,tn,tm); //保护现场
-		branch(k+1,n,m,n0,m0,X,maxNum,ans,C,C0,H); 
-		back(H,C,tH,tC,n,m,tn,tm); //还原现场
+		copy(tTP,C,TP,tC,n,m,tn,tm);//保护现场
+		branch(k+1,n,m,n0,m0,X,maxNum,ans,C,C0,TP,H); 
+		back(tTP,C,TP,tC,n,m,tn,tm); //还原现场
 	}
 }
 int main(int argc,char **arg){
-    freopen("sgen1-unsat-61-100.cnf","r",stdin);
-	//freopen("input.txt","r",stdin);
+    freopen("sgen1-unsat-145-100.cnf","r",stdin); 
     freopen("output.txt","w",stdout);
     int n,m,maxNum=0;
 	set<int> C[MAXN],C0[MAXN];
 	int ans[MAXN],X[MAXN];
+	int TP[MAXN]; //TP存变量的状态是 -1 未知  0 为确定值  1 由H[i].F得到  2看H[i].fx之后得到
     node H[MAXN]; 
     initial(n,m,C0);
     memset(X,-1,sizeof(X));  
-	for (int i=0;i<MAXN;i++) H[i].fx=-1;
+	memset(TP,-1,sizeof(TP));
 	for (int i=1;i<=m;i++) C[i]=C0[i]; 
-	branch(1,n,m,n,m,X,maxNum,ans,C,C0,H); 
+	branch(1,n,m,n,m,X,maxNum,ans,C,C0,TP,H); 
 	printf("%d\n",maxNum);
 	for (int i=1;i<=n;i++) printf("%d ",ans[i]);
 	puts(""); 
