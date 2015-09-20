@@ -70,20 +70,20 @@ bool rule1(int n,int &m,int *X,node *H,set<int> *C){
 	bool f=false;
 	for (int i=1;i<=m;i++)
 		for (it=C[i].begin();it!=C[i].end();it++){
-			if (!find(C[i],-*it)) continue; // -x x 别和X[i]=0,1弄混
-			X[abs(*it)]=1; 
-			H[abs(*it)].fx=0;
+			if (!find(C[i],-*it)) continue; // ~x x 别和X[i]=0,1弄混
+			C[i--]=C[m--];
 			f=true;
 			break;
 		} 
 	for (int x=1;x<=n;x++){
 		if (H[x].fx!=-1) continue;  
-		int p1,p2;
-		for (p1=1;p1<=m;p1++)
-			if (find(C[p1],x) && C[p1].size()==1) break;
-		if (p1>m) continue; //找不到包含i的unit clause
-		for (p2=1;p2<=m;p2++)
-			if (find(C[p2],-x) && C[p2].size()==1) break; 
+		int p1=0,p2=0;
+		for (int i=1;i<=m;i++){
+			if (C[i].size()!=1) continue;
+			if (find(C[i],x)) p1=i;  
+			if (find(C[i],-x)) p2=i;
+		}
+		if (!p1 || !p2) continue; //找不到包含~x的unit clause
 		C[p1]=C[m--];
 		C[p2]=C[m--];
 		f=true;
@@ -145,6 +145,7 @@ bool rule5(int n,int &m,int *X,node *H,set<int> *C){ //在实现的时候只需�
 		for (int i=1;i<=m;i++)
 			if (find(C[i],x) || find(C[i],-x)) degree[x]++;
 	}
+	bool f=false;
 	for (int x=1;x<=n;x++){  
 		if (H[x].fx!=-1 || degree[x]!=3) continue;  
 		int c1,c2,c3;
@@ -157,17 +158,17 @@ bool rule5(int n,int &m,int *X,node *H,set<int> *C){ //在实现的时候只需�
 			y=abs(*it);
 			break;
 		}
-		if (!y || degree[y]!=3) continue;
-		if (find(C[c3],x)){ // x x -x
+		if (!y || degree[y]!=3) continue; //是否出问题
+		if (find(C[c3],x)){ // x为(2,1)
 			H[x].fx=0;
 			X[x]=1;
-		}else{		// x -x -x
+		}else{		// x为(1,2)
 			H[x].fx=0;
 			X[x]=0;
 		}
-		return true;
+		f=true;
 	}
-	return false;
+	return f;
 }
 bool rule6(int n,int m,node *H,set<int> *C){ //对于y有没有degree=3的限制
 	int degree[MAXN];
@@ -315,13 +316,13 @@ bool rule9(int n,int &m,set<int> *C){
 		int x[2],t=0;
 		for (it=C[i].begin();it!=C[i].end();it++)
 			x[t++]=*it;
-		int p0,p1;
-		for (p0=0;p0<=m;p0++)
-			if (C[p0].size()==1 && find(C[p0],1-x[0])) break;
-		if (p0>m) continue;
-		for (p1=0;p1<=m;p1++)
-			if (C[p1].size()==1 && find(C[p1],1-x[1])) break;
-		if (p1>m) continue;
+		int p0=0,p1=0;
+		for (int j=1;j<=m;j++){
+			if (C[j].size()!=1) continue;
+			if (find(C[j],-x[0])) p0=j; 
+			if (find(C[j],-x[1])) p1=j;
+		}
+		if (!p0 || !p1) continue;
 		C[i]=C[m--];
 		C[p0]=C[m--];
 		C[p1]=C[m--];
