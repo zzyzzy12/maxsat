@@ -8,7 +8,7 @@
 #include<queue>
 #include<stack> 
 using namespace std;
-const int MAXN=505; 
+const int MAXN=305; 
 struct node{
 	set<int> F;
 	int fx,fd;
@@ -35,7 +35,7 @@ void find3clause(int &c1,int &c2,int &c3,int x,int m,set<int> *C){
 		if (c3!=c1 && c3!=c2 && (find(C[c3],x) || find(C[c3],-x))) break;		
 }
 bool reFrash(int &m,int *X,node *H,set<int> *C){
-	set<int>::iterator it;
+	set<int>::iterator it; 
 	for (int i=1;i<=m;i++){ //一个个clause看，是否为空，是否有值确定了
 		if (C[i].size()==0){
 			C[i]=C[m--];
@@ -65,7 +65,7 @@ void initial(int &n,int &m,set<int> *C){ //读取数据
     }
   }  
 } 
-bool rule1(int n,int &m,int *X,node *H,set<int> *C){
+bool rule1(int n,int &m,int *X,node *H,set<int> *C){ 
 	set<int>::iterator it;
 	bool f=false;
 	for (int i=1;i<=m;i++)
@@ -90,7 +90,7 @@ bool rule1(int n,int &m,int *X,node *H,set<int> *C){
 	}
 	return f;
 }
-bool rule2(int n,int &m,int *X,node *H,set<int> *C){  //不用管dgree
+bool rule2(int n,int &m,int *X,node *H,set<int> *C){  //不用管dgree 
 	for (int z=1;z<=n;z++){
 		if (H[z].fx!=-1) continue;
 		int p1=0,p2=0,h1=0,h2=0; //p1= x个数   p2= -x个数  h1= x unit  h2= -x unit
@@ -118,7 +118,7 @@ bool rule2(int n,int &m,int *X,node *H,set<int> *C){  //不用管dgree
 	} 
 	return false;
 }
-bool rule3(int n,int &m,int *X,node *H,set<int> *C){
+bool rule3(int n,int &m,int *X,node *H,set<int> *C){ 
 	set<int>::iterator it;
 	for (int x=1;x<=n;x++){ 
 		int degree=0;
@@ -138,7 +138,7 @@ bool rule3(int n,int &m,int *X,node *H,set<int> *C){
 	}
 	return false;
 }
-bool rule5(int n,int &m,int *X,node *H,set<int> *C){ //在实现的时候只需要让x=1 
+bool rule5(int n,int &m,int *X,node *H,set<int> *C){ //在实现的时候只需要让x=1  
 	int degree[MAXN];
 	for (int x=1;x<=n;x++){
 		degree[x]=0;
@@ -170,7 +170,7 @@ bool rule5(int n,int &m,int *X,node *H,set<int> *C){ //在实现的时候只需�
 	}
 	return f;
 }
-bool rule6(int n,int m,node *H,set<int> *C){ //对于y有没有degree=3的限制
+bool rule6(int n,int m,node *H,set<int> *C){ //对于y有没有degree=3的限制 
 	int degree[MAXN];
 	for (int x=1;x<=n;x++){
 		degree[x]=0;
@@ -212,7 +212,7 @@ bool rule6(int n,int m,node *H,set<int> *C){ //对于y有没有degree=3的限制
 	}
 	return false;
 }
-bool rule7(int n,int &m,int *X,node *H,set<int> *C){
+bool rule7(int n,int &m,int *X,node *H,set<int> *C){ 
 	int degree[MAXN];
 	for (int x=1;x<=n;x++){
 		degree[x]=0;
@@ -241,7 +241,7 @@ bool rule7(int n,int &m,int *X,node *H,set<int> *C){
 	}
 	return false;
 }
-bool rule8(int &n,int &m,int *X,node *H,set<int> *C){ // (~x',D1,D2)
+bool rule8(int &n,int &m,int *X,node *H,set<int> *C){ // (~x',D1,D2) 
 	int degree[MAXN];
 	for (int x=1;x<=n;x++){
 		degree[x]=0;
@@ -309,7 +309,7 @@ bool rule8(int &n,int &m,int *X,node *H,set<int> *C){ // (~x',D1,D2)
 	}
 	return false;
 }
-bool rule9(int n,int &m,set<int> *C){
+bool rule9(int n,int &m,set<int> *C){ 
 	set<int>::iterator it;
 	for (int i=1;i<=m;i++){
 		if (C[i].size()!=2) continue;
@@ -392,20 +392,20 @@ void dfs(int x,int n,int m,int* X,int *ans,int &maxNum,node *H,set<int> *C0){
 		dfs(x-1,n,m,X,ans,maxNum,H,C0);
 }  
 void branch(int k,int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<int> *C,set<int> *C0,node* H){
-	if (k>n){
+	if (k>n || !m){
 		dfs(n0,n0,m0,X,ans,maxNum,H,C0); //n0,m0为输入时的n,m
 		return;
 	} 
 	while (1){
 		while (reFrash(m,X,H,C)); //done
-		if (rule1(n,m,X,H,C)) continue; //done
-		if (rule2(n,m,X,H,C)) continue; //done
-		if (rule3(n,m,X,H,C)) continue; //done
-		if (rule5(n,m,X,H,C)) continue; //done
-		if (rule6(n,m,H,C))   continue; //done
-		if (rule7(n,m,X,H,C)) continue; //done
-		if (rule8(n,m,X,H,C)) continue; //done
-		if (rule9(n,m,C))     continue; //done
+		if (rule1(n,m,X,H,C)) { puts("rule1"); continue; }//done
+		if (rule2(n,m,X,H,C)) { puts("rule2"); continue; }//done
+		if (rule3(n,m,X,H,C)) { puts("rule3"); continue; }//done
+		if (rule5(n,m,X,H,C)) { puts("rule5"); continue; }//done
+		if (rule6(n,m,H,C))   { puts("rule6"); continue; }//done
+		if (rule7(n,m,X,H,C)) { puts("rule7"); continue; }//done
+		if (rule8(n,m,X,H,C)) { puts("rule8"); continue; }//done
+		if (rule9(n,m,C))     { puts("rule9"); continue; }//done
 		break;
 	}  
 	int num=0;
