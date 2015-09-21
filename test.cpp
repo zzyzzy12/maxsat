@@ -118,22 +118,23 @@ bool rule2(int n,int &m,int *X,int *TP,node *H,set<int> *C){  //不用管dgree
 	return false;
 }
 bool rule3(int n,int &m,int *X,int *TP,node *H,set<int> *C){ 
+	int degree[MAXN];
 	set<int>::iterator it;
+	memset(degree,0,sizeof(degree));
+    for (int i=1;i<=m;i++)
+    	for (it=C[i].begin();it!=C[i].end();it++)
+			degree[abs(*it)]++; 
 	for (int x=1;x<=n;x++){ 
-		if (TP[x]!=-1) continue;
-		int degree=0;
-		for (int i=1;i<=m;i++)
-			if (find(C[i],x) || find(C[i],-x)) degree++;
-		if (degree!=2) continue;
+		if (TP[x]!=-1 || degree[x]!=2) continue;
 		int c1,c2;
-		for (int i=1;i<=m;i++){
+		for (int i=1;i<=m;i++){ // x,x  ~x,~x在rule2会过滤掉
 			if (find(C[i],x)) c1=i;
 			if (find(C[i],-x)) c2=i;
 		} 
 		C[c1].insert(C[c2].begin(),C[c2].end()); //合并set
 		C[c1].erase(x),C[c1].erase(-x);
 		TP[x]=1,H[x].F=C[c2],H[x].F.erase(-x); // x由c2得来
-		C[c2]=C[m--];
+		C[c2]=C[m--]; //删掉c2
 		return true;
 	}
 	return false;
@@ -151,13 +152,13 @@ bool rule5(int n,int &m,int *X,int *TP,node *H,set<int> *C){ //在实现的时�
 		find3clause(c1,c2,c3,x,m,C); //找到这三个clause
 		int y=0; 
 		for (it=C[c1].begin();it!=C[c1].end();it++){
-			if (degree[abs(*it)]!=3) continue;
+			if (degree[abs(*it)]!=3 || TP[abs(*it)]!=-1) continue; //是否出问题
 			if (!find(C[c2],*it) && !find(C[c2],-*it)) continue;
 			if (!find(C[c3],*it) && !find(C[c3],-*it)) continue;
 			y=abs(*it);
 			break;
 		}
-		if (!y) continue; //是否出问题
+		if (!y) continue;
 		if (find(C[c3],x)){ // x为(2,1)
 			TP[x]=0;
 			X[x]=1;
@@ -334,7 +335,7 @@ void searchH(int i,int *TP,node *H,int *X){
     }
 	if (TP[i]>1){ //其值依赖于H[i].fx与H[i].F的值
 		searchH(TP[i],TP,H,X);
-		if (X[TP[i]]==0){
+		if (X[TP[i]]==0){    //根据rule8规则
 			TP[i]=0,X[i]=H[i].fd; //根据rule8规则
 			return;
 		}
@@ -357,53 +358,53 @@ void consH(int n,int *TP,node *H,int *tTP,int *X){
 void reTP(int n,int *TP,int *tTP){
 	for (int i=1;i<=n;i++) TP[i]=tTP[i];
 } 
-void branch(int k,int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<int> *C,set<int> *C0,int *TP,node* H){
-	if (k>n || !m){ //分支结束，计算结果
-		int tTP[MAXN];
-		consH(n0,TP,H,tTP,X); //展开递推关系TP,H
-		int t=0; 
-		set<int>::iterator it; 
-		for (int i=1;i<=m0;i++)
-			for (it=C0[i].begin();it!=C0[i].end();it++){ 
-				if ((*it>0 && X[*it]==1) || (*it<0 && X[-*it]==0)){
-					t++;
-					break;
-				}
-			}
-		if (t>maxNum){
-			maxNum=t;
-			for (int i=1;i<=n0;i++) ans[i]=X[i]; 
-		}
-		reTP(n0,TP,tTP); //还原TP
-		return;
-	} 
-	while (1){
+void branch(int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<int> *C,set<int> *C0,int *TP,node* H){
+	while (1){ 
 		while (reFrash(m,X,TP,H,C)); //done
 		if (rule1(n,m,X,TP,H,C)) continue; //done
 		if (rule2(n,m,X,TP,H,C)) continue; //done
 		if (rule3(n,m,X,TP,H,C)) continue; //done
-		if (rule5(n,m,X,TP,H,C)) continue; //done
-		if (rule6(n,m,TP,H,C))   continue; //done
+		if (rule5(n,m,X,TP,H,C)) continue; //done 
+	/*	if (rule6(n,m,TP,H,C))   continue; //done
 		if (rule7(n,m,X,TP,H,C)) continue; //done
 		if (rule8(n,m,X,TP,H,C)) continue; //done
-		if (rule9(m,C))          continue; //done
+		if (rule9(m,C))          continue; //done   */
 		break;
 	}   
 	set<int> tC[MAXN]; 
 	int tn,tm,tTP[MAXN]; 
-	if (TP[k]==-1){ //值为未知的进行分支
-		copy(tTP,C,TP,tC,n,m,tn,tm); //保护现场
-		TP[k]=0; //值确定
-		X[k]=0;
-		branch(k+1,n,m,n0,m0,X,maxNum,ans,C,C0,TP,H);
-		back(tTP,C,TP,tC,n,m,tn,tm); //还原现场
-		X[k]=1;
-		branch(k+1,n,m,n0,m0,X,maxNum,ans,C,C0,TP,H); 
-	}else
-		branch(k+1,n,m,n0,m0,X,maxNum,ans,C,C0,TP,H);  
+	for (int k=1;k<=n;k++)
+		if (TP[k]==-1){ //值为未知的进行分支 
+			copy(tTP,C,TP,tC,n,m,tn,tm); //保护现场
+			TP[k]=0; //值确定
+			X[k]=0;
+			branch(n,m,n0,m0,X,maxNum,ans,C,C0,TP,H);
+			back(tTP,C,TP,tC,n,m,tn,tm); //还原现场
+			TP[k]=0; //----大错点----不加则死循环---
+			X[k]=1;
+			branch(n,m,n0,m0,X,maxNum,ans,C,C0,TP,H); 
+			back(tTP,C,TP,tC,n,m,tn,tm); //还原现场
+			return; 
+		}
+	consH(n0,TP,H,tTP,X); //展开递推关系TP,H
+	int t=0; 
+	set<int>::iterator it; 
+	for (int i=1;i<=m0;i++)
+		for (it=C0[i].begin();it!=C0[i].end();it++){ 
+			if ((*it>0 && X[*it]==1) || (*it<0 && X[-*it]==0)){
+				t++;
+				break;
+			}
+		}
+	if (t>maxNum){
+		maxNum=t;
+		for (int i=1;i<=n0;i++) ans[i]=X[i]; 
+	}
+	reTP(n0,TP,tTP); //还原TP 
+	return; 
 }
 int main(int argc,char **arg){
-    freopen("sgen1-sat-60-100.cnf","r",stdin); 
+    freopen("sgen1-unsat-61-100.cnf","r",stdin); 
     freopen("output.txt","w",stdout);
     int n,m,maxNum=0;
 	set<int> C[MAXN],C0[MAXN];
@@ -414,7 +415,7 @@ int main(int argc,char **arg){
     memset(X,-1,sizeof(X));  
 	memset(TP,-1,sizeof(TP));
 	for (int i=1;i<=m;i++) C[i]=C0[i]; 
-	branch(1,n,m,n,m,X,maxNum,ans,C,C0,TP,H); 
+	branch(n,m,n,m,X,maxNum,ans,C,C0,TP,H); 
 	printf("%d\n",maxNum);
 	for (int i=1;i<=n;i++) printf("%d ",ans[i]);
 	puts(""); 
