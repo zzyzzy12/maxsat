@@ -23,7 +23,7 @@ void copy(int *tTP,set<int> *C,int *TP,set<int> *tC,int n,int m,int &tn,int &tm)
 }
 void back(int *tTP,set<int> *C,int *TP,set<int> *tC,int &n,int &m,int tn,int tm){
 	n=tn,m=tm;
-	for (int i=1;i<MAXN;i++) tTP[i]=TP[i]; 
+	for (int i=1;i<MAXN;i++) TP[i]=tTP[i]; //注意
 	for (int i=1;i<MAXN;i++) C[i]=tC[i];
 }
 void find3clause(int &c1,int &c2,int &c3,int x,int m,set<int> *C){
@@ -94,7 +94,6 @@ bool rule2(int n,int &m,int *X,int *TP,node *H,set<int> *C){  //不用管dgree
 	for (int z=1;z<=n;z++){
 		if (TP[z]!=-1) continue;
 		int p1=0,p2=0,h1=0,h2=0; //p1= x个数   p2= -x个数  h1= x unit  h2= -x unit
-		//注意赋初值
 		for (int i=1;i<=m;i++){
 			if (find(C[i],z)) {
 				p1++;
@@ -328,7 +327,11 @@ bool rule9(int &m,set<int> *C){
 }
 void searchH(int i,int *TP,node *H,int *X){
 	set<int>::iterator it;
-    if (TP[i]<=0) return; //值是确定的
+    if (TP[i]==0) return; //值是确定的
+    if (TP[i]==-1){
+    	X[i]=TP[i]=0;
+    	return;
+    }
 	if (TP[i]>1){ //其值依赖于H[i].fx与H[i].F的值
 		searchH(TP[i],TP,H,X);
 		if (X[TP[i]]==0){
@@ -395,16 +398,12 @@ void branch(int k,int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<in
 		branch(k+1,n,m,n0,m0,X,maxNum,ans,C,C0,TP,H);
 		back(tTP,C,TP,tC,n,m,tn,tm); //还原现场
 		X[k]=1;
-		branch(k+1,n,m,n0,m0,X,maxNum,ans,C,C0,TP,H);
-		back(tTP,C,TP,tC,n,m,tn,tm);
-	}else{
-		copy(tTP,C,TP,tC,n,m,tn,tm);//保护现场
 		branch(k+1,n,m,n0,m0,X,maxNum,ans,C,C0,TP,H); 
-		back(tTP,C,TP,tC,n,m,tn,tm); //还原现场
-	}
+	}else
+		branch(k+1,n,m,n0,m0,X,maxNum,ans,C,C0,TP,H);  
 }
 int main(int argc,char **arg){
-    freopen("sgen1-unsat-145-100.cnf","r",stdin); 
+    freopen("sgen1-sat-60-100.cnf","r",stdin); 
     freopen("output.txt","w",stdout);
     int n,m,maxNum=0;
 	set<int> C[MAXN],C0[MAXN];
