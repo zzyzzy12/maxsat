@@ -167,7 +167,7 @@ bool rule5(int n,int &m,int *X,int *TP,node *H,set<int> *C){ //在实现的时�
 		int y=0;
 		for (it=C[c1].begin();it!=C[c1].end();it++){
 			if (degree[abs(*it)]!=3 || TP[abs(*it)]!=-1) continue; //是否出问题
-			if (*it==x || *it==-x) continue;
+			if (*it==x) continue;
 			if (!find(C[c2],*it) && !find(C[c2],-*it)) continue;
 			if (!find(C[c3],*it) && !find(C[c3],-*it)) continue;
 			y=abs(*it);
@@ -197,6 +197,7 @@ bool rule6(int n,int m,int *TP,node *H,set<int> *C){
 		int c1,c2,c3,y=0;
 		find3clause(c1,c2,c3,x,m,C); //找到这三个clause
 		for (it=C[c1].begin();it!=C[c1].end();it++){
+			if (*it==x) continue; //注意
 			if (*it<0 || degree[*it]!=3) continue; //注意限制y的degree=3
 			if (find(C[c2],-*it)){
 				y=*it;
@@ -210,7 +211,7 @@ bool rule6(int n,int m,int *TP,node *H,set<int> *C){
 		}
 		if (!y) continue; //找不到对应的y
 		if (find(C[c3],x)){ //x为(2,1)
-			TP[x]=1;
+			TP[x]=1; //x的值由c2推出
 			H[x].F=C[c2],H[x].F.erase(-x);
 			C[c2].insert(C[c3].begin(),C[c3].end());
 			C[c2].erase(x),C[c2].erase(-x);
@@ -390,11 +391,11 @@ void branch(int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<int> *C,
 		if (rule1(n,m,X,TP,H,C)) continue; //done
 		if (rule2(n,m,X,TP,H,C)) continue; //done
 		if (rule3(n,m,X,TP,H,C)) continue; //done
-		if (rule5(n,m,X,TP,H,C)) continue; //wrong
-	/*	if (rule6(n,m,TP,H,C))   continue; //done
-		if (rule7(n,m,X,TP,H,C)) continue; //done
+		if (rule5(n,m,X,TP,H,C)) continue; //done
+		if (rule6(n,m,TP,H,C))   continue; //wrong
+	/*	if (rule7(n,m,X,TP,H,C)) continue; //done
 		if (rule8(n,m,X,TP,H,C)) continue; //done
-		if (rule9(m,C))          continue; //done   */
+		if (rule9(m,C))          continue; //done    */
 		break;
 	}
 	set<int> tC[MAXN];
@@ -434,17 +435,17 @@ int main(int argc,char **arg){
     freopen("output.txt","w",stdout);
     int n,m,maxNum=0;
 	set<int> C[MAXN],C0[MAXN];
-	int ans[MAXN],X[MAXN];
+	int ans[MAXN];//,X[MAXN];
 	int TP[MAXN]; //TP存变量的状态是 -1 未知  0 为确定值  1 由H[i].F得到  2看H[i].fx之后得到
     node H[MAXN];
     initial(n,m,C0);
-    memset(X,-1,sizeof(X));
+   // memset(X,-1,sizeof(X));
 	memset(TP,-1,sizeof(TP));
 	for (int i=1;i<=m;i++) C[i]=C0[i];
-	/*
+	//----------for test rule6
     	memset(TP,0,sizeof(TP));
         srand((int)time(0));
-    	for (int i=1;i<=50;i++){
+    	for (int i=1;i<=40;i++){
     		int h=rand()%60+1;
     		while (1) {
     			if (TP[h]==0) break;
@@ -455,7 +456,7 @@ int main(int argc,char **arg){
 		int X[MAXN]={0,0,0,1,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,
 					   0,0,1,0,0,0,1,0,0,0,0,1,0,0,0,1,0,0,0,0,
 					   1,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0,0,0,1,0 };
-	*/
+	//----------for test rule6
 	branch(n,m,n,m,X,maxNum,ans,C,C0,TP,H);
 	printf("%d\n",maxNum);
 	for (int i=1;i<=n;i++)
