@@ -4,6 +4,7 @@
 #include<algorithm>
 #include<cmath>
 #include<map>
+#include<time.h>
 #include<set>
 #include<queue>
 #include<stack>
@@ -384,12 +385,12 @@ void reTP(int n,int *TP,int *tTP){
 }
 void branch(int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<int> *C,set<int> *C0,int *TP,node* H){
 	while (1){
-		while (reFrash(m,X,TP,H,C)); //done
+	/*	while (reFrash(m,X,TP,H,C)); //done
 		if (rule1(n,m,X,TP,H,C)) continue; //done
 		if (rule2(n,m,X,TP,H,C)) continue; //done
 		if (rule3(n,m,X,TP,H,C)) continue; //done
 		if (rule5(n,m,X,TP,H,C)) continue; //done
-	/*	if (rule6(n,m,TP,H,C))   continue; //done
+		if (rule6(n,m,TP,H,C))   continue; //done
 		if (rule7(n,m,X,TP,H,C)) continue; //done
 		if (rule8(n,m,X,TP,H,C)) continue; //done
 		if (rule9(m,C))          continue; //done   */
@@ -432,13 +433,28 @@ int main(int argc,char **arg){
     freopen("output.txt","w",stdout);
     int n,m,maxNum=0;
 	set<int> C[MAXN],C0[MAXN];
-	int ans[MAXN],X[MAXN];
+	int ans[MAXN];//,X[MAXN];
 	int TP[MAXN]; //TP存变量的状态是 -1 未知  0 为确定值  1 由H[i].F得到  2看H[i].fx之后得到
     node H[MAXN];
     initial(n,m,C0);
-    memset(X,-1,sizeof(X));
+   // memset(X,-1,sizeof(X));
 	memset(TP,-1,sizeof(TP));
 	for (int i=1;i<=m;i++) C[i]=C0[i];
+	//--------------
+    	memset(TP,0,sizeof(TP));
+        srand((int)time(0));
+    	for (int i=1;i<=15;i++){
+    		int h=rand()%60+1;
+    		while (1) {
+    			if (TP[h]==0) break;
+    			h=rand()%60+1;
+    		}
+    		TP[h]=-1;
+    	}
+		int X[MAXN]={0,0,0,1,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,
+					   0,0,1,0,0,0,1,0,0,0,0,1,0,0,0,1,0,0,0,0,
+					   1,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0,0,0,1,0 };
+	//--------------
 	branch(n,m,n,m,X,maxNum,ans,C,C0,TP,H);
 	printf("%d\n",maxNum);
 	for (int i=1;i<=n;i++)
