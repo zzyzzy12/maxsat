@@ -6,66 +6,79 @@
 #include<map>
 #include<set>
 #include<queue>
-#include<stack> 
+#include<stack>
 using namespace std;
-const int MAXN=505; 
+const int MAXN=505;
 struct node{
 	set<int> F;
 	int fd;
 };
 bool find(set<int> C,int x){
-	return C.find(x)!=C.end();
-}  
+//input：clause C and literal x
+//output：1 denotes literal x is in C
+//      0 denotes literal x is not in C
+	return C.find(x)!=C.end();//C.find(x)返回值: x在C中则返回x的位置，否则返回C.end
+}
 void copy(int *tTP,set<int> *C,int *TP,set<int> *tC,int n,int m,int &tn,int &tm){
+//input：把TP的数据存到tTP里去
+//output：no exist
 	tn=n,tm=m;
-	for (int i=1;i<MAXN;i++) tTP[i]=TP[i]; 
+	for (int i=1;i<MAXN;i++) tTP[i]=TP[i];
 	for (int i=1;i<MAXN;i++) tC[i]=C[i];
 }
 void back(int *tTP,set<int> *C,int *TP,set<int> *tC,int &n,int &m,int tn,int tm){
+//input：把tTP的数据还原到TP里去
+//output：no exist
 	n=tn,m=tm;
 	for (int i=1;i<MAXN;i++) TP[i]=tTP[i]; //注意
 	for (int i=1;i<MAXN;i++) C[i]=tC[i];
 }
 void find3clause(int &c1,int &c2,int &c3,int x,int m,set<int> *C){
+//input：找到degree 为3的variable x的3个子句
+//output：0
 	for (c1=1;c1<=m;c1++)
 		if (find(C[c1],x)) break;
 	for (c2=1;c2<=m;c2++)
 		if (find(C[c2],-x)) break;
 	for (c3=1;c3<=m;c3++)
-		if (c3!=c1 && c3!=c2 && (find(C[c3],x) || find(C[c3],-x))) break;		
+		if (c3!=c1 && c3!=c2 && (find(C[c3],x) || find(C[c3],-x))) break;
 }
 bool reFrash(int &m,int *X,int *TP,node *H,set<int> *C){
-	set<int>::iterator it; 
+//input： 子句数m X是存当前赋值， TP是每个X的当前状态， H是递推关系， C是当前所有的子句
+//output：1 至少做了一次操作：{1.子句为空，去掉子句；2.如果一个子句的字符值为1，去掉该子句； 如果为0,删去该子句中的字符}
+//      0 无操作
+	set<int>::iterator it;
 	for (int i=1;i<=m;i++){ //一个个clause看，是否为空，是否有值确定了
 		if (C[i].size()==0){
 			C[i]=C[m--];
 			return true;
-		} 
+		}
 		for (it=C[i].begin();it!=C[i].end();it++){
 			if (TP[abs(*it)]!=0) continue; //要值确定了才
 			if (X[abs(*it)]==1){
 				if (*it>0) C[i]=C[m--];
-					  else C[i].erase(*it); 
+					  else C[i].erase(*it);
 			}else{
 				if (*it<0) C[i]=C[m--];
-					  else C[i].erase(*it); 
+					  else C[i].erase(*it);
 			}
 			return true;
 		}
-	} 
+	}
 	return false;
 }
 void initial(int &n,int &m,set<int> *C){ //读取数据
-  scanf("%d%d",&n,&m); 
-  for (int t=1;t<=m;t++){ 
+//input：读入数据
+  scanf("%d%d",&n,&m);
+  for (int t=1;t<=m;t++){
   	int x;
     C[t].clear();
-    while (~scanf("%d",&x) && x){ 
-      C[t].insert(x); 
+    while (~scanf("%d",&x) && x){
+      C[t].insert(x);
     }
-  }  
-} 
-bool rule1(int n,int &m,int *X,int *TP,node *H,set<int> *C){ 
+  }
+}
+bool rule1(int n,int &m,int *X,int *TP,node *H,set<int> *C){
 	set<int>::iterator it;
 	bool f=false;
 	for (int i=1;i<=m;i++)
@@ -74,13 +87,13 @@ bool rule1(int n,int &m,int *X,int *TP,node *H,set<int> *C){
 			C[i--]=C[m--];
 			f=true;
 			break;
-		} 
+		}
 	for (int x=1;x<=n;x++){
-		if (TP[x]!=-1) continue;  
+		if (TP[x]!=-1) continue;
 		int p1=0,p2=0;
 		for (int i=1;i<=m;i++){
 			if (C[i].size()!=1) continue;
-			if (find(C[i],x)) p1=i;  
+			if (find(C[i],x)) p1=i;
 			if (find(C[i],-x)) p2=i;
 		}
 		if (!p1 || !p2) continue; //找不到包含~x的unit clause
@@ -90,7 +103,7 @@ bool rule1(int n,int &m,int *X,int *TP,node *H,set<int> *C){
 	}
 	return f;
 }
-bool rule2(int n,int &m,int *X,int *TP,node *H,set<int> *C){  //不用管dgree 
+bool rule2(int n,int &m,int *X,int *TP,node *H,set<int> *C){  //不用管dgree
 	for (int z=1;z<=n;z++){
 		if (TP[z]!=-1) continue;
 		int p1=0,p2=0,h1=0,h2=0; //p1= x个数   p2= -x个数  h1= x unit  h2= -x unit
@@ -114,23 +127,23 @@ bool rule2(int n,int &m,int *X,int *TP,node *H,set<int> *C){  //不用管dgree
 			X[z]=0;
 			return true;
 		}
-	} 
+	}
 	return false;
 }
-bool rule3(int n,int &m,int *X,int *TP,node *H,set<int> *C){ 
+bool rule3(int n,int &m,int *X,int *TP,node *H,set<int> *C){
 	int degree[MAXN];
 	set<int>::iterator it;
 	memset(degree,0,sizeof(degree));
     for (int i=1;i<=m;i++)
     	for (it=C[i].begin();it!=C[i].end();it++)
-			degree[abs(*it)]++; 
-	for (int x=1;x<=n;x++){ 
+			degree[abs(*it)]++;
+	for (int x=1;x<=n;x++){
 		if (TP[x]!=-1 || degree[x]!=2) continue;
 		int c1,c2;
 		for (int i=1;i<=m;i++){ // x,x  ~x,~x在rule2会过滤掉
 			if (find(C[i],x)) c1=i;
 			if (find(C[i],-x)) c2=i;
-		} 
+		}
 		C[c1].insert(C[c2].begin(),C[c2].end()); //合并set
 		C[c1].erase(x),C[c1].erase(-x);
 		TP[x]=1,H[x].F=C[c2],H[x].F.erase(-x); // x由c2得来
@@ -139,18 +152,18 @@ bool rule3(int n,int &m,int *X,int *TP,node *H,set<int> *C){
 	}
 	return false;
 }
-bool rule5(int n,int &m,int *X,int *TP,node *H,set<int> *C){ //在实现的时候只需要让x=1  
+bool rule5(int n,int &m,int *X,int *TP,node *H,set<int> *C){ //在实现的时候只需要让x=1
 	int degree[MAXN];
 	set<int>::iterator it;
 	memset(degree,0,sizeof(degree));
     for (int i=1;i<=m;i++)
     	for (it=C[i].begin();it!=C[i].end();it++)
-			degree[abs(*it)]++; 
-	for (int x=1;x<=n;x++){  
-		if (TP[x]!=-1 || degree[x]!=3) continue;  
+			degree[abs(*it)]++;
+	for (int x=1;x<=n;x++){
+		if (TP[x]!=-1 || degree[x]!=3) continue;
 		int c1,c2,c3;
 		find3clause(c1,c2,c3,x,m,C); //找到这三个clause
-		int y=0; 
+		int y=0;
 		for (it=C[c1].begin();it!=C[c1].end();it++){
 			if (degree[abs(*it)]!=3 || TP[abs(*it)]!=-1) continue; //是否出问题
 			if (!find(C[c2],*it) && !find(C[c2],-*it)) continue;
@@ -211,7 +224,7 @@ bool rule6(int n,int m,int *TP,node *H,set<int> *C){
 	}
 	return false;
 }
-bool rule7(int n,int &m,int *X,int *TP,node *H,set<int> *C){ 
+bool rule7(int n,int &m,int *X,int *TP,node *H,set<int> *C){
 	int degree[MAXN];
 	set<int>::iterator it;
 	memset(degree,0,sizeof(degree));
@@ -222,7 +235,7 @@ bool rule7(int n,int &m,int *X,int *TP,node *H,set<int> *C){
 		if (TP[z2]!=-1 || degree[z2]!=3) continue;
 		int c1,c2,c3;
 		find3clause(c1,c2,c3,z2,m,C); //找到这三个clause
-		//找到了degree=3的z2三个clause c1,c2,c3 
+		//找到了degree=3的z2三个clause c1,c2,c3
 		int z1=0;
 		for (it=C[c1].begin();it!=C[c1].end();it++)
 			if (find(C[c2],*it)){
@@ -239,7 +252,7 @@ bool rule7(int n,int &m,int *X,int *TP,node *H,set<int> *C){
 	}
 	return false;
 }
-bool rule8(int &n,int &m,int *X,int *TP,node *H,set<int> *C){ // (~x',D1,D2) 
+bool rule8(int &n,int &m,int *X,int *TP,node *H,set<int> *C){ // (~x',D1,D2)
 	int degree[MAXN];
 	set<int>::iterator it;
 	memset(degree,0,sizeof(degree));
@@ -251,7 +264,7 @@ bool rule8(int &n,int &m,int *X,int *TP,node *H,set<int> *C){ // (~x',D1,D2)
 		int c1,c2,d1,d2;
 		find3clause(c1,c2,d1,x,m,C);
 		if (find(C[d1],x)){ //x,y为(2,1)
-			swap(c2,d1); 
+			swap(c2,d1);
 			int y=0;
 			for (it=C[c1].begin();it!=C[c1].end();it++){
 				if (*it<0) continue;
@@ -266,7 +279,7 @@ bool rule8(int &n,int &m,int *X,int *TP,node *H,set<int> *C){ // (~x',D1,D2)
 			H[y].F.clear(),H[y].F.insert(-x);
 			H[x].F=C[d1],H[x].F.erase(-x);
 			TP[++n]=-1;
-			TP[x]=TP[y]=n;  
+			TP[x]=TP[y]=n;
 			H[x].fd=H[y].fd=0;//x,y的值将由n来决定
 			C[c1].erase(x),C[c1].erase(y),C[c1].insert(n);
 			C[c2].erase(x),C[c2].erase(y),C[c2].insert(n);
@@ -286,7 +299,7 @@ bool rule8(int &n,int &m,int *X,int *TP,node *H,set<int> *C){ // (~x',D1,D2)
 			}
 			if (!y || degree[y]!=3) continue;
 			int yc1,yc2;
-			find3clause(d2,yc2,yc1,y,m,C); 
+			find3clause(d2,yc2,yc1,y,m,C);
 			H[y].F.clear(),H[y].F.insert(-x);
 			H[x].F.clear();
 			for (it=C[d1].begin();it!=C[d1].end();it++){
@@ -294,13 +307,13 @@ bool rule8(int &n,int &m,int *X,int *TP,node *H,set<int> *C){ // (~x',D1,D2)
 				H[x].F.insert(-*it);
 			} // x= ~D1
 			TP[++n]=-1;
-			TP[x]=TP[y]=n;  
+			TP[x]=TP[y]=n;
 			H[x].fd=H[y].fd=1;//x,y的值将由n来决定
 			C[c1].erase(x),C[c1].erase(y),C[c1].insert(n);
 			C[c2].erase(x),C[c2].erase(y),C[c2].insert(n);
 			C[d1].insert(C[d2].begin(),C[d2].end());
 			C[d1].erase(x),C[d1].erase(y),C[d1].insert(-n);
-			C[d2]=C[m--];  
+			C[d2]=C[m--];
 		}
 		return true;
 	}
@@ -315,21 +328,27 @@ bool rule9(int &m,set<int> *C){
 		int p0=0,p1=0;
 		for (int j=1;j<=m;j++){
 			if (C[j].size()!=1) continue;
-			if (find(C[j],-x[0])) p0=j; 
+			if (find(C[j],-x[0])) p0=j;
 			if (find(C[j],-x[1])) p1=j;
 		}
 		if (!p0 || !p1) continue;
 		C[i]=C[m--];
-		C[p0]=C[m--]; 
+		C[p0]=C[m--];
 		C[p1].insert(-x[0]); //注意
 		return true;
 	}
 	return false;
 }
 void searchH(int i,int *TP,node *H,int *X){
+//展开递推关系
+//判断第i个变量的值, 通过H
+//input：i is the existing extentable variableclause C and literal x
+//output：1 denotes literal x is in C
+//      0 denotes literal x is not in C
 	set<int>::iterator it;
     if (TP[i]==0) return; //值是确定的
     if (TP[i]==-1){
+    	printf("ERROR!!!");
     	X[i]=TP[i]=0;
     	return;
     }
@@ -349,32 +368,37 @@ void searchH(int i,int *TP,node *H,int *X){
 			break;
 		}
 	}
-	TP[i]=0,X[i]=t; 
-} 
+	TP[i]=0,X[i]=t;
+}
 void consH(int n,int *TP,node *H,int *tTP,int *X){
+//根据H,把X的值全构造出来
+//input：clause C and literal x
+//output：1 denotes literal x is in C
+//      0 denotes literal x is not in C
 	for (int i=1;i<=n;i++) tTP[i]=TP[i];
 	for (int i=1;i<=n;i++) searchH(i,TP,H,X);
 }
 void reTP(int n,int *TP,int *tTP){
+//还原tp
 	for (int i=1;i<=n;i++) TP[i]=tTP[i];
-} 
+}
 void branch(int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<int> *C,set<int> *C0,int *TP,node* H){
-	while (1){ 
+	while (1){
 		while (reFrash(m,X,TP,H,C)); //done
 		if (rule1(n,m,X,TP,H,C)) continue; //done
 		if (rule2(n,m,X,TP,H,C)) continue; //done
 		if (rule3(n,m,X,TP,H,C)) continue; //done
-		if (rule5(n,m,X,TP,H,C)) continue; //done 
+		if (rule5(n,m,X,TP,H,C)) continue; //done
 	/*	if (rule6(n,m,TP,H,C))   continue; //done
 		if (rule7(n,m,X,TP,H,C)) continue; //done
 		if (rule8(n,m,X,TP,H,C)) continue; //done
 		if (rule9(m,C))          continue; //done   */
 		break;
-	}   
-	set<int> tC[MAXN]; 
-	int tn,tm,tTP[MAXN]; 
+	}
+	set<int> tC[MAXN];
+	int tn,tm,tTP[MAXN];
 	for (int k=1;k<=n;k++)
-		if (TP[k]==-1){ //值为未知的进行分支 
+		if (TP[k]==-1){ //值为未知的进行分支
 			copy(tTP,C,TP,tC,n,m,tn,tm); //保护现场
 			TP[k]=0; //值确定
 			X[k]=0;
@@ -382,15 +406,15 @@ void branch(int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<int> *C,
 			back(tTP,C,TP,tC,n,m,tn,tm); //还原现场
 			TP[k]=0; //----大错点----不加则死循环---
 			X[k]=1;
-			branch(n,m,n0,m0,X,maxNum,ans,C,C0,TP,H); 
+			branch(n,m,n0,m0,X,maxNum,ans,C,C0,TP,H);
 			back(tTP,C,TP,tC,n,m,tn,tm); //还原现场
-			return; 
+			return;
 		}
 	consH(n0,TP,H,tTP,X); //展开递推关系TP,H
-	int t=0; 
-	set<int>::iterator it; 
+	int t=0;
+	set<int>::iterator it;
 	for (int i=1;i<=m0;i++)
-		for (it=C0[i].begin();it!=C0[i].end();it++){ 
+		for (it=C0[i].begin();it!=C0[i].end();it++){
 			if ((*it>0 && X[*it]==1) || (*it<0 && X[-*it]==0)){
 				t++;
 				break;
@@ -398,26 +422,31 @@ void branch(int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<int> *C,
 		}
 	if (t>maxNum){
 		maxNum=t;
-		for (int i=1;i<=n0;i++) ans[i]=X[i]; 
+		for (int i=1;i<=n0;i++) ans[i]=X[i];
 	}
-	reTP(n0,TP,tTP); //还原TP 
-	return; 
+	reTP(n0,TP,tTP); //还原TP
+	return;
 }
 int main(int argc,char **arg){
-    freopen("sgen1-unsat-61-100.cnf","r",stdin); 
+    freopen("sgen1-sat-60-100.cnf","r",stdin);
     freopen("output.txt","w",stdout);
     int n,m,maxNum=0;
 	set<int> C[MAXN],C0[MAXN];
 	int ans[MAXN],X[MAXN];
 	int TP[MAXN]; //TP存变量的状态是 -1 未知  0 为确定值  1 由H[i].F得到  2看H[i].fx之后得到
-    node H[MAXN]; 
+    node H[MAXN];
     initial(n,m,C0);
-    memset(X,-1,sizeof(X));  
+    memset(X,-1,sizeof(X));
 	memset(TP,-1,sizeof(TP));
-	for (int i=1;i<=m;i++) C[i]=C0[i]; 
-	branch(n,m,n,m,X,maxNum,ans,C,C0,TP,H); 
+	for (int i=1;i<=m;i++) C[i]=C0[i];
+	branch(n,m,n,m,X,maxNum,ans,C,C0,TP,H);
 	printf("%d\n",maxNum);
-	for (int i=1;i<=n;i++) printf("%d ",ans[i]);
-	puts(""); 
+	for (int i=1;i<=n;i++)
+    {
+        if(ans[i]) printf("%d ", i);
+        else printf("%d ",-i);
+        if(i%20==0) puts("");
+    }
+	puts("");
     return 0;
 }
