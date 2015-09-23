@@ -11,8 +11,8 @@
 using namespace std;
 const int MAXN=505;
 //test
-bool DEBUG1=true,DEBUG2=true;
-int testvar=45;
+bool DEBUG1=true,DEBUG2=false;
+int testvar=40;
 
 struct node{
 	set<int> F;
@@ -202,6 +202,7 @@ bool rule6(int n,int m,int *TP,node *H,set<int> *C){
 		find3clause(c1,c2,c3,x,m,C); //找到这三个clause
 		for (it=C[c1].begin();it!=C[c1].end();it++){
 			if (*it==x) continue; //注意
+			if (TP[abs(*it)]!=-1) continue; //需要么
 			if (*it<0 || degree[*it]!=3) continue; //注意限制y的degree=3
 			if (find(C[c2],-*it)){
 				y=*it;
@@ -346,7 +347,11 @@ bool rule9(int &m,set<int> *C){
 	}
 	return false;
 }
-void searchH(int i,int *TP,node *H,int *X){
+
+bool used[MAXN];
+
+
+void searchH(int i,int n,int *TP,node *H,int *X){
 //展开递推关系
 //判断第i个变量的值, 通过H
 //input：i is the existing extentable variableclause C and literal x
@@ -354,13 +359,27 @@ void searchH(int i,int *TP,node *H,int *X){
 //      0 denotes literal x is not in C
 	set<int>::iterator it;
     if (TP[i]==0) return; //值是确定的
-    if (TP[i]==-1){
-    	printf("ERROR!!!");
-    	X[i]=TP[i]=0;
-    	return;
+    if (used[i]) { //递推关系中有环，有死循环
+    	puts("ERROR!!"); 
+    	printf("--  %d --\n",i);
+		for (int i=1;i<=n;i++){
+			printf("x%d = ",i);
+			if (TP[i]==0) {
+				printf("%d\n",X[i]);
+				continue;
+			} 
+			for (it=H[i].F.begin();it!=H[i].F.end();it++){
+				if (*it<0) printf("~x%d ",-*it);
+			    	  else printf("x%d ",*it); 
+        	}
+			puts("");
+		}
+		puts("-----------------");
+    	return; 
     }
+    used[i]=true;
 	if (TP[i]>1){ //其值依赖于H[i].fx与H[i].F的值
-		searchH(TP[i],TP,H,X);
+		searchH(TP[i],n,TP,H,X);
 		if (X[TP[i]]==0){    //根据rule8规则
 			TP[i]=0,X[i]=H[i].fd; //根据rule8规则
 			return;
@@ -369,7 +388,7 @@ void searchH(int i,int *TP,node *H,int *X){
 	int t=0;  //只看H[i].F的值
 	for (it=H[i].F.begin();it!=H[i].F.end();it++){
 		int x=*it;
-		searchH(abs(x),TP,H,X);
+		searchH(abs(x),n,TP,H,X);
 		if ((x>0 && X[x]==1) || (x<0 && X[-x]==0)){
 			t=1;
 			break;
@@ -383,7 +402,8 @@ void consH(int n,int *TP,node *H,int *tTP,int *X){
 //output：1 denotes literal x is in C
 //      0 denotes literal x is not in C
 	for (int i=1;i<=n;i++) tTP[i]=TP[i];
-	for (int i=1;i<=n;i++) searchH(i,TP,H,X);
+	memset(used,false,sizeof(used));
+	for (int i=1;i<=n;i++) searchH(i,n,TP,H,X);
 }
 void reTP(int n,int *TP,int *tTP){
 //还原tp
@@ -432,8 +452,9 @@ void branch(int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<int> *C,
         	}
 			puts("");
 		}
+		puts("-----------------");
 		//------for test
-	}//else
+	}else
 	{ 
 		consH(n0,TP,H,tTP,X); //展开递推关系TP,H
 		int t=0;
