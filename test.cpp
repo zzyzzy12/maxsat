@@ -11,8 +11,8 @@
 using namespace std;
 const int MAXN=505;
 //test
-bool DEBUG=true;
-int testvar=40;
+bool DEBUG1=true,DEBUG2=true;
+int testvar=45;
 
 struct node{
 	set<int> F;
@@ -250,9 +250,9 @@ bool rule7(int n,int &m,int *X,int *TP,node *H,set<int> *C){
 				break;
 			}
 		if (!z1) continue;
-		if (find(C[c3],z2)){ //(2,1)
+		if (find(C[c3],z2)){ //z2为(2,1)
 			C[c1].erase(z1);
-		}else{				 //(1,2)
+		}else{				 //z2为(1,2)
 			C[c2].erase(z1);
 		}
 		return true;
@@ -396,7 +396,7 @@ void branch(int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<int> *C,
 		if (rule2(n,m,X,TP,H,C)) continue; //done
 		if (rule3(n,m,X,TP,H,C)) continue; //done
 		if (rule5(n,m,X,TP,H,C)) continue; //done
-	//	if (rule6(n,m,TP,H,C))   continue; 
+		if (rule6(n,m,TP,H,C))   continue; 
 		if (rule7(n,m,X,TP,H,C)) continue; //done
 	//	if (rule8(n,m,X,TP,H,C)) continue; 
 		if (rule9(m,C))          continue; //done
@@ -416,24 +416,41 @@ void branch(int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<int> *C,
 			branch(n,m,n0,m0,X,maxNum,ans,C,C0,TP,H);
 			back(tTP,C,TP,tC,n,m,tn,tm); //还原现场
 			return;
-		}
-
-	consH(n0,TP,H,tTP,X); //展开递推关系TP,H
-	int t=0;
-	set<int>::iterator it;
-	for (int i=1;i<=m0;i++)
-		for (it=C0[i].begin();it!=C0[i].end();it++){
-			if ((*it>0 && X[*it]==1) || (*it<0 && X[-*it]==0)){
-				t++;
-				break;
+		} 
+	if (DEBUG2){
+		//------for test
+		for (int i=1;i<=n0;i++){
+			printf("x%d = ",i);
+			if (TP[i]==0) {
+				printf("%d\n",X[i]);
+				continue;
 			}
+			set<int>::iterator it;
+			for (it=H[i].F.begin();it!=H[i].F.end();it++){
+				if (*it<0) printf("~x%d ",-*it);
+			    	  else printf("x%d ",*it); 
+        	}
+			puts("");
 		}
-	if (t>maxNum){
-		maxNum=t;
-		for (int i=1;i<=n0;i++) ans[i]=X[i];
+		//------for test
+	}//else
+	{ 
+		consH(n0,TP,H,tTP,X); //展开递推关系TP,H
+		int t=0;
+		set<int>::iterator it;
+		for (int i=1;i<=m0;i++)
+			for (it=C0[i].begin();it!=C0[i].end();it++){
+				if ((*it>0 && X[*it]==1) || (*it<0 && X[-*it]==0)){
+					t++;
+					break;
+				}
+			}
+		if (t>maxNum){
+			maxNum=t;
+			for (int i=1;i<=n0;i++) ans[i]=X[i];
+		}
+		reTP(n0,TP,tTP);
 	}
-	reTP(n0,TP,tTP);
-
 	return;
 }
 int main(int argc,char **arg){
@@ -450,7 +467,7 @@ int main(int argc,char **arg){
 					   1,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0,0,0,1,0 };
     memset(TP,-1,sizeof(TP));
 	for (int i=1;i<=m;i++) C[i]=C0[i];
-    if(DEBUG)
+    if(DEBUG1)
     {
 	//----------for test
     	memset(TP,0,sizeof(TP));
