@@ -10,6 +10,10 @@
 #include<stack>
 using namespace std;
 const int MAXN=505;
+//test
+bool DEBUG=true;
+int testvar=40;
+
 struct node{
 	set<int> F;
 	int fd;
@@ -392,10 +396,10 @@ void branch(int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<int> *C,
 		if (rule2(n,m,X,TP,H,C)) continue; //done
 		if (rule3(n,m,X,TP,H,C)) continue; //done
 		if (rule5(n,m,X,TP,H,C)) continue; //done
-	//	if (rule6(n,m,TP,H,C))   continue; //wrong?或者展开错误
-	//	if (rule7(n,m,X,TP,H,C)) continue; //done
-	//	if (rule8(n,m,X,TP,H,C)) continue; //done
-		if (rule9(m,C))          continue; //done    
+	//	if (rule6(n,m,TP,H,C))   continue; 
+		if (rule7(n,m,X,TP,H,C)) continue; //done
+	//	if (rule8(n,m,X,TP,H,C)) continue; 
+		if (rule9(m,C))          continue; //done
 		break;
 	}
 	set<int> tC[MAXN];
@@ -413,7 +417,7 @@ void branch(int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<int> *C,
 			back(tTP,C,TP,tC,n,m,tn,tm); //还原现场
 			return;
 		}
-	
+
 	consH(n0,TP,H,tTP,X); //展开递推关系TP,H
 	int t=0;
 	set<int>::iterator it;
@@ -428,7 +432,7 @@ void branch(int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<int> *C,
 		maxNum=t;
 		for (int i=1;i<=n0;i++) ans[i]=X[i];
 	}
-	reTP(n0,TP,tTP); 
+	reTP(n0,TP,tTP);
 
 	return;
 }
@@ -437,18 +441,21 @@ int main(int argc,char **arg){
     freopen("output.txt","w",stdout);
     int n,m,maxNum=0;
 	set<int> C[MAXN],C0[MAXN];
-	int ans[MAXN];//,X[MAXN];
+	int ans[MAXN];
 	int TP[MAXN]; //TP存变量的状态是 -1 未知  0 为确定值  1 由H[i].F得到  2看H[i].fx之后得到
     node H[MAXN];
     initial(n,m,C0);
-    //memset(X,-1,sizeof(X));
-	memset(TP,-1,sizeof(TP));
+    int X[MAXN]={0,0,0,1,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,
+					   0,0,1,0,0,0,1,0,0,0,0,1,0,0,0,1,0,0,0,0,
+					   1,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0,0,0,1,0 };
+    memset(TP,-1,sizeof(TP));
 	for (int i=1;i<=m;i++) C[i]=C0[i];
+    if(DEBUG)
+    {
 	//----------for test
-		
     	memset(TP,0,sizeof(TP));
         srand((int)time(0));
-    	for (int i=1;i<=40;i++){
+    	for (int i=1;i<=testvar;i++){
     		int h=rand()%60+1;
     		while (1) {
     			if (TP[h]==0) break;
@@ -456,11 +463,10 @@ int main(int argc,char **arg){
     		}
     		TP[h]=-1;
     	}
-		int X[MAXN]={0,0,0,1,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,
-					   0,0,1,0,0,0,1,0,0,0,0,1,0,0,0,1,0,0,0,0,
-					   1,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0,0,0,1,0 };
-					   
+
+    }
 	//----------for test
+    else memset(X,-1,sizeof(X));
 	branch(n,m,n,m,X,maxNum,ans,C,C0,TP,H);
 	printf("%d\n",maxNum);
 	for (int i=1;i<=n;i++)
