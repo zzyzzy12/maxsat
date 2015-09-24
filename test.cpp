@@ -12,11 +12,12 @@ using namespace std;
 const int MAXN=505;
 //test
 bool DEBUG1=true,DEBUG2=false;
-int testvar=43;
+int testvar=45;
+int TIME=0;
 
 struct node{
 	set<int> F;
-	int fd;
+	int fd,from,t;
 };
 bool find(set<int> C,int x){
 //input：clause C and literal x
@@ -153,7 +154,7 @@ bool rule3(int n,int &m,int *X,int *TP,node *H,set<int> *C){
 		}
 		C[c1].insert(C[c2].begin(),C[c2].end()); //合并set
 		C[c1].erase(x),C[c1].erase(-x);
-		TP[x]=1,H[x].F=C[c2],H[x].F.erase(-x); // x由c2得来
+		TP[x]=1,H[x].F=C[c2],H[x].F.erase(-x);    H[x].from=3; H[x].t=TIME++;// x由c2得来
 		C[c2]=C[m--]; //删掉c2
 		return true;
 	}
@@ -191,7 +192,7 @@ bool rule5(int n,int &m,int *X,int *TP,node *H,set<int> *C){ //在实现的时�
 	}
 	return false;
 }
-bool rule6(int n,int m,int *TP,node *H,set<int> *C){
+bool rule6(int n,int &m,int *TP,node *H,set<int> *C){ //注意m为变参
 	int degree[MAXN];
 	set<int>::iterator it;
 	memset(degree,0,sizeof(degree));
@@ -205,7 +206,7 @@ bool rule6(int n,int m,int *TP,node *H,set<int> *C){
 		for (it=C[c1].begin();it!=C[c1].end();it++){
 			if (*it==x) continue; //注意
 			if (TP[abs(*it)]!=-1) continue; //需要么
-			if (*it<0 || degree[*it]!=3) continue; //注意限制y的degree=3
+			if (degree[abs(*it)]!=3) continue; //注意限制y的degree=3  *it的正负不用限制
 			if (find(C[c2],-*it)){
 				y=*it;
 				break;
@@ -236,6 +237,12 @@ bool rule6(int n,int m,int *TP,node *H,set<int> *C){
 			else
 				C[c3]=C[m--],C[c2]=C[m--];
 		} 
+		for (int c=1;c<=m;c++)
+			for (it=C[c].begin();it!=C[c].end();it++)
+				if (abs(*it)==x){
+					puts("rule6 wrong!!");
+				}
+		H[x].from=6;  H[x].t=TIME++;
 		return true;
 	}
 	return false;
@@ -380,7 +387,7 @@ void searchH(int i,int n,int *TP,node *H,int *X){
 				if (*it<0) printf("~x%d ",-*it);
 			    	  else printf("x%d ",*it); 
         	}
-			puts("");
+			printf("rule%d   time=%d\n",H[i].from,H[i].t); 
 		}
 		puts("-----------------");
     	return; 
@@ -458,7 +465,7 @@ void branch(int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<int> *C,
 				if (*it<0) printf("~x%d ",-*it);
 			    	  else printf("x%d ",*it); 
         	}
-			puts("");
+        	puts("");
 		}
 		puts("-----------------");
 		//------for test
