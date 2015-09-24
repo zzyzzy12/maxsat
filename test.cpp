@@ -11,8 +11,8 @@
 using namespace std;
 const int MAXN=505;
 //test
-bool DEBUG1=true;
-int testvar=40;
+bool DEBUG1=false;
+int testvar=50;
 int TIME=0;
 
 struct node{
@@ -49,7 +49,7 @@ void find3clause(int &c1,int &c2,int &c3,int x,int m,set<int> *C){
 	for (c3=1;c3<=m;c3++)
 		if (c3!=c1 && c3!=c2 && (find(C[c3],x) || find(C[c3],-x))) break;
 }
-bool reFrash(int &m,int *X,int *TP,node *H,set<int> *C){
+bool reFrash(int &m,int *X,int *TP,node *H,set<int> *C,int &Upbound){
 //input： 子句数m X是存当前赋值， TP是每个X的当前状态， H是递推关系， C是当前所有的子句
 //output：1 至少做了一次操作：{1.子句为空，去掉子句；2.如果一个子句的字符值为1，去掉该子句； 如果为0,删去该子句中的字符}
 //      0 无操作
@@ -57,6 +57,7 @@ bool reFrash(int &m,int *X,int *TP,node *H,set<int> *C){
 	for (int i=1;i<=m;i++){ //一个个clause看，是否为空，是否有值确定了
 		if (C[i].size()==0){
 			C[i]=C[m--]; 
+			Upbound--;
 			return true;
 		}
 		for (it=C[i].begin();it!=C[i].end();it++){
@@ -397,9 +398,10 @@ void reTP(int n,int *TP,int *tTP){
 //还原tp
 	for (int i=1;i<=n;i++) TP[i]=tTP[i];
 }
-void branch(int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<int> *C,set<int> *C0,int *TP,node* H){
+void branch(int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<int> *C,set<int> *C0,int *TP,node* H,int Upbound){
 	while (1){
-		while (reFrash(m,X,TP,H,C)); //done
+		while (reFrash(m,X,TP,H,C,Upbound)); //done
+		if (Upbound<=maxNum) return;
 		if (rule1(n,m,X,TP,H,C)) continue; //done
 		if (rule2(n,m,X,TP,H,C)) continue; //done
 		if (rule3(n,m,X,TP,H,C)) continue; //done
@@ -423,11 +425,11 @@ void branch(int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<int> *C,
 		copy(tTP,C,TP,tC,n,m,tn,tm); //保护现场
 		TP[k]=0; //值确定
 		X[k]=0;
-		branch(n,m,n0,m0,X,maxNum,ans,C,C0,TP,H);
+		branch(n,m,n0,m0,X,maxNum,ans,C,C0,TP,H,Upbound);
 		back(tTP,C,TP,tC,n,m,tn,tm); //还原现场
 		TP[k]=0; //----大错点----不加则死循环---
 		X[k]=1;
-		branch(n,m,n0,m0,X,maxNum,ans,C,C0,TP,H);
+		branch(n,m,n0,m0,X,maxNum,ans,C,C0,TP,H,Upbound);
 		back(tTP,C,TP,tC,n,m,tn,tm); //还原现场
 		return;
 	}
@@ -479,7 +481,7 @@ int main(int argc,char **arg){
     }
 	//----------for test
     else memset(X,-1,sizeof(X));
-	branch(n,m,n,m,X,maxNum,ans,C,C0,TP,H);
+	branch(n,m,n,m,X,maxNum,ans,C,C0,TP,H,m);
 	printf("%d\n",maxNum);
 	for (int i=1;i<=n0;i++)
     {
