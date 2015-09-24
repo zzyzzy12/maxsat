@@ -290,13 +290,14 @@ bool rule8(int &n,int &m,int *X,int *TP,node *H,set<int> *C){ // (~x',D1,D2)
 			swap(c2,d1);
 			int y=0;
 			for (it=C[c1].begin();it!=C[c1].end();it++){
-				if (*it<0) continue;
+				if (*it<0 || TP[*it]!=-1 || degree[*it]!=3) continue;
+				if (*it==x) continue;
 				if (find(C[c2],*it)){
-					y=*it;
+					y=*it; //y满足: 正的在c1,c2中出现  y未赋值  y的degree=3  y!=x
 					break;
 				}
 			}
-			if (!y || degree[y]!=3) continue;
+			if (!y) continue; //找不到对应的y
 			int yc1,yc2;
 			find3clause(yc1,d2,yc2,y,m,C);
 			H[y].F.clear(),H[y].F.insert(-x);
@@ -308,32 +309,28 @@ bool rule8(int &n,int &m,int *X,int *TP,node *H,set<int> *C){ // (~x',D1,D2)
 			C[c2].erase(x),C[c2].erase(y),C[c2].insert(n);
 			C[d1].insert(C[d2].begin(),C[d2].end());
 			C[d1].erase(-x),C[d1].erase(-y),C[d1].insert(-n);
-			C[d2]=C[m--];
+			C[d2]=C[m--];   //删去d2
 		}else{				//x,y为(1,2)
 			swap(c1,d1);
-			set<int>::iterator it;
 			int y=0;
 			for (it=C[c1].begin();it!=C[c1].end();it++){
-				if (*it>0) continue;
+				if (*it>0 || TP[-*it]!=-1 || degree[-*it]!=3) continue;
+				if (-*it==x) continue;
 				if (find(C[c2],*it)){
-					y=*it;
+					y=-*it;
 					break;
 				}
 			}
-			if (!y || degree[y]!=3) continue;
+			if (!y) continue; //找不到对应的y
 			int yc1,yc2;
 			find3clause(d2,yc2,yc1,y,m,C);
-			H[y].F.clear(),H[y].F.insert(-x);
-			H[x].F.clear();
-			for (it=C[d1].begin();it!=C[d1].end();it++){
-				if (*it==x) continue;
-				H[x].F.insert(-*it);
-			} // x= ~D1
+			H[x].F.clear(),H[x].F.insert(-y);
+			H[y].F=C[d1],H[y].F.erase(x);
 			TP[++n]=-1;
 			TP[x]=TP[y]=n;
 			H[x].fd=H[y].fd=1;//x,y的值将由n来决定
-			C[c1].erase(x),C[c1].erase(y),C[c1].insert(n);
-			C[c2].erase(x),C[c2].erase(y),C[c2].insert(n);
+			C[c1].erase(-x),C[c1].erase(-y),C[c1].insert(n);
+			C[c2].erase(-x),C[c2].erase(-y),C[c2].insert(n);
 			C[d1].insert(C[d2].begin(),C[d2].end());
 			C[d1].erase(x),C[d1].erase(y),C[d1].insert(-n);
 			C[d2]=C[m--];
@@ -431,9 +428,9 @@ void branch(int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<int> *C,
 		if (rule2(n,m,X,TP,H,C)) continue; //done
 		if (rule3(n,m,X,TP,H,C)) continue; //done
 		if (rule5(n,m,X,TP,H,C)) continue; //done
-		if (rule6(n,m,TP,H,C))   continue; 
+		if (rule6(n,m,TP,H,C))   continue; //done
 		if (rule7(n,m,X,TP,H,C)) continue; //done
-	//	if (rule8(n,m,X,TP,H,C)) continue; 
+		if (rule8(n,m,X,TP,H,C)) continue; //肯定不正确
 		if (rule9(m,C))          continue; //done
 		break;
 	}
