@@ -12,7 +12,7 @@ using namespace std;
 const int MAXN=505;
 //test
 bool DEBUG1=true,DEBUG2=false;
-int testvar=45;
+int testvar=50;
 int TIME=0;
 
 struct node{
@@ -352,9 +352,11 @@ bool rule9(int &m,set<int> *C){
 			if (find(C[j],-x[1])) p1=j;
 		}
 		if (!p0 || !p1) continue;
-		C[i]=C[m--];
-		C[p0]=C[m--];
-		C[p1].insert(-x[0]); //注意
+		C[p1].insert(-x[0]); //先插入 后删除
+		if (i>p0)
+			C[i]=C[m--],C[p0]=C[m--];
+		else
+			C[p0]=C[m--],C[i]=C[m--];
 		return true;
 	}
 	return false;
@@ -430,7 +432,7 @@ void branch(int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<int> *C,
 		if (rule5(n,m,X,TP,H,C)) continue; //done
 		if (rule6(n,m,TP,H,C))   continue; //done
 		if (rule7(n,m,X,TP,H,C)) continue; //done
-		if (rule8(n,m,X,TP,H,C)) continue; //肯定不正确
+		if (rule8(n,m,X,TP,H,C)) continue; //done
 		if (rule9(m,C))          continue; //done
 		break;
 	}
