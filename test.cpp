@@ -11,7 +11,7 @@
 using namespace std;
 const int MAXN=505;
 //test
-bool DEBUG1=true,DEBUG2=false;
+bool DEBUG1=false,DEBUG2=false;
 int testvar=50;
 int TIME=0;
 
@@ -437,20 +437,26 @@ void branch(int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<int> *C,
 		break;
 	}
 	set<int> tC[MAXN];
-	int tn,tm,tTP[MAXN];
-	for (int k=1;k<=n;k++)
-		if (TP[k]==-1){ //值为未知的进行分支
-			copy(tTP,C,TP,tC,n,m,tn,tm); //保护现场
-			TP[k]=0; //值确定
-			X[k]=0;
-			branch(n,m,n0,m0,X,maxNum,ans,C,C0,TP,H);
-			back(tTP,C,TP,tC,n,m,tn,tm); //还原现场
-			TP[k]=0; //----大错点----不加则死循环---
-			X[k]=1;
-			branch(n,m,n0,m0,X,maxNum,ans,C,C0,TP,H);
-			back(tTP,C,TP,tC,n,m,tn,tm); //还原现场
-			return;
-		} 
+	int tn,tm,tTP[MAXN],degree[MAXN],k=0;
+	set<int>::iterator it;
+	memset(degree,0,sizeof(degree));
+    for (int i=1;i<=m;i++)
+    	for (it=C[i].begin();it!=C[i].end();it++)
+			degree[abs(*it)]++;	
+	for (int i=1;i<=n;i++)
+		if (TP[i]==-1 && degree[k]<degree[i]) k=i; 
+	if (k){
+		copy(tTP,C,TP,tC,n,m,tn,tm); //保护现场
+		TP[k]=0; //值确定
+		X[k]=0;
+		branch(n,m,n0,m0,X,maxNum,ans,C,C0,TP,H);
+		back(tTP,C,TP,tC,n,m,tn,tm); //还原现场
+		TP[k]=0; //----大错点----不加则死循环---
+		X[k]=1;
+		branch(n,m,n0,m0,X,maxNum,ans,C,C0,TP,H);
+		back(tTP,C,TP,tC,n,m,tn,tm); //还原现场
+		return;
+	}
 	if (DEBUG2){
 		//------for test
 		for (int i=1;i<=n0;i++){
@@ -491,12 +497,13 @@ void branch(int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<int> *C,
 int main(int argc,char **arg){
     freopen("sgen1-sat-60-100.cnf","r",stdin);
     freopen("output.txt","w",stdout);
-    int n,m,maxNum=0;
+    int n,m,n0,maxNum=0;
 	set<int> C[MAXN],C0[MAXN];
 	int ans[MAXN];
 	int TP[MAXN]; //TP存变量的状态是 -1 未知  0 为确定值  1 由H[i].F得到  2看H[i].fx之后得到
     node H[MAXN];
     initial(n,m,C0);
+    n0=n;
     int X[MAXN]={0,0,0,1,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,
 					   0,0,1,0,0,0,1,0,0,0,0,1,0,0,0,1,0,0,0,0,
 					   1,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0,0,0,1,0 };
@@ -521,7 +528,7 @@ int main(int argc,char **arg){
     else memset(X,-1,sizeof(X));
 	branch(n,m,n,m,X,maxNum,ans,C,C0,TP,H);
 	printf("%d\n",maxNum);
-	for (int i=1;i<=n;i++)
+	for (int i=1;i<=n0;i++)
     {
         if(ans[i]) printf("%d ", i);
         else printf("%d ",-i);
