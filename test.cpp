@@ -12,7 +12,7 @@ using namespace std;
 const int MAXN=505;
 //test
 bool DEBUG1=true,DEBUG2=false;
-int testvar=40;
+int testvar=43;
 
 struct node{
 	set<int> F;
@@ -55,7 +55,7 @@ bool reFrash(int &m,int *X,int *TP,node *H,set<int> *C){
 	set<int>::iterator it;
 	for (int i=1;i<=m;i++){ //一个个clause看，是否为空，是否有值确定了
 		if (C[i].size()==0){
-			C[i]=C[m--];
+			C[i]=C[m--]; 
 			return true;
 		}
 		for (it=C[i].begin();it!=C[i].end();it++){
@@ -102,8 +102,10 @@ bool rule1(int n,int &m,int *X,int *TP,node *H,set<int> *C){
 			if (find(C[i],-x)) p2=i;
 		}
 		if (!p1 || !p2) continue; //找不到包含~x的unit clause
-		C[p1]=C[m--];
-		C[p2]=C[m--];
+		if (p1>p2) //多个删除注意顺序
+		   C[p1]=C[m--],C[p2]=C[m--]; //出问题
+		else
+		   C[p2]=C[m--],C[p1]=C[m--];
 		f=true;
 	}
 	return f;
@@ -220,14 +222,20 @@ bool rule6(int n,int m,int *TP,node *H,set<int> *C){
 			H[x].F=C[c2],H[x].F.erase(-x);
 			C[c2].insert(C[c3].begin(),C[c3].end());
 			C[c2].erase(x),C[c2].erase(-x);
-			C[c1]=C[m--]; //注意先改clause再删除clause
+			if (c1>c3) //多个删除注意顺序
+				C[c1]=C[m--],C[c3]=C[m--]; //注意先改clause再删除clause
+			else
+				C[c3]=C[m--],C[c1]=C[m--];
 		}else{				//x为(1,2)
 			TP[x]=1; //x的值由c1推出
 			H[x].F=C[c1],H[x].F.erase(x);
 			C[c1].insert(C[c3].begin(),C[c3].end());
 			C[c1].erase(x),C[c1].erase(-x);
-			C[c2]=C[m--]; //注意先改clause再删除clause
-		}
+			if (c2>c3)  //多个删除注意顺序
+				C[c2]=C[m--],C[c3]=C[m--]; //注意先改clause再删除clause
+			else
+				C[c3]=C[m--],C[c2]=C[m--];
+		} 
 		return true;
 	}
 	return false;
@@ -246,7 +254,7 @@ bool rule7(int n,int &m,int *X,int *TP,node *H,set<int> *C){
 		//找到了degree=3的z2三个clause c1,c2,c3
 		int z1=0;
 		for (it=C[c1].begin();it!=C[c1].end();it++)
-			if (find(C[c2],*it)){
+			if (find(C[c2],*it) && TP[abs(*it)]==-1){ //是否需要限制TP[*it]
 				z1=*it;
 				break;
 			}
