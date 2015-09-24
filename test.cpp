@@ -11,13 +11,13 @@
 using namespace std;
 const int MAXN=505;
 //test
-bool DEBUG1=false,DEBUG2=false;
-int testvar=50;
+bool DEBUG1=true;
+int testvar=40;
 int TIME=0;
 
 struct node{
 	set<int> F;
-	int fd,from,t;
+	int fd;
 };
 bool find(set<int> C,int x){
 //input：clause C and literal x
@@ -154,7 +154,7 @@ bool rule3(int n,int &m,int *X,int *TP,node *H,set<int> *C){
 		}
 		C[c1].insert(C[c2].begin(),C[c2].end()); //合并set
 		C[c1].erase(x),C[c1].erase(-x);
-		TP[x]=1,H[x].F=C[c2],H[x].F.erase(-x);    H[x].from=3; H[x].t=TIME++;// x由c2得来
+		TP[x]=1,H[x].F=C[c2],H[x].F.erase(-x);// x由c2得来
 		C[c2]=C[m--]; //删掉c2
 		return true;
 	}
@@ -236,13 +236,7 @@ bool rule6(int n,int &m,int *TP,node *H,set<int> *C){ //注意m为变参
 				C[c2]=C[m--],C[c3]=C[m--]; //注意先改clause再删除clause
 			else
 				C[c3]=C[m--],C[c2]=C[m--];
-		} 
-		for (int c=1;c<=m;c++)
-			for (it=C[c].begin();it!=C[c].end();it++)
-				if (abs(*it)==x){
-					puts("rule6 wrong!!");
-				}
-		H[x].from=6;  H[x].t=TIME++;
+		}  
 		return true;
 	}
 	return false;
@@ -372,26 +366,7 @@ void searchH(int i,int n,int *TP,node *H,int *X){
 //output：1 denotes literal x is in C
 //      0 denotes literal x is not in C
 	set<int>::iterator it;
-    if (TP[i]==0) return; //值是确定的
-    if (used[i]) { //递推关系中有环，有死循环
-    	puts("ERROR!!"); 
-    	printf("--  %d --\n",i);
-		for (int i=1;i<=n;i++){
-			printf("x%d = ",i);
-			if (TP[i]==0) {
-				printf("%d\n",X[i]);
-				continue;
-			} 
-			for (it=H[i].F.begin();it!=H[i].F.end();it++){
-				if (*it<0) printf("~x%d ",-*it);
-			    	  else printf("x%d ",*it); 
-        	}
-			printf("rule%d   time=%d\n",H[i].from,H[i].t); 
-		}
-		puts("-----------------");
-    	return; 
-    }
-    used[i]=true;
+    if (TP[i]==0) return; //值是确定的 
 	if (TP[i]>1){ //其值依赖于H[i].fx与H[i].F的值
 		searchH(TP[i],n,TP,H,X);
 		if (X[TP[i]]==0){    //根据rule8规则
@@ -415,8 +390,7 @@ void consH(int n,int *TP,node *H,int *tTP,int *X){
 //input：clause C and literal x
 //output：1 denotes literal x is in C
 //      0 denotes literal x is not in C
-	for (int i=1;i<=n;i++) tTP[i]=TP[i];
-	memset(used,false,sizeof(used));
+	for (int i=1;i<=n;i++) tTP[i]=TP[i]; 
 	for (int i=1;i<=n;i++) searchH(i,n,TP,H,X);
 }
 void reTP(int n,int *TP,int *tTP){
@@ -457,41 +431,20 @@ void branch(int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<int> *C,
 		back(tTP,C,TP,tC,n,m,tn,tm); //还原现场
 		return;
 	}
-	if (DEBUG2){
-		//------for test
-		for (int i=1;i<=n0;i++){
-			printf("x%d = ",i);
-			if (TP[i]==0) {
-				printf("%d\n",X[i]);
-				continue;
+	consH(n0,TP,H,tTP,X); //展开递推关系TP,H
+	int t=0; 
+	for (int i=1;i<=m0;i++)
+		for (it=C0[i].begin();it!=C0[i].end();it++){
+			if ((*it>0 && X[*it]==1) || (*it<0 && X[-*it]==0)){
+				t++;
+				break;
 			}
-			set<int>::iterator it;
-			for (it=H[i].F.begin();it!=H[i].F.end();it++){
-				if (*it<0) printf("~x%d ",-*it);
-			    	  else printf("x%d ",*it); 
-        	}
-        	puts("");
 		}
-		puts("-----------------");
-		//------for test
-	}else
-	{ 
-		consH(n0,TP,H,tTP,X); //展开递推关系TP,H
-		int t=0;
-		set<int>::iterator it;
-		for (int i=1;i<=m0;i++)
-			for (it=C0[i].begin();it!=C0[i].end();it++){
-				if ((*it>0 && X[*it]==1) || (*it<0 && X[-*it]==0)){
-					t++;
-					break;
-				}
-			}
-		if (t>maxNum){
-			maxNum=t;
-			for (int i=1;i<=n0;i++) ans[i]=X[i];
-		}
-		reTP(n0,TP,tTP);
+	if (t>maxNum){
+		maxNum=t;
+		for (int i=1;i<=n0;i++) ans[i]=X[i];
 	}
+	reTP(n0,TP,tTP);
 	return;
 }
 int main(int argc,char **arg){
