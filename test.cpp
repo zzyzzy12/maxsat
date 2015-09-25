@@ -411,7 +411,7 @@ bool rule8(int &n,int &m,int *X,int *TP,node *H,set<int> *C){ // (~x',D1,D2)
 	}
 	return false;
 }
-bool rule9(int &m,int *TP,set<int> *C){
+bool rule9(int &m,int *TP,set<int> *C,int &Upbound){
 	int p[MAXN][2];
 	set<int>::iterator it;
 	memset(p,0,sizeof(p));
@@ -437,6 +437,7 @@ bool rule9(int &m,int *TP,set<int> *C){
 			C[i]=C[m--],C[p0]=C[m--];
 		else
 			C[p0]=C[m--],C[i]=C[m--];
+		Upbound--;
 		return true;
 	}
 	return false;
@@ -512,7 +513,7 @@ void branch(int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<int> *C,
 		if (rule8(n,m,X,TP,H,C)) { TIME[8]+=clock()-start; continue; } //done
 		TIME[8]+=clock()-start; 
 		start=clock();
-		if (rule9(m,TP,C))          { TIME[9]+=clock()-start; continue; } //done
+		if (rule9(m,TP,C,Upbound)) { TIME[9]+=clock()-start; continue; } //done
 		TIME[9]+=clock()-start; 
 		break;
 	}
