@@ -430,7 +430,7 @@ bool rule9(int &m,int *TP,set<int> *C){
 		if (x[0]>0) p0=p[x[0]][1];
 		       else p0=p[-x[0]][0];
 		if (x[1]>0) p1=p[x[1]][1];
-			   else p0=p[-x[1]][0];
+			   else p1=p[-x[1]][0];
 		if (!p0 || !p1) continue;
 		C[p1].insert(-x[0]); //先插入 后删除
 		if (i>p0)
@@ -440,11 +440,8 @@ bool rule9(int &m,int *TP,set<int> *C){
 		return true;
 	}
 	return false;
-}
-
-bool used[MAXN];
-
-
+} 
+ 
 void searchH(int i,int n,int *TP,node *H,int *X){
 //展开递推关系
 //判断第i个变量的值, 通过H
@@ -485,7 +482,7 @@ void reTP(int n,int *TP,int *tTP){
 }
 void branch(int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<int> *C,set<int> *C0,int *TP,node* H,int Upbound){
 	while (1){
-		clock_t start,finish;
+		clock_t start;
 		start=clock();
 		while (reNew(m,X,TP,H,C,Upbound)); //done
 		TIME[0]+=clock()-start;
