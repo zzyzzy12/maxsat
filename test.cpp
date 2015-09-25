@@ -10,9 +10,7 @@
 #include<stack>
 using namespace std;
 const int MAXN=505;
-//test
-bool DEBUG1=false;
-int testvar=50;
+//test 
 clock_t TIME[15];
 
 struct node{
@@ -572,33 +570,14 @@ int main(int argc,char **arg){
     clock_t start,finish; 
     start=clock();
 	set<int> C[MAXN],C0[MAXN];
-	int ans[MAXN];
+	int ans[MAXN],X[MAXN];
 	int TP[MAXN]; //TP存变量的状态是 -1 未知  0 为确定值  1 由H[i].F得到  2看H[i].fx之后得到
     node H[MAXN];
     initial(n,m,C0);
-    n0=n;
-    int X[MAXN]={0,0,0,1,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,
-					   0,0,1,0,0,0,1,0,0,0,0,1,0,0,0,1,0,0,0,0,
-					   1,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0,0,0,1,0 };
+    n0=n; 
     memset(TP,-1,sizeof(TP));
-	for (int i=1;i<=m;i++) C[i]=C0[i];
-    if(DEBUG1)
-    {
-	//----------for test
-    	memset(TP,0,sizeof(TP));
-        srand((int)time(0));
-    	for (int i=1;i<=testvar;i++){
-    		int h=rand()%60+1;
-    		while (1) {
-    			if (TP[h]==0) break;
-    			h=rand()%60+1;
-    		}
-    		TP[h]=-1;
-    	}
-
-    }
-	//----------for test
-    else memset(X,-1,sizeof(X));
+	for (int i=1;i<=m;i++) C[i]=C0[i]; 
+	memset(X,-1,sizeof(X));
     memset(TIME,0,sizeof(TIME));
 	branch(n,m,n,m,X,maxNum,ans,C,C0,TP,H,m);
 	printf("%d\n",maxNum);
