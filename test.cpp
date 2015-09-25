@@ -13,7 +13,7 @@ const int MAXN=505;
 //test
 bool DEBUG1=true;
 int testvar=50;
-int TIME=0;
+clock_t TIME[15];
 
 struct node{
 	set<int> F;
@@ -113,31 +113,39 @@ bool rule1(int n,int &m,int *X,int *TP,node *H,set<int> *C){
 	return f;
 }
 bool rule2(int n,int &m,int *X,int *TP,node *H,set<int> *C){  //不用管dgree
-	for (int z=1;z<=n;z++){
-		if (TP[z]!=-1) continue;
-		int p1=0,p2=0,h1=0,h2=0; //p1= x个数   p2= -x个数  h1= x unit  h2= -x unit
-		for (int i=1;i<=m;i++){
-			if (find(C[i],z)) {
-				p1++;
-			    if (C[i].size()==1) h1++;
-			}
-			if (find(C[i],-z)) {
-				p2++;
-				if (C[i].size()==1) h2++;
-			}
+	int p1[MAXN],p2[MAXN],h1[MAXN],h2[MAXN],x;
+	bool f=false;
+	set<int>::iterator it;
+	memset(p1,0,sizeof(p1));
+	memset(p2,0,sizeof(p2));
+	memset(h1,0,sizeof(h1));
+	memset(h2,0,sizeof(h2));
+	for (int i=1;i<=m;i++){
+		if (C[i].size()==1){
+			x=*C[i].begin(); 
+			if (x>0) h1[x]++;
+			    else h2[-x]++; 
 		}
-		if (h1>=p2){
-			TP[z]=0; //z可以直接赋值
-			X[z]=1;
-			return true;
-		}
-		if (h2>=p1){
-			TP[z]=0; //z可以直接赋值
-			X[z]=0;
-			return true;
+		for (it=C[i].begin();it!=C[i].end();it++){
+			x=*it;
+			if (x>0) p1[x]++;
+			    else p2[-x]++; 			
 		}
 	}
-	return false;
+	for (int z=1;z<=n;z++){
+		if (TP[z]!=-1) continue;
+		if (h1[z]>=p2[z]){
+			TP[z]=0;
+			X[z]=1;
+			f=true;
+		}else
+		if (h2[z]>=p1[z]){
+			TP[z]=0;
+			X[z]=0;
+			f=true;
+		}
+	}
+    return f; 
 }
 bool rule3(int n,int &m,int *X,int *TP,node *H,set<int> *C){
 	int degree[MAXN];
@@ -400,16 +408,35 @@ void reTP(int n,int *TP,int *tTP){
 }
 void branch(int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<int> *C,set<int> *C0,int *TP,node* H,int Upbound){
 	while (1){
+		clock_t start,finish;
+		start=clock();
 		while (reFrash(m,X,TP,H,C,Upbound)); //done
+		TIME[0]+=clock()-start;
 		if (Upbound<=maxNum) return;
-		if (rule1(n,m,X,TP,H,C)) continue; //done
-		if (rule2(n,m,X,TP,H,C)) continue; //done
-		if (rule3(n,m,X,TP,H,C)) continue; //done
-		if (rule5(n,m,X,TP,H,C)) continue; //done
-		if (rule6(n,m,TP,H,C))   continue; //done
-		if (rule7(n,m,X,TP,H,C)) continue; //done
-		if (rule8(n,m,X,TP,H,C)) continue; //done
-		if (rule9(m,C))          continue; //done
+		start=clock();
+		if (rule1(n,m,X,TP,H,C)) { TIME[1]+=clock()-start; continue; } //done
+		TIME[1]+=clock()-start; 
+		start=clock();
+		if (rule2(n,m,X,TP,H,C)) { TIME[2]+=clock()-start; continue; } //done
+		TIME[2]+=clock()-start; 
+		start=clock();
+		if (rule3(n,m,X,TP,H,C)) { TIME[3]+=clock()-start; continue; } //done
+		TIME[3]+=clock()-start; 
+		start=clock();
+		if (rule5(n,m,X,TP,H,C)) { TIME[5]+=clock()-start; continue; } //done
+		TIME[5]+=clock()-start; 
+		start=clock();
+		if (rule6(n,m,TP,H,C))   { TIME[6]+=clock()-start; continue; } //done
+		TIME[6]+=clock()-start; 
+		start=clock();
+		if (rule7(n,m,X,TP,H,C)) { TIME[7]+=clock()-start; continue; } //done
+		TIME[7]+=clock()-start; 
+		start=clock();
+		if (rule8(n,m,X,TP,H,C)) { TIME[8]+=clock()-start; continue; } //done
+		TIME[8]+=clock()-start; 
+		start=clock();
+		if (rule9(m,C))          { TIME[9]+=clock()-start; continue; } //done
+		TIME[9]+=clock()-start; 
 		break;
 	}
 	set<int> tC[MAXN];
@@ -464,6 +491,8 @@ int main(int argc,char **arg){
     freopen("sgen1-sat-60-100.cnf","r",stdin);
     freopen("output.txt","w",stdout);
     int n,m,n0,maxNum=0;
+    clock_t start,finish; 
+    start=clock();
 	set<int> C[MAXN],C0[MAXN];
 	int ans[MAXN];
 	int TP[MAXN]; //TP存变量的状态是 -1 未知  0 为确定值  1 由H[i].F得到  2看H[i].fx之后得到
@@ -492,6 +521,7 @@ int main(int argc,char **arg){
     }
 	//----------for test
     else memset(X,-1,sizeof(X));
+    memset(TIME,0,sizeof(TIME));
 	branch(n,m,n,m,X,maxNum,ans,C,C0,TP,H,m);
 	printf("%d\n",maxNum);
 	for (int i=1;i<=n0;i++)
@@ -501,5 +531,12 @@ int main(int argc,char **arg){
         if(i%20==0) puts("");
     }
 	puts("");
+	finish=clock();
+	printf("Totol time is %.5lf seconds.\n",(double)(finish - start)/CLOCKS_PER_SEC);
+	printf("reFrash : %.5lf seconds.\n",(double)TIME[0]/CLOCKS_PER_SEC);
+	for (int i=1;i<=9;i++){
+		if (i==4) continue;
+		printf("Rule %d  : %.5lf seconds.\n",i,(double)TIME[i]/CLOCKS_PER_SEC);
+	}
     return 0;
 }
