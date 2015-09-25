@@ -11,7 +11,7 @@
 using namespace std;
 const int MAXN=505;
 //test
-bool DEBUG1=false;
+bool DEBUG1=true;
 int testvar=50;
 int TIME=0;
 
@@ -413,14 +413,25 @@ void branch(int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<int> *C,
 		break;
 	}
 	set<int> tC[MAXN];
-	int tn,tm,tTP[MAXN],degree[MAXN],k=0;
+	int tn,tm,tTP[MAXN],degree[MAXN],D[MAXN],k=0;
 	set<int>::iterator it;
 	memset(degree,0,sizeof(degree));
     for (int i=1;i<=m;i++)
     	for (it=C[i].begin();it!=C[i].end();it++)
 			degree[abs(*it)]++;	
+	memset(D,0,sizeof(D));
+	for (int i=1;i<=n;i++) D[i]=degree[i]*2;
+	for (int i=1;i<=m;i++){ // 
+		int d3=0,d4=0;
+		for (it=C[i].begin();it!=C[i].end();it++){
+			if (degree[abs(*it)]==3) d3+=2;
+			if (degree[abs(*it)]==4) d4++;
+		}
+		for (it=C[i].begin();it!=C[i].end();it++)
+			D[abs(*it)]+=d3+d4;
+	}
 	for (int i=1;i<=n;i++)
-		if (TP[i]==-1 && degree[k]<degree[i]) k=i; 
+		if (TP[i]==-1 && D[k]<D[i]) k=i; 
 	if (k){
 		copy(tTP,C,TP,tC,n,m,tn,tm); //保护现场
 		TP[k]=0; //值确定
