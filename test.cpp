@@ -11,8 +11,8 @@
 using namespace std;
 const int MAXN=505;
 //test
-bool DEBUG1=true;
-int testvar=55;
+bool DEBUG1=false;
+int testvar=50;
 clock_t TIME[15];
 
 struct node{
@@ -39,15 +39,10 @@ void back(int *tTP,set<int> *C,int *TP,set<int> *tC,int &n,int &m,int tn,int tm)
 	for (int i=1;i<MAXN;i++) TP[i]=tTP[i]; //注意
 	for (int i=1;i<MAXN;i++) C[i]=tC[i];
 }
-void find3clause(int &c1,int &c2,int &c3,int x,int m,set<int> *C){
+void find3clause(int &c1,int &c2,int &c3,int x,int c[MAXN][3]){
 //input：找到degree 为3的variable x的3个子句
 //output：0
-	for (c1=1;c1<=m;c1++)
-		if (find(C[c1],x)) break;
-	for (c2=1;c2<=m;c2++)
-		if (find(C[c2],-x)) break;
-	for (c3=1;c3<=m;c3++)
-		if (c3!=c1 && c3!=c2 && (find(C[c3],x) || find(C[c3],-x))) break;
+	c1=c[x][0],c2=c[x][1],c3=c[x][2];
 }
 bool reFrash(int &m,int *X,int *TP,node *H,set<int> *C,int &Upbound){
 //input： 子句数m X是存当前赋值， TP是每个X的当前状态， H是递推关系， C是当前所有的子句
@@ -172,16 +167,30 @@ bool rule3(int n,int &m,int *X,int *TP,node *H,set<int> *C){
 	return false;
 }
 bool rule5(int n,int &m,int *X,int *TP,node *H,set<int> *C){ //在实现的时候只需要让x=1
-	int degree[MAXN];
-	set<int>::iterator it;
+	int degree[MAXN],c[MAXN][3];
+	set<int>::iterator it; 
 	memset(degree,0,sizeof(degree));
     for (int i=1;i<=m;i++)
     	for (it=C[i].begin();it!=C[i].end();it++)
 			degree[abs(*it)]++;
+    memset(c,0,sizeof(c));
+    for (int i=1;i<=m;i++)
+    	for (it=C[i].begin();it!=C[i].end();it++){
+    		int x=*it;
+    		if (degree[abs(x)]!=3) continue;
+    		if (x>0){
+    			if (!c[x][0]) c[x][0]=i;
+    			        else  c[x][2]=i;
+    		}else{
+    			x=-x;
+    			if (!c[x][1]) c[x][1]=i;
+    			        else  c[x][2]=i;
+    		}
+    	} 
 	for (int x=1;x<=n;x++){
 		if (TP[x]!=-1 || degree[x]!=3) continue;
 		int c1,c2,c3;
-		find3clause(c1,c2,c3,x,m,C); //找到这三个clause
+		find3clause(c1,c2,c3,x,c); //找到这三个clause
 		int y=0;
 		for (it=C[c1].begin();it!=C[c1].end();it++){
 			if (degree[abs(*it)]!=3 || TP[abs(*it)]!=-1) continue; //是否出问题
@@ -204,16 +213,30 @@ bool rule5(int n,int &m,int *X,int *TP,node *H,set<int> *C){ //在实现的时�
 	return false;
 }
 bool rule6(int n,int &m,int *TP,node *H,set<int> *C){ //注意m为变参
-	int degree[MAXN];
-	set<int>::iterator it;
+	int degree[MAXN],c[MAXN][3];
+	set<int>::iterator it; 
 	memset(degree,0,sizeof(degree));
     for (int i=1;i<=m;i++)
     	for (it=C[i].begin();it!=C[i].end();it++)
 			degree[abs(*it)]++;
+    memset(c,0,sizeof(c));
+    for (int i=1;i<=m;i++)
+    	for (it=C[i].begin();it!=C[i].end();it++){
+    		int x=*it;
+    		if (degree[abs(x)]!=3) continue;
+    		if (x>0){
+    			if (!c[x][0]) c[x][0]=i;
+    			        else  c[x][2]=i;
+    		}else{
+    			x=-x;
+    			if (!c[x][1]) c[x][1]=i;
+    			        else  c[x][2]=i;
+    		}
+    	} 
 	for (int x=1;x<=n;x++){
 		if (TP[x]!=-1 || degree[x]!=3) continue;
 		int c1,c2,c3,y=0;
-		find3clause(c1,c2,c3,x,m,C); //找到这三个clause
+		find3clause(c1,c2,c3,x,c); //找到这三个clause
 		for (it=C[c1].begin();it!=C[c1].end();it++){
 			if (*it==x) continue; //注意
 			if (TP[abs(*it)]!=-1) continue; //需要么
@@ -253,16 +276,30 @@ bool rule6(int n,int &m,int *TP,node *H,set<int> *C){ //注意m为变参
 	return false;
 }
 bool rule7(int n,int &m,int *X,int *TP,node *H,set<int> *C){
-	int degree[MAXN];
-	set<int>::iterator it;
+	int degree[MAXN],c[MAXN][3];
+	set<int>::iterator it; 
 	memset(degree,0,sizeof(degree));
     for (int i=1;i<=m;i++)
     	for (it=C[i].begin();it!=C[i].end();it++)
 			degree[abs(*it)]++;
+    memset(c,0,sizeof(c));
+    for (int i=1;i<=m;i++)
+    	for (it=C[i].begin();it!=C[i].end();it++){
+    		int x=*it;
+    		if (degree[abs(x)]!=3) continue;
+    		if (x>0){
+    			if (!c[x][0]) c[x][0]=i;
+    			        else  c[x][2]=i;
+    		}else{
+    			x=-x;
+    			if (!c[x][1]) c[x][1]=i;
+    			        else  c[x][2]=i;
+    		}
+    	} 
 	for (int z2=1;z2<=n;z2++){
 		if (TP[z2]!=-1 || degree[z2]!=3) continue;
 		int c1,c2,c3;
-		find3clause(c1,c2,c3,z2,m,C); //找到这三个clause
+		find3clause(c1,c2,c3,z2,c); //找到这三个clause
 		//找到了degree=3的z2三个clause c1,c2,c3
 		int z1=0;
 		for (it=C[c1].begin();it!=C[c1].end();it++)
@@ -281,16 +318,30 @@ bool rule7(int n,int &m,int *X,int *TP,node *H,set<int> *C){
 	return false;
 }
 bool rule8(int &n,int &m,int *X,int *TP,node *H,set<int> *C){ // (~x',D1,D2)
-	int degree[MAXN];
-	set<int>::iterator it;
+	int degree[MAXN],c[MAXN][3];
+	set<int>::iterator it; 
 	memset(degree,0,sizeof(degree));
     for (int i=1;i<=m;i++)
     	for (it=C[i].begin();it!=C[i].end();it++)
 			degree[abs(*it)]++;
+    memset(c,0,sizeof(c));
+    for (int i=1;i<=m;i++)
+    	for (it=C[i].begin();it!=C[i].end();it++){
+    		int x=*it;
+    		if (degree[abs(x)]!=3) continue;
+    		if (x>0){
+    			if (!c[x][0]) c[x][0]=i;
+    			        else  c[x][2]=i;
+    		}else{
+    			x=-x;
+    			if (!c[x][1]) c[x][1]=i;
+    			        else  c[x][2]=i;
+    		}
+    	} 
 	for (int x=1;x<=n;x++){
 		if (TP[x]!=-1 || degree[x]!=3) continue;
 		int c1,c2,d1,d2;
-		find3clause(c1,c2,d1,x,m,C);
+		find3clause(c1,c2,d1,x,c);
 		if (find(C[d1],x)){ //x,y为(2,1)
 			swap(c2,d1);
 			int y=0;
@@ -304,7 +355,7 @@ bool rule8(int &n,int &m,int *X,int *TP,node *H,set<int> *C){ // (~x',D1,D2)
 			}
 			if (!y) continue; //找不到对应的y
 			int yc1,yc2;
-			find3clause(yc1,d2,yc2,y,m,C);
+			find3clause(yc1,d2,yc2,y,c);
 			H[y].F.clear(),H[y].F.insert(-x);
 			H[x].F=C[d1],H[x].F.erase(-x);
 			TP[++n]=-1;
@@ -328,7 +379,7 @@ bool rule8(int &n,int &m,int *X,int *TP,node *H,set<int> *C){ // (~x',D1,D2)
 			}
 			if (!y) continue; //找不到对应的y
 			int yc1,yc2;
-			find3clause(d2,yc2,yc1,y,m,C);
+			find3clause(d2,yc2,yc1,y,c);
 			H[x].F.clear(),H[x].F.insert(-y);
 			H[y].F=C[d1],H[y].F.erase(x);
 			TP[++n]=-1;
