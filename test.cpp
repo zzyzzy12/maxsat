@@ -99,7 +99,7 @@ bool rule1_1(int n,int &m,int *X,int *TP,node *H,set<int> *C){
 	}
 	return f;
 }
-bool rule1_2(int n,int &m,int *X,int *TP,node *H,set<int> *C){
+bool rule1_2(int n,int &m,int *X,int *TP,node *H,set<int> *C,int &Upbound){
 	bool f=false;
 	int p[MAXN][2];
 	memset(p,0,sizeof(p));
@@ -116,6 +116,7 @@ bool rule1_2(int n,int &m,int *X,int *TP,node *H,set<int> *C){
 			C[p[x][0]]=C[m--],C[p[x][1]]=C[m--];
 		else
 			C[p[x][1]]=C[m--],C[p[x][0]]=C[m--];
+		Upbound--;
 		f=true;
 	} 
 	return f;
@@ -410,18 +411,26 @@ bool rule8(int &n,int &m,int *X,int *TP,node *H,set<int> *C){ // (~x',D1,D2)
 	}
 	return false;
 }
-bool rule9(int &m,set<int> *C){
+bool rule9(int &m,int *TP,set<int> *C){
+	int p[MAXN][2];
 	set<int>::iterator it;
+	memset(p,0,sizeof(p));
+	for (int i=1;i<=m;i++){
+		if (C[i].size()!=1) continue;
+		int x=*C[i].begin();
+		if (x>0) p[x][0]=i;
+		    else p[-x][1]=i;
+	} 
 	for (int i=1;i<=m;i++){
 		if (C[i].size()!=2) continue;
 		int x[2],t=0;
 		for (it=C[i].begin();it!=C[i].end();it++) x[t++]=*it;
-		int p0=0,p1=0;
-		for (int j=1;j<=m;j++){
-			if (C[j].size()!=1) continue;
-			if (find(C[j],-x[0])) p0=j;
-			if (find(C[j],-x[1])) p1=j;
-		}
+		if (TP[abs(x[0])]!=-1 || TP[abs(x[1])]!=-1) continue;
+		int p0,p1;
+		if (x[0]>0) p0=p[x[0]][1];
+		       else p0=p[-x[0]][0];
+		if (x[1]>0) p1=p[x[1]][1];
+			   else p0=p[-x[1]][0];
 		if (!p0 || !p1) continue;
 		C[p1].insert(-x[0]); //先插入 后删除
 		if (i>p0)
@@ -485,7 +494,7 @@ void branch(int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<int> *C,
 		if (rule1_1(n,m,X,TP,H,C)) { TIME[1]+=clock()-start; continue; } //done
 		TIME[1]+=clock()-start; 
 		start=clock();
-		if (rule1_2(n,m,X,TP,H,C)) { TIME[10]+=clock()-start; continue; } //done
+		if (rule1_2(n,m,X,TP,H,C,Upbound)) { TIME[10]+=clock()-start; continue; } //done
 		TIME[10]+=clock()-start; 
 		start=clock();
 		if (rule2(n,m,X,TP,H,C)) { TIME[2]+=clock()-start; continue; } //done
@@ -506,7 +515,7 @@ void branch(int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<int> *C,
 		if (rule8(n,m,X,TP,H,C)) { TIME[8]+=clock()-start; continue; } //done
 		TIME[8]+=clock()-start; 
 		start=clock();
-		if (rule9(m,C))          { TIME[9]+=clock()-start; continue; } //done
+		if (rule9(m,TP,C))          { TIME[9]+=clock()-start; continue; } //done
 		TIME[9]+=clock()-start; 
 		break;
 	}
