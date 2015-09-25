@@ -12,7 +12,7 @@ using namespace std;
 const int MAXN=505;
 //test
 bool DEBUG1=true;
-int testvar=50;
+int testvar=55;
 clock_t TIME[15];
 
 struct node{
@@ -86,6 +86,7 @@ void initial(int &n,int &m,set<int> *C){ //读取数据
   }
 }
 bool rule1(int n,int &m,int *X,int *TP,node *H,set<int> *C){
+	int p[MAXN][2];
 	set<int>::iterator it;
 	bool f=false;
 	for (int i=1;i<=m;i++)
@@ -95,21 +96,22 @@ bool rule1(int n,int &m,int *X,int *TP,node *H,set<int> *C){
 			f=true;
 			break;
 		}
+	memset(p,0,sizeof(p));
+	for (int i=1;i<=m;i++){
+		if (C[i].size()!=1) continue;
+		int x=*C[i].begin();
+		if (x>0) p[x][0]=i;
+		    else p[-x][1]=i; 
+	}
 	for (int x=1;x<=n;x++){
 		if (TP[x]!=-1) continue;
-		int p1=0,p2=0;
-		for (int i=1;i<=m;i++){
-			if (C[i].size()!=1) continue;
-			if (find(C[i],x)) p1=i;
-			if (find(C[i],-x)) p2=i;
-		}
-		if (!p1 || !p2) continue; //找不到包含~x的unit clause
-		if (p1>p2) //多个删除注意顺序
-		   C[p1]=C[m--],C[p2]=C[m--]; //出问题
+		if (!p[x][0] || !p[x][1]) continue;
+		if (p[x][0]>p[x][1])
+			C[p[x][0]]=C[m--],C[p[x][1]]=C[m--];
 		else
-		   C[p2]=C[m--],C[p1]=C[m--];
+			C[p[x][1]]=C[m--],C[p[x][0]]=C[m--];
 		f=true;
-	}
+	} 
 	return f;
 }
 bool rule2(int n,int &m,int *X,int *TP,node *H,set<int> *C){  //不用管dgree
