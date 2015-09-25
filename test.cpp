@@ -44,7 +44,7 @@ void find3clause(int &c1,int &c2,int &c3,int x,int c[MAXN][3]){
 //output：0
 	c1=c[x][0],c2=c[x][1],c3=c[x][2];
 }
-bool reFrash(int &m,int *X,int *TP,node *H,set<int> *C,int &Upbound){
+bool reNew(int &m,int *X,int *TP,node *H,set<int> *C,int &Upbound){
 //input： 子句数m X是存当前赋值， TP是每个X的当前状态， H是递推关系， C是当前所有的子句
 //output：1 至少做了一次操作：{1.子句为空，去掉子句；2.如果一个子句的字符值为1，去掉该子句； 如果为0,删去该子句中的字符}
 //      0 无操作
@@ -84,15 +84,16 @@ bool rule1(int n,int &m,int *X,int *TP,node *H,set<int> *C){
 	int p[MAXN][2];
 	set<int>::iterator it;
 	bool f=false;
-	for (int i=1;i<=m;i++)
+	memset(p,0,sizeof(p)); 
+	for (int i=1;i<=m;i++){
+		bool ok=false;
 		for (it=C[i].begin();it!=C[i].end();it++){
 			if (!find(C[i],-*it)) continue; // ~x x 别和X[i]=0,1弄混
 			C[i--]=C[m--];
-			f=true;
+			f=ok=true;
 			break;
 		}
-	memset(p,0,sizeof(p));
-	for (int i=1;i<=m;i++){
+		if (ok) continue; 
 		if (C[i].size()!=1) continue;
 		int x=*C[i].begin();
 		if (x>0) p[x][0]=i;
@@ -145,19 +146,23 @@ bool rule2(int n,int &m,int *X,int *TP,node *H,set<int> *C){  //不用管dgree
     return f; 
 }
 bool rule3(int n,int &m,int *X,int *TP,node *H,set<int> *C){
-	int degree[MAXN];
+	int degree[MAXN],c[MAXN][2];
 	set<int>::iterator it;
 	memset(degree,0,sizeof(degree));
     for (int i=1;i<=m;i++)
     	for (it=C[i].begin();it!=C[i].end();it++)
 			degree[abs(*it)]++;
+    memset(c,0,sizeof(c));
+    for (int i=1;i<=m;i++)
+    	for (it=C[i].begin();it!=C[i].end();it++){
+    		int x=*it;
+    		if (degree[abs(x)]!=2) continue;
+    		if (x>0) c[x][0]=i;
+    		   else  c[-x][1]=i; 
+    	} 
 	for (int x=1;x<=n;x++){
 		if (TP[x]!=-1 || degree[x]!=2) continue;
-		int c1,c2;
-		for (int i=1;i<=m;i++){ // x,x  ~x,~x在rule2会过滤掉
-			if (find(C[i],x)) c1=i;
-			if (find(C[i],-x)) c2=i;
-		}
+		int c1=c[x][0],c2=c[x][1]; 
 		C[c1].insert(C[c2].begin(),C[c2].end()); //合并set
 		C[c1].erase(x),C[c1].erase(-x);
 		TP[x]=1,H[x].F=C[c2],H[x].F.erase(-x);// x由c2得来
@@ -463,7 +468,7 @@ void branch(int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<int> *C,
 	while (1){
 		clock_t start,finish;
 		start=clock();
-		while (reFrash(m,X,TP,H,C,Upbound)); //done
+		while (reNew(m,X,TP,H,C,Upbound)); //done
 		TIME[0]+=clock()-start;
 		if (Upbound<=maxNum) return;
 		start=clock();
@@ -586,7 +591,7 @@ int main(int argc,char **arg){
 	puts("");
 	finish=clock();
 	printf("Totol time is %.5lf seconds.\n",(double)(finish - start)/CLOCKS_PER_SEC);
-	printf("reFrash : %.5lf seconds.\n",(double)TIME[0]/CLOCKS_PER_SEC);
+	printf("reNew   : %.5lf seconds.\n",(double)TIME[0]/CLOCKS_PER_SEC);
 	for (int i=1;i<=9;i++){
 		if (i==4) continue;
 		printf("Rule %d  : %.5lf seconds.\n",i,(double)TIME[i]/CLOCKS_PER_SEC);
