@@ -69,6 +69,12 @@ bool reNew(int &m,int *X,int *TP,node *H,set<int> *C,int &Upbound){
 }
 void initial(int &n,int &m,set<int> *C){ //读取数据
 //input：读入数据
+  char s[100];
+  while (~scanf("%s",s)){
+  	  if (strlen(s)!=1) continue;
+  	  if (s[0]=='p') break;
+  }
+  scanf("%s",s);
   scanf("%d%d",&n,&m);
   for (int t=1;t<=m;t++){
   	int x;
@@ -564,8 +570,8 @@ void branch(int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<int> *C,
 	return;
 }
 int main(int argc,char **arg){
-    freopen("sgen1-sat-60-100.cnf","r",stdin);
-    freopen("output.txt","w",stdout);
+    freopen(arg[1],"r",stdin);
+    //freopen("output.txt","w",stdout);
     int n,m,n0,maxNum=0;
     clock_t start,finish; 
     start=clock();
@@ -596,6 +602,6 @@ int main(int argc,char **arg){
 	for (int i=2;i<=9;i++){
 		if (i==4) continue;
 		printf("Rule %d   : %.5lf seconds.\n",i,(double)TIME[i]/CLOCKS_PER_SEC);
-	} 
+	}
     return 0;
 }
