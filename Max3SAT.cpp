@@ -9,7 +9,7 @@
 #include<queue>
 #include<stack>
 using namespace std;
-const int MAXN=505;
+const int MAXN=1505;
 //test 
 clock_t TIME[15];
 
