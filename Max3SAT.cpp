@@ -368,58 +368,52 @@ bool rule8(int &n,int &m,int *X,int *TP,node *H,set<int> *C){ // (~x',D1,D2)
 		if (TP[x]!=-1 || degree[x]!=3) continue;
 		int c1,c2,d1,d2;
 		find3clause(c1,c2,d1,x,c);
-		if (find(C[d1],x)){ //x,y为(2,1)
-			swap(c2,d1);
-			int y=0;
-			for (it=C[c1].begin();it!=C[c1].end();it++){
-				if (*it<0 || TP[*it]!=-1 || degree[*it]!=3) continue;
-				if (*it==x) continue;
-				if (find(C[c2],*it)){
-					y=*it; //y满足: 正的在c1,c2中出现  y未赋值  y的degree=3  y!=x
-					break;
-				}
+		if (find(C[d1],x)) swap(c2,d1); // x (2,1)
+		              else swap(c1,d1); // x (1,2)
+		int y=0;
+		for (it=C[c1].begin();it!=C[c1].end();it++){
+			if (TP[abs(*it)]!=-1 || degree[abs(*it)]!=3) continue;
+			if (abs(*it)==x) continue;
+			if (find(C[c2],*it)){
+				y=abs(*it); //y满足:  y未赋值  y的degree=3  y!=x
+				break;
 			}
-			if (!y) continue; //找不到对应的y
-			int yc1,yc2;
-			find3clause(yc1,d2,yc2,y,c);
-			H[y].F.clear(),H[y].F.insert(-x);
-			H[x].F=C[d1],H[x].F.erase(-x);
-			TP[++n]=-1;
-			TP[x]=TP[y]=n;
-			H[x].fd=H[y].fd=0;//x,y的值将由n来决定
-			C[c1].erase(x),C[c1].erase(y),C[c1].insert(n);
-			C[c2].erase(x),C[c2].erase(y),C[c2].insert(n);
-			C[d1].insert(C[d2].begin(),C[d2].end());
-			C[d1].erase(-x),C[d1].erase(-y),C[d1].insert(-n);
-			C[d2]=C[m--];   //删去d2
-		}else{				//x,y为(1,2)
-			swap(c1,d1);
-			int y=0;
-			for (it=C[c1].begin();it!=C[c1].end();it++){
-				if (*it>0 || TP[-*it]!=-1 || degree[-*it]!=3) continue;
-				if (-*it==x) continue;
-				if (find(C[c2],*it)){
-					y=-*it;
-					break;
-				}
-			}
-			if (!y) continue; //找不到对应的y
-			int yc1,yc2;
-			find3clause(d2,yc2,yc1,y,c);
-			H[x].F.clear(),H[x].F.insert(-y);
-			H[y].F=C[d1],H[y].F.erase(x);
-			TP[++n]=-1;
-			TP[x]=TP[y]=n;
-			H[x].fd=H[y].fd=1;//x,y的值将由n来决定
-			C[c1].erase(-x),C[c1].erase(-y),C[c1].insert(n);
-			C[c2].erase(-x),C[c2].erase(-y),C[c2].insert(n);
-			C[d1].insert(C[d2].begin(),C[d2].end());
-			C[d1].erase(x),C[d1].erase(y),C[d1].insert(-n);
-			C[d2]=C[m--];
 		}
-		//puts("Rule 8");
+		if (!y) continue; //找不到对应的y   
+		find3clause(c1,c2,d2,y,c);
+		if (find(C[d2],y)) swap(c2,d2);
+		              else swap(c1,d2);
+		TP[++n]=-1;
+		TP[x]=TP[y]=n;
+		if (find(C[d1],-x)){
+			H[x].fd=0;
+			H[x].F=C[d1],H[x].F.erase(-x);
+		}else{
+			H[x].fd=1;
+			H[x].F=C[d2]; 
+			if (find(C[d2],y)) H[x].F.erase(y);
+			              else H[x].F.erase(-y);
+		}
+		if (find(C[d2],-y)){
+			H[y].fd=0;
+			H[y].F.clear(),H[y].F.insert(-x);
+		}else{
+			H[y].fd=1;
+			H[y].F.clear(),H[y].F.insert(x);
+		}
+		if (find(C[c1],x)) C[c1].erase(x);
+		              else C[c1].erase(-x);
+		if (find(C[c2],x)) C[c2].erase(x);
+		              else C[c2].erase(-x);
+		if (find(C[d1],x)) C[d1].erase(x);
+		              else C[d1].erase(-x);
+		if (find(C[d2],y)) C[d2].erase(y);
+		              else C[d2].erase(-y);		
+		C[d1].insert(C[d2].begin(),C[d2].end());
+		C[d2]=C[m--];
+		C[c1].insert(n),C[c2].insert(n),C[d1].insert(n); 
 		return true;
-	}
+	} 
 	return false;
 }
 bool rule9(int &m,int *TP,set<int> *C,int &Upbound){
