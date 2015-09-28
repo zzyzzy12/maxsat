@@ -12,6 +12,7 @@ using namespace std;
 const int MAXN=1505;
 //test 
 clock_t TIME[15];
+int COUNT[15];
 
 struct node{
 	set<int> F;
@@ -101,6 +102,7 @@ bool rule1_1(int n,int &m,int *X,int *TP,node *H,set<int> *C){
 			}
 		}
 	}
+	//if (f) puts("rule1.1");
 	return f;
 }
 bool rule1_2(int n,int &m,int *X,int *TP,node *H,set<int> *C,int &Upbound){
@@ -123,6 +125,7 @@ bool rule1_2(int n,int &m,int *X,int *TP,node *H,set<int> *C,int &Upbound){
 		Upbound--;
 		f=true;
 	} 
+	//if (f) puts("rule1.2");
 	return f;
 }
 bool rule2(int n,int &m,int *X,int *TP,node *H,set<int> *C){  //不用管dgree
@@ -228,6 +231,7 @@ bool rule5(int n,int &m,int *X,int *TP,node *H,set<int> *C){ //在实现的时�
 			TP[x]=0;
 			X[x]=0;
 		}
+		//puts("Rule 5");
 		return true;
 	}
 	return false;
@@ -260,7 +264,7 @@ bool rule6(int n,int &m,int *TP,node *H,set<int> *C){ //注意m为变参
 		for (it=C[c1].begin();it!=C[c1].end();it++){
 			if (*it==x) continue; //注意
 			if (TP[abs(*it)]!=-1) continue; //需要么
-			if (degree[abs(*it)]!=3) continue; //注意限制y的degree=3  *it的正负不用限制
+    	//	if (degree[abs(*it)]!=3) continue; //注意限制y的degree=3  *it的正负不用限制
 			if (find(C[c2],-*it)){
 				y=*it;
 				break;
@@ -291,6 +295,7 @@ bool rule6(int n,int &m,int *TP,node *H,set<int> *C){ //注意m为变参
 			else
 				C[c3]=C[m--],C[c2]=C[m--];
 		}  
+		//puts("Rule 6");
 		return true;
 	}
 	return false;
@@ -333,6 +338,7 @@ bool rule7(int n,int &m,int *X,int *TP,node *H,set<int> *C){
 		}else{				 //z2为(1,2)
 			C[c2].erase(z1);
 		}
+		//puts("Rule 7");
 		return true;
 	}
 	return false;
@@ -411,6 +417,7 @@ bool rule8(int &n,int &m,int *X,int *TP,node *H,set<int> *C){ // (~x',D1,D2)
 			C[d1].erase(x),C[d1].erase(y),C[d1].insert(-n);
 			C[d2]=C[m--];
 		}
+		//puts("Rule 8");
 		return true;
 	}
 	return false;
@@ -486,6 +493,7 @@ void reTP(int n,int *TP,int *tTP){
 	for (int i=1;i<=n;i++) TP[i]=tTP[i];
 }
 void branch(int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<int> *C,set<int> *C0,int *TP,node* H,int Upbound){
+	COUNT[0]++;
 	while (1){
 		clock_t start;
 		start=clock();
@@ -493,31 +501,31 @@ void branch(int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<int> *C,
 		TIME[0]+=clock()-start;
 		if (Upbound<=maxNum) return;
 		start=clock();
-		if (rule1_1(n,m,X,TP,H,C)) { TIME[1]+=clock()-start; continue; } //done
+		if (rule1_1(n,m,X,TP,H,C)) { TIME[1]+=clock()-start; COUNT[1]++; continue; } //done
 		TIME[1]+=clock()-start; 
 		start=clock();
-		if (rule1_2(n,m,X,TP,H,C,Upbound)) { TIME[10]+=clock()-start; continue; } //done
+		if (rule1_2(n,m,X,TP,H,C,Upbound)) { TIME[10]+=clock()-start; COUNT[4]++; continue; } //done
 		TIME[10]+=clock()-start; 
 		start=clock();
-		if (rule2(n,m,X,TP,H,C)) { TIME[2]+=clock()-start; continue; } //done
+		if (rule2(n,m,X,TP,H,C)) { TIME[2]+=clock()-start; COUNT[2]++; continue; } //done
 		TIME[2]+=clock()-start; 
 		start=clock();
-		if (rule3(n,m,X,TP,H,C)) { TIME[3]+=clock()-start; continue; } //done
+		if (rule3(n,m,X,TP,H,C)) { TIME[3]+=clock()-start; COUNT[3]++; continue; } //done
 		TIME[3]+=clock()-start; 
 		start=clock();
-		if (rule5(n,m,X,TP,H,C)) { TIME[5]+=clock()-start; continue; } //done
+		if (rule5(n,m,X,TP,H,C)) { TIME[5]+=clock()-start; COUNT[5]++; continue; } //done
 		TIME[5]+=clock()-start; 
 		start=clock();
-		if (rule6(n,m,TP,H,C))   { TIME[6]+=clock()-start; continue; } //done
+		if (rule6(n,m,TP,H,C))   { TIME[6]+=clock()-start; COUNT[6]++; continue; } //done
 		TIME[6]+=clock()-start; 
 		start=clock();
-		if (rule7(n,m,X,TP,H,C)) { TIME[7]+=clock()-start; continue; } //done
+		if (rule7(n,m,X,TP,H,C)) { TIME[7]+=clock()-start; COUNT[7]++; continue; } //done
 		TIME[7]+=clock()-start; 
 		start=clock();
-		if (rule8(n,m,X,TP,H,C)) { TIME[8]+=clock()-start; continue; } //done
+		if (rule8(n,m,X,TP,H,C)) { TIME[8]+=clock()-start; COUNT[8]++; continue; } //done
 		TIME[8]+=clock()-start; 
 		start=clock();
-		if (rule9(m,TP,C,Upbound)) { TIME[9]+=clock()-start; continue; } //done
+		if (rule9(m,TP,C,Upbound)) { TIME[9]+=clock()-start; COUNT[9]++; continue; } //done
 		TIME[9]+=clock()-start; 
 		break;
 	}
@@ -585,23 +593,31 @@ int main(int argc,char **arg){
 	for (int i=1;i<=m;i++) C[i]=C0[i]; 
 	memset(X,-1,sizeof(X));
     memset(TIME,0,sizeof(TIME));
+    memset(COUNT,0,sizeof(COUNT));
 	branch(n,m,n,m,X,maxNum,ans,C,C0,TP,H,m);
+	puts("---------------------------------------------");
 	printf("%d\n",maxNum);
-	for (int i=1;i<=n0;i++)
-    {
+	for (int i=1;i<=n0;i++){
         if(ans[i]) printf("%d ", i);
-        else printf("%d ",-i);
-        if(i%20==0) puts("");
+        else printf("%d ",-i); 
     }
-	puts("");
+	puts("\n");
 	finish=clock();
-	printf("Totol time is %.5lf seconds.\n",(double)(finish - start)/CLOCKS_PER_SEC);
+	printf("Total time is %.5lf seconds.\n",(double)(finish - start)/CLOCKS_PER_SEC);
 	printf("reNew    : %.5lf seconds.\n",(double)TIME[0]/CLOCKS_PER_SEC);
 	printf("Rule 1.1 : %.5lf seconds.\n",(double)TIME[1]/CLOCKS_PER_SEC);
 	printf("Rule 1.2 : %.5lf seconds.\n",(double)TIME[10]/CLOCKS_PER_SEC);
 	for (int i=2;i<=9;i++){
 		if (i==4) continue;
 		printf("Rule %d   : %.5lf seconds.\n",i,(double)TIME[i]/CLOCKS_PER_SEC);
+	}
+	puts("");
+	printf("NB_Branch  : %d\n",COUNT[0]);
+	printf("NB_Rule 1.1: %d\n",COUNT[1]);
+	printf("NB_Rule 1.2: %d\n",COUNT[4]);
+	for (int i=2;i<=9;i++){
+		if (i==4) continue;
+		printf("NB_Rule %d  : %d\n",i,COUNT[i]);
 	}
     return 0;
 }
