@@ -74,7 +74,7 @@ void Output(){
 	printf("NB_Rule 1.1: %d\n",COUNT[1]);
 	printf("NB_Rule 1.2: %d\n",COUNT[4]);
 	for (int i=2;i<=9;i++){
-		if (i==4) continue;
+		if (i==4 || i==5) continue;
 		printf("NB_Rule %d  : %d\n",i,COUNT[i]);
 	} 
 	puts("#################################");
@@ -174,13 +174,9 @@ bool rule2(int n,int &m,int *X,int *TP,node *H,set<int> *C){  //不用管dgree
 	}
     return f; 
 }
-bool rule3(int n,int &m,int *X,int *TP,node *H,set<int> *C){
-	int degree[MAXN],c[MAXN][2];
-	set<int>::iterator it;
-	memset(degree,0,sizeof(degree));
-    for (int i=1;i<=m;i++)
-    	for (it=C[i].begin();it!=C[i].end();it++)
-			degree[abs(*it)]++;
+bool rule3(int n,int &m,int *X,int *TP,node *H,set<int> *C,int *degree){
+	int c[MAXN][2];
+	set<int>::iterator it; 
     memset(c,0,sizeof(c));
     for (int i=1;i<=m;i++)
     	for (it=C[i].begin();it!=C[i].end();it++){
@@ -199,61 +195,10 @@ bool rule3(int n,int &m,int *X,int *TP,node *H,set<int> *C){
 		return true;
 	}
 	return false;
-}
-bool rule5(int n,int &m,int *X,int *TP,node *H,set<int> *C){ //在实现的时候只需要让x=1
-	int degree[MAXN],c[MAXN][3];
-	set<int>::iterator it; 
-	memset(degree,0,sizeof(degree));
-    for (int i=1;i<=m;i++)
-    	for (it=C[i].begin();it!=C[i].end();it++)
-			degree[abs(*it)]++;
-    memset(c,0,sizeof(c));
-    for (int i=1;i<=m;i++)
-    	for (it=C[i].begin();it!=C[i].end();it++){
-    		int x=*it;
-    		if (degree[abs(x)]!=3) continue;
-    		if (x>0){
-    			if (!c[x][0]) c[x][0]=i;
-    			        else  c[x][2]=i;
-    		}else{
-    			x=-x;
-    			if (!c[x][1]) c[x][1]=i;
-    			        else  c[x][2]=i;
-    		}
-    	} 
-	for (int x=1;x<=n;x++){
-		if (TP[x]!=-1 || degree[x]!=3) continue;
-		int c1,c2,c3;
-		find3clause(c1,c2,c3,x,c); //找到这三个clause
-		int y=0;
-		for (it=C[c1].begin();it!=C[c1].end();it++){
-			if (degree[abs(*it)]!=3 || TP[abs(*it)]!=-1) continue; //是否出问题
-			if (*it==x) continue;
-			if (!find(C[c2],*it) && !find(C[c2],-*it)) continue;
-			if (!find(C[c3],*it) && !find(C[c3],-*it)) continue;
-			y=abs(*it);
-			break;
-		}
-		if (!y) continue;
-		if (find(C[c3],x)){ // x为(2,1)
-			TP[x]=0;
-			X[x]=1;
-		}else{		// x为(1,2)
-			TP[x]=0;
-			X[x]=0;
-		}
-		//puts("Rule 5");
-		return true;
-	}
-	return false;
-}
-bool rule6(int n,int &m,int *TP,node *H,set<int> *C){ //注意m为变参
-	int degree[MAXN],c[MAXN][3];
-	set<int>::iterator it; 
-	memset(degree,0,sizeof(degree));
-    for (int i=1;i<=m;i++)
-    	for (it=C[i].begin();it!=C[i].end();it++)
-			degree[abs(*it)]++;
+} 
+bool rule6(int n,int &m,int *TP,node *H,set<int> *C,int *degree){ //注意m为变参
+	int c[MAXN][3];
+	set<int>::iterator it;  
     memset(c,0,sizeof(c));
     for (int i=1;i<=m;i++)
     	for (it=C[i].begin();it!=C[i].end();it++){
@@ -311,13 +256,9 @@ bool rule6(int n,int &m,int *TP,node *H,set<int> *C){ //注意m为变参
 	}
 	return false;
 }
-bool rule7(int n,int &m,int *X,int *TP,node *H,set<int> *C){
-	int degree[MAXN],c[MAXN][3];
-	set<int>::iterator it; 
-	memset(degree,0,sizeof(degree));
-    for (int i=1;i<=m;i++)
-    	for (it=C[i].begin();it!=C[i].end();it++)
-			degree[abs(*it)]++;
+bool rule7(int n,int &m,int *X,int *TP,node *H,set<int> *C,int *degree){
+	int c[MAXN][3];
+	set<int>::iterator it;  
     memset(c,0,sizeof(c));
     for (int i=1;i<=m;i++)
     	for (it=C[i].begin();it!=C[i].end();it++){
@@ -354,13 +295,9 @@ bool rule7(int n,int &m,int *X,int *TP,node *H,set<int> *C){
 	}
 	return false;
 }
-bool rule8(int &n,int &m,int *X,int *TP,node *H,set<int> *C){ // (~x',D1,D2)
-	int degree[MAXN],c[MAXN][3];
-	set<int>::iterator it; 
-	memset(degree,0,sizeof(degree));
-    for (int i=1;i<=m;i++)
-    	for (it=C[i].begin();it!=C[i].end();it++)
-			degree[abs(*it)]++;
+bool rule8(int &n,int &m,int *X,int *TP,node *H,set<int> *C,int *degree){ // (~x',D1,D2)
+	int c[MAXN][3];
+	set<int>::iterator it;  
     memset(c,0,sizeof(c));
     for (int i=1;i<=m;i++)
     	for (it=C[i].begin();it!=C[i].end();it++){
@@ -525,7 +462,16 @@ void reUB(int n,int m,set<int> *C,int &Upbound){
 		}
 	}
 }
+void countDegree(int m,set<int> *C,int *degree){
+	set<int>::iterator it;
+	for (int i=0;i<MAXN;i++) degree[i]=0; 
+   	for (int i=1;i<=m;i++)
+     	for (it=C[i].begin();it!=C[i].end();it++)
+			degree[abs(*it)]++;	 
+}
 void branch(int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<int> *C,set<int> *C0,int *TP,node* H,int Upbound){
+	set<int>::iterator it;
+	int degree[MAXN];
 	COUNT[0]++;
 	while (1){
 		clock_t start;
@@ -543,19 +489,17 @@ void branch(int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<int> *C,
 		if (rule2(n,m,X,TP,H,C)) { TIME[2]+=clock()-start; COUNT[2]++; continue; } //done
 		TIME[2]+=clock()-start; 
 		start=clock();
-		if (rule3(n,m,X,TP,H,C)) { TIME[3]+=clock()-start; COUNT[3]++; continue; } //done
+		countDegree(m,C,degree);
+		if (rule3(n,m,X,TP,H,C,degree)) { TIME[3]+=clock()-start; COUNT[3]++; continue; } //done
 		TIME[3]+=clock()-start; 
-		start=clock();
-		if (rule5(n,m,X,TP,H,C)) { TIME[5]+=clock()-start; COUNT[5]++; continue; } //done
-		TIME[5]+=clock()-start; 
-		start=clock();
-		if (rule6(n,m,TP,H,C))   { TIME[6]+=clock()-start; COUNT[6]++; continue; } //done
+		start=clock(); 
+		if (rule6(n,m,TP,H,C,degree))   { TIME[6]+=clock()-start; COUNT[6]++; continue; } //done
 		TIME[6]+=clock()-start; 
 		start=clock();
-		if (rule7(n,m,X,TP,H,C)) { TIME[7]+=clock()-start; COUNT[7]++; continue; } //done
+		if (rule7(n,m,X,TP,H,C,degree)) { TIME[7]+=clock()-start; COUNT[7]++; continue; } //done
 		TIME[7]+=clock()-start; 
 		start=clock();
-		if (rule8(n,m,X,TP,H,C)) { TIME[8]+=clock()-start; COUNT[8]++; continue; } //done
+		if (rule8(n,m,X,TP,H,C,degree)) { TIME[8]+=clock()-start; COUNT[8]++; continue; } //done
 		TIME[8]+=clock()-start; 
 		start=clock();
 		if (rule9(m,TP,C,Upbound)) { TIME[9]+=clock()-start; COUNT[9]++; continue; } //done
@@ -566,13 +510,11 @@ void branch(int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<int> *C,
 	if (Upbound<=maxNum) return;
 	Output();
 	set<int> tC[MAXN];
-	int tn,tm,tTP[MAXN],degree[MAXN],k=0;
-	set<int>::iterator it;
+	int tn,tm,tTP[MAXN],k=0; 
 	memset(degree,0,sizeof(degree));
     for (int i=1;i<=m;i++)
     	for (it=C[i].begin();it!=C[i].end();it++)
 			degree[abs(*it)]++;	 
-
 	for (int i=1;i<=n;i++){
 		if (TP[i]!=-1) continue;
 		if (degree[k]==4) {
@@ -642,7 +584,7 @@ int main(int argc,char **arg){
 	printf("Rule 1.1 : %.5lf seconds.   (%.2lf %%) \n",(double)TIME[1]/CLOCKS_PER_SEC,100.0*TIME[1]/finish);
 	printf("Rule 1.2 : %.5lf seconds.   (%.2lf %%) \n",(double)TIME[10]/CLOCKS_PER_SEC,100.0*TIME[10]/finish);
 	for (int i=2;i<=9;i++){
-		if (i==4) continue;
+		if (i==4 || i==5) continue;
 		printf("Rule %d   : %.5lf seconds.   (%.2lf %%) \n",i,(double)TIME[i]/CLOCKS_PER_SEC,100.0*TIME[i]/finish);
 	}
 	printf("(%.2lf %%) \n\n",100.0*sum/finish);
