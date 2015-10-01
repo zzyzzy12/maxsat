@@ -68,6 +68,17 @@ bool reNew(int &m,int *X,int *TP,node *H,set<int> *C,int &Upbound){
 	}
 	return false;
 }
+void Output(){ 
+	system("clear");
+	printf("NB_Branch  : %d\n",COUNT[0]);
+	printf("NB_Rule 1.1: %d\n",COUNT[1]);
+	printf("NB_Rule 1.2: %d\n",COUNT[4]);
+	for (int i=2;i<=9;i++){
+		if (i==4) continue;
+		printf("NB_Rule %d  : %d\n",i,COUNT[i]);
+	} 
+	puts("#################################");
+}
 void initial(int &n,int &m,set<int> *C){ //读取数据
 //input：读入数据
   char s[100];
@@ -486,6 +497,34 @@ void reTP(int n,int *TP,int *tTP){
 //还原tp
 	for (int i=1;i<=n;i++) TP[i]=tTP[i];
 }
+void reUB(int n,int m,set<int> *C,int &Upbound){
+	int unit[n+5][2];
+	set<int>::iterator it;
+	memset(unit,0,sizeof(unit));
+	for (int i=1;i<=m;i++){
+		if (C[i].size()!=1) continue;
+		int x=*C[i].begin();
+		if (x>0) unit[x][0]++;   //  为正的unit个数
+		    else unit[-x][1]++;  //  为负的unit个数
+	}
+	for (int i=1;i<=m;i++){
+		for (it=C[i].begin();it!=C[i].end();it++){
+			int x=*it;
+			if (x>0){
+				if (!unit[x][1]) break;
+			}else{
+				if (!unit[-x][0]) break;
+			}
+		}
+		if (it!=C[i].end()) continue;
+		Upbound--;
+		for (it=C[i].begin();it!=C[i].end();it++){
+			int x=*it;
+			if (x>0) unit[x][1]--;
+				else unit[-x][0]--;
+		}
+	}
+}
 void branch(int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<int> *C,set<int> *C0,int *TP,node* H,int Upbound){
 	COUNT[0]++;
 	while (1){
@@ -523,26 +562,25 @@ void branch(int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<int> *C,
 		TIME[9]+=clock()-start; 
 		break;
 	}
+	reUB(n,m,C,Upbound);
+	if (Upbound<=maxNum) return;
+	Output();
 	set<int> tC[MAXN];
-	int tn,tm,tTP[MAXN],degree[MAXN],D[MAXN],k=0;
+	int tn,tm,tTP[MAXN],degree[MAXN],k=0;
 	set<int>::iterator it;
 	memset(degree,0,sizeof(degree));
     for (int i=1;i<=m;i++)
     	for (it=C[i].begin();it!=C[i].end();it++)
-			degree[abs(*it)]++;	
-	memset(D,0,sizeof(D));
-	for (int i=1;i<=n;i++) D[i]=degree[i]*2;
-	for (int i=1;i<=m;i++){ // 
-		int d3=0,d4=0;
-		for (it=C[i].begin();it!=C[i].end();it++){
-			if (degree[abs(*it)]==3) d3+=2;
-			if (degree[abs(*it)]==4) d4++;
+			degree[abs(*it)]++;	 
+
+	for (int i=1;i<=n;i++){
+		if (TP[i]!=-1) continue;
+		if (degree[k]==4) {
+			k=i;
+			break;
 		}
-		for (it=C[i].begin();it!=C[i].end();it++)
-			D[abs(*it)]+=d3+d4;
+		if (degree[k]<degree[i]) k=i; 
 	}
-	for (int i=1;i<=n;i++)
-		if (TP[i]==-1 && D[k]<D[i]) k=i; 
 	if (k){
 		copy(tTP,C,TP,tC,n,m,tn,tm); //保护现场
 		TP[k]=0; //值确定
@@ -596,22 +634,18 @@ int main(int argc,char **arg){
         else printf("%d ",-i); 
     }
 	puts("\n");
-	finish=clock();
-	printf("Total time is %.5lf seconds.\n",(double)(finish - start)/CLOCKS_PER_SEC);
-	printf("reNew    : %.5lf seconds.\n",(double)TIME[0]/CLOCKS_PER_SEC);
-	printf("Rule 1.1 : %.5lf seconds.\n",(double)TIME[1]/CLOCKS_PER_SEC);
-	printf("Rule 1.2 : %.5lf seconds.\n",(double)TIME[10]/CLOCKS_PER_SEC);
+	finish=clock()-start;
+	double sum=0;
+	for (int i=0;i<=10;i++) sum+=TIME[i];
+	printf("Total time is %.5lf seconds.\n",(double)finish/CLOCKS_PER_SEC);
+	printf("reNew    : %.5lf seconds.   (%.2lf %%) \n",(double)TIME[0]/CLOCKS_PER_SEC,100.0*TIME[0]/finish);
+	printf("Rule 1.1 : %.5lf seconds.   (%.2lf %%) \n",(double)TIME[1]/CLOCKS_PER_SEC,100.0*TIME[1]/finish);
+	printf("Rule 1.2 : %.5lf seconds.   (%.2lf %%) \n",(double)TIME[10]/CLOCKS_PER_SEC,100.0*TIME[10]/finish);
 	for (int i=2;i<=9;i++){
 		if (i==4) continue;
-		printf("Rule %d   : %.5lf seconds.\n",i,(double)TIME[i]/CLOCKS_PER_SEC);
+		printf("Rule %d   : %.5lf seconds.   (%.2lf %%) \n",i,(double)TIME[i]/CLOCKS_PER_SEC,100.0*TIME[i]/finish);
 	}
-	puts("");
-	printf("NB_Branch  : %d\n",COUNT[0]);
-	printf("NB_Rule 1.1: %d\n",COUNT[1]);
-	printf("NB_Rule 1.2: %d\n",COUNT[4]);
-	for (int i=2;i<=9;i++){
-		if (i==4) continue;
-		printf("NB_Rule %d  : %d\n",i,COUNT[i]);
-	}
+	printf("(%.2lf %%) \n\n",100.0*sum/finish);
+	Output(); 
     return 0;
 }
