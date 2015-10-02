@@ -254,25 +254,6 @@ bool rule6(int n,int &m,int *TP,node *H,set<int> *C,int *degree){ //注意m为�
 		//puts("Rule 6");
 		return true;
 	}
-	return false;
-}
-bool rule7(int n,int &m,int *X,int *TP,node *H,set<int> *C,int *degree){
-	int c[MAXN][3];
-	set<int>::iterator it;  
-    memset(c,0,sizeof(c));
-    for (int i=1;i<=m;i++)
-    	for (it=C[i].begin();it!=C[i].end();it++){
-    		int x=*it;
-    		if (degree[abs(x)]!=3) continue;
-    		if (x>0){
-    			if (!c[x][0]) c[x][0]=i;
-    			        else  c[x][2]=i;
-    		}else{
-    			x=-x;
-    			if (!c[x][1]) c[x][1]=i;
-    			        else  c[x][2]=i;
-    		}
-    	} 
 	for (int z2=1;z2<=n;z2++){
 		if (TP[z2]!=-1 || degree[z2]!=3) continue;
 		int c1,c2,c3;
@@ -495,9 +476,6 @@ void branch(int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<int> *C,
 		start=clock(); 
 		if (rule6(n,m,TP,H,C,degree))   { TIME[6]+=clock()-start; COUNT[6]++; continue; } //done
 		TIME[6]+=clock()-start; 
-		start=clock();
-		if (rule7(n,m,X,TP,H,C,degree)) { TIME[7]+=clock()-start; COUNT[7]++; continue; } //done
-		TIME[7]+=clock()-start; 
 		start=clock();
 		if (rule8(n,m,X,TP,H,C,degree)) { TIME[8]+=clock()-start; COUNT[8]++; continue; } //done
 		TIME[8]+=clock()-start; 
