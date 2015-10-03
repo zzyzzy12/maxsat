@@ -68,8 +68,9 @@ bool reNew(int &m,int *X,int *TP,node *H,set<int> *C,int &Upbound){
 	}
 	return false;
 }
-void Output(){ 
+void Output(int maxNum){ 
 	system("clear");
+	printf("MaxNum = %d\n",maxNum);
 	printf("NB_Branch   : %d\n",COUNT[0]);
 	printf("NB_Rule 1.1 : %d\n",COUNT[1]);
 	printf("NB_Rule 1.2 : %d\n",COUNT[4]);
@@ -256,7 +257,7 @@ bool rule6_8(int &n,int &m,int *TP,node *H,set<int> *C,int *degree){ //注意m�
 		//puts("Rule 6");
 		return true;
 	}
-	for (int z2=1;z2<=n;z2++){
+	for (int z2=1;z2<=n;z2++){ //rule7对z1的degree不限制
 		if (TP[z2]!=-1 || degree[z2]!=3) continue;
 		int c1,c2,c3;
 		find3clause(c1,c2,c3,z2,c); //找到这三个clause
@@ -426,16 +427,17 @@ void reUB(int n,int m,set<int> *C,int &Upbound){
 		}
 	}
 }
-void countDegree(int m,set<int> *C,int *degree){
+void countDegree(int m,set<int> *C,int *degree,int &DM){
 	set<int>::iterator it;
+	DM=0;
 	for (int i=0;i<MAXN;i++) degree[i]=0; 
    	for (int i=1;i<=m;i++)
      	for (it=C[i].begin();it!=C[i].end();it++)
-			degree[abs(*it)]++;	 
+			degree[abs(*it)]++,DM++;
 }
 void branch(int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<int> *C,set<int> *C0,int *TP,node* H,int Upbound){
 	set<int>::iterator it;
-	int degree[MAXN];
+	int degree[MAXN],DM;
 	COUNT[0]++;
 	while (1){
 		clock_t start;
@@ -453,20 +455,25 @@ void branch(int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<int> *C,
 		if (rule2(n,m,X,TP,H,C)) { TIME[2]+=clock()-start; COUNT[2]++; continue; } //done
 		TIME[2]+=clock()-start; 
 		start=clock();
-		countDegree(m,C,degree);
+		countDegree(m,C,degree,DM);
 		if (rule3(n,m,X,TP,H,C,degree)) { TIME[3]+=clock()-start; COUNT[3]++; continue; } //done
 		TIME[3]+=clock()-start; 
-		start=clock(); 
-		if (rule6_8(n,m,TP,H,C,degree))   { TIME[6]+=clock()-start; COUNT[6]++; continue; } //done
-		TIME[6]+=clock()-start;  
+		//if (DM<=n*3){
+
+		{
+			start=clock(); 
+			if (rule6_8(n,m,TP,H,C,degree))   { TIME[6]+=clock()-start; COUNT[6]++; continue; } //done
+			TIME[6]+=clock()-start;  
+		}
 		start=clock();
 		if (rule9(m,TP,C,Upbound)) { TIME[9]+=clock()-start; COUNT[9]++; continue; } //done
-		TIME[9]+=clock()-start; 
+		TIME[9]+=clock()-start;  
 		break;
 	}
 	reUB(n,m,C,Upbound);
-	if (Upbound<=maxNum) return;
-	//Output();
+	if (Upbound<=maxNum) return; 
+	/*printf("UB = %d\n",Upbound);
+	Output(maxNum); */
 	set<int> tC[MAXN];
 	int tn,tm,tTP[MAXN],k=0; 
 	memset(degree,0,sizeof(degree));
@@ -548,6 +555,6 @@ int main(int argc,char **arg){
 				  printf("Rule %d   : %.5lf seconds.   (%.2lf %%) \n",i,(double)TIME[i]/CLOCKS_PER_SEC,100.0*TIME[i]/finish);
 	}
 	printf("(%.2lf %%) \n\n",100.0*sum/finish);
-	Output(); 
+	Output(maxNum); 
     return 0;
 }
