@@ -76,7 +76,7 @@ void Output(int maxNum){
 	printf("NB_Rule 1.2 : %d\n",COUNT[4]);
 	for (int i=2;i<=9;i++){
 		if (i==4 || i==5 || i==7 || i==8) continue;
-		if (i==6) printf("NB_Rule 5-8 : %d\n",COUNT[i]);
+		if (i==6) printf("NB_Rule 6-8 : %d\n",COUNT[i]);
 			else
 				  printf("NB_Rule %d   : %d\n",i,COUNT[i]);
 	} 
@@ -199,7 +199,7 @@ bool rule3(int n,int &m,int *X,int *TP,node *H,set<int> *C,int *degree){
 	}
 	return false;
 } 
-bool rule5_8(int &n,int &m,int *TP,node *H,set<int> *C,int *X,int *degree){ //注意m为变参
+bool rule6_8(int &n,int &m,int *TP,node *H,set<int> *C,int *X,int *degree){ //注意m为变参
 	int c[MAXN][3];
 	set<int>::iterator it;  
     memset(c,0,sizeof(c));
@@ -215,31 +215,7 @@ bool rule5_8(int &n,int &m,int *TP,node *H,set<int> *C,int *X,int *degree){ //�
     			if (!c[x][1]) c[x][1]=i;
     			        else  c[x][2]=i;
     		}
-    	} 
-	for (int x=1;x<=n;x++){
-		if (TP[x]!=-1 || degree[x]!=3) continue;
-		int c1,c2,c3;
-		find3clause(c1,c2,c3,x,c); //找到这三个clause
-		int y=0;
-		for (it=C[c1].begin();it!=C[c1].end();it++){
-			if (degree[abs(*it)]!=3 || TP[abs(*it)]!=-1) continue; //是否出问题
-			if (*it==x) continue;
-			if (!find(C[c2],*it) && !find(C[c2],-*it)) continue;
-			if (!find(C[c3],*it) && !find(C[c3],-*it)) continue;
-			y=abs(*it);
-			break;
-		}
-		if (!y) continue;
-		if (find(C[c3],x)){ // x为(2,1)
-			TP[x]=0;
-			X[x]=1;
-		}else{		// x为(1,2)
-			TP[x]=0;
-			X[x]=0;
-		}
-		//puts("Rule 5");
-		return true;
-	} 
+    	}  
 	for (int x=1;x<=n;x++){
 		if (TP[x]!=-1 || degree[x]!=3) continue;
 		int c1,c2,c3,y=0;
@@ -348,8 +324,8 @@ bool rule5_8(int &n,int &m,int *TP,node *H,set<int> *C,int *X,int *degree){ //�
 		if (find(C[d2],y)) C[d2].erase(y);
 		              else C[d2].erase(-y);		
 		C[d1].insert(C[d2].begin(),C[d2].end());
-		C[d2]=C[m--];
 		C[c1].insert(n),C[c2].insert(n),C[d1].insert(n);  
+		C[d2]=C[m--];  //一定记住删除放在最后面
 		return true; 
 	}  
 	return false;
@@ -384,8 +360,7 @@ bool rule9(int &m,int *TP,set<int> *C,int &Upbound){
 		return true;
 	}
 	return false;
-} 
- 
+}  
 void searchH(int i,int n,int *TP,node *H,int *X){
 //展开递推关系
 //判断第i个变量的值, 通过H
@@ -393,7 +368,7 @@ void searchH(int i,int n,int *TP,node *H,int *X){
 //output：1 denotes literal x is in C
 //      0 denotes literal x is not in C
 	set<int>::iterator it;
-    if (TP[i]==0) return; //值是确定的 
+    if (TP[i]==0) return; //值是确定的   
 	if (TP[i]>1){ //其值依赖于H[i].fx与H[i].F的值
 		searchH(TP[i],n,TP,H,X);
 		if (X[TP[i]]==0){    //根据rule8规则
@@ -416,7 +391,7 @@ void consH(int n,int *TP,node *H,int *tTP,int *X){
 //根据H,把X的值全构造出来
 //input：clause C and literal x
 //output：1 denotes literal x is in C
-//      0 denotes literal x is not in C
+//      0 denotes literal x is not in C 
 	for (int i=1;i<=n;i++) tTP[i]=TP[i]; 
 	for (int i=1;i<=n;i++) searchH(i,n,TP,H,X);
 }
@@ -461,8 +436,8 @@ void getDegree(int n0,int m,set<int> *C,int *degree,int *TP,bool &D3){
    	for (int i=1;i<=m;i++)
      	for (it=C[i].begin();it!=C[i].end();it++)
 			degree[abs(*it)]++,DM++;
-	if (DM<=n*4) D3=true;
-	        else D3=false;
+	if (DM<=n*4) D3=true; //调节阀值
+	        else D3=false; 
 }
 void branch(int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<int> *C,set<int> *C0,int *TP,node* H,int Upbound){
 	set<int>::iterator it;
@@ -495,8 +470,8 @@ void branch(int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<int> *C,
 		TIME[3]+=clock()-start; 
 		if (D3){ //阀值
 			start=clock(); 
-	//		puts("进入rule5-8");
-			if (rule5_8(n,m,TP,H,C,X,degree))   { TIME[6]+=clock()-start; COUNT[6]++; continue; } // 有问题
+	//		puts("进入rule6-8");
+			if (rule6_8(n,m,TP,H,C,X,degree))   { TIME[6]+=clock()-start; COUNT[6]++; continue; } // 有问题
 			TIME[6]+=clock()-start;  
 		}
 		start=clock();
@@ -586,7 +561,7 @@ int main(int argc,char **arg){
 	printf("Rule 1.2 : %.5lf seconds.   (%.2lf %%) \n",(double)TIME[10]/CLOCKS_PER_SEC,100.0*TIME[10]/finish);
 	for (int i=2;i<=9;i++){
 		if (i==4 || i==5 || i==7 || i==8) continue;
-		if (i==6) printf("Rule 5-8 : %.5lf seconds.   (%.2lf %%) \n",(double)TIME[i]/CLOCKS_PER_SEC,100.0*TIME[i]/finish);
+		if (i==6) printf("Rule 6-8 : %.5lf seconds.   (%.2lf %%) \n",(double)TIME[i]/CLOCKS_PER_SEC,100.0*TIME[i]/finish);
 			else
 				  printf("Rule %d   : %.5lf seconds.   (%.2lf %%) \n",i,(double)TIME[i]/CLOCKS_PER_SEC,100.0*TIME[i]/finish);
 	}
