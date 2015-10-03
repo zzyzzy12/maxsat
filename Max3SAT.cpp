@@ -76,7 +76,7 @@ void Output(int maxNum){
 	printf("NB_Rule 1.2 : %d\n",COUNT[4]);
 	for (int i=2;i<=9;i++){
 		if (i==4 || i==5 || i==7 || i==8) continue;
-		if (i==6) printf("NB_Rule 6-8 : %d\n",COUNT[i]);
+		if (i==6) printf("NB_Rule 5-8 : %d\n",COUNT[i]);
 			else
 				  printf("NB_Rule %d   : %d\n",i,COUNT[i]);
 	} 
@@ -199,7 +199,7 @@ bool rule3(int n,int &m,int *X,int *TP,node *H,set<int> *C,int *degree){
 	}
 	return false;
 } 
-bool rule6_8(int &n,int &m,int *TP,node *H,set<int> *C,int *degree){ //注意m为变参
+bool rule5_8(int &n,int &m,int *TP,node *H,set<int> *C,int *X,int *degree){ //注意m为变参
 	int c[MAXN][3];
 	set<int>::iterator it;  
     memset(c,0,sizeof(c));
@@ -216,6 +216,30 @@ bool rule6_8(int &n,int &m,int *TP,node *H,set<int> *C,int *degree){ //注意m�
     			        else  c[x][2]=i;
     		}
     	} 
+	for (int x=1;x<=n;x++){
+		if (TP[x]!=-1 || degree[x]!=3) continue;
+		int c1,c2,c3;
+		find3clause(c1,c2,c3,x,c); //找到这三个clause
+		int y=0;
+		for (it=C[c1].begin();it!=C[c1].end();it++){
+			if (degree[abs(*it)]!=3 || TP[abs(*it)]!=-1) continue; //是否出问题
+			if (*it==x) continue;
+			if (!find(C[c2],*it) && !find(C[c2],-*it)) continue;
+			if (!find(C[c3],*it) && !find(C[c3],-*it)) continue;
+			y=abs(*it);
+			break;
+		}
+		if (!y) continue;
+		if (find(C[c3],x)){ // x为(2,1)
+			TP[x]=0;
+			X[x]=1;
+		}else{		// x为(1,2)
+			TP[x]=0;
+			X[x]=0;
+		}
+		//puts("Rule 5");
+		return true;
+	} 
 	for (int x=1;x<=n;x++){
 		if (TP[x]!=-1 || degree[x]!=3) continue;
 		int c1,c2,c3,y=0;
@@ -277,6 +301,7 @@ bool rule6_8(int &n,int &m,int *TP,node *H,set<int> *C,int *degree){ //注意m�
 		//puts("Rule 7");
 		return true;
 	}
+	//-----rule8
 	for (int x=1;x<=n;x++){
 		if (TP[x]!=-1 || degree[x]!=3) continue;
 		int c1,c2,d1,d2;
@@ -324,9 +349,9 @@ bool rule6_8(int &n,int &m,int *TP,node *H,set<int> *C,int *degree){ //注意m�
 		              else C[d2].erase(-y);		
 		C[d1].insert(C[d2].begin(),C[d2].end());
 		C[d2]=C[m--];
-		C[c1].insert(n),C[c2].insert(n),C[d1].insert(n); 
-		return true;
-	} 
+		C[c1].insert(n),C[c2].insert(n),C[d1].insert(n);  
+		return true; 
+	}  
 	return false;
 }
 bool rule9(int &m,int *TP,set<int> *C,int &Upbound){
@@ -427,47 +452,57 @@ void reUB(int n,int m,set<int> *C,int &Upbound){
 		}
 	}
 }
-void countDegree(int m,set<int> *C,int *degree,int &DM){
+void getDegree(int n0,int m,set<int> *C,int *degree,int *TP,bool &D3){
 	set<int>::iterator it;
-	DM=0;
+	int n=0,DM=0;
+	for (int i=1;i<=n0;i++)
+		if (TP[i]==-1) n++;
 	for (int i=0;i<MAXN;i++) degree[i]=0; 
    	for (int i=1;i<=m;i++)
      	for (it=C[i].begin();it!=C[i].end();it++)
 			degree[abs(*it)]++,DM++;
+	if (DM<=n*4) D3=true;
+	        else D3=false;
 }
 void branch(int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<int> *C,set<int> *C0,int *TP,node* H,int Upbound){
 	set<int>::iterator it;
-	int degree[MAXN],DM;
+	int degree[MAXN];
+	bool D3;
 	COUNT[0]++;
 	while (1){
 		clock_t start;
 		start=clock();
+	//	puts("进入reNew");
 		while (reNew(m,X,TP,H,C,Upbound)); //done
 		TIME[0]+=clock()-start;
 		if (Upbound<=maxNum) return;
 		start=clock();
+	//	puts("进入rule1_1");
 		if (rule1_1(n,m,X,TP,H,C)) { TIME[1]+=clock()-start; COUNT[1]++; continue; } //done
 		TIME[1]+=clock()-start; 
 		start=clock();
+	//	puts("进入rule1_2");
 		if (rule1_2(n,m,X,TP,H,C,Upbound)) { TIME[10]+=clock()-start; COUNT[4]++; continue; } //done
 		TIME[10]+=clock()-start; 
 		start=clock();
+	//	puts("进入rule2");
 		if (rule2(n,m,X,TP,H,C)) { TIME[2]+=clock()-start; COUNT[2]++; continue; } //done
 		TIME[2]+=clock()-start; 
 		start=clock();
-		countDegree(m,C,degree,DM);
+		getDegree(n,m,C,degree,TP,D3);
+	//	puts("进入rule3");
 		if (rule3(n,m,X,TP,H,C,degree)) { TIME[3]+=clock()-start; COUNT[3]++; continue; } //done
 		TIME[3]+=clock()-start; 
-		//if (DM<=n*3){
-
-		{
+		if (D3){ //阀值
 			start=clock(); 
-			if (rule6_8(n,m,TP,H,C,degree))   { TIME[6]+=clock()-start; COUNT[6]++; continue; } //done
+	//		puts("进入rule5-8");
+			if (rule5_8(n,m,TP,H,C,X,degree))   { TIME[6]+=clock()-start; COUNT[6]++; continue; } // 有问题
 			TIME[6]+=clock()-start;  
 		}
 		start=clock();
+	//	puts("进入rule9");
 		if (rule9(m,TP,C,Upbound)) { TIME[9]+=clock()-start; COUNT[9]++; continue; } //done
-		TIME[9]+=clock()-start;  
+		TIME[9]+=clock()-start;   
 		break;
 	}
 	reUB(n,m,C,Upbound);
@@ -500,6 +535,7 @@ void branch(int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<int> *C,
 		back(tTP,C,TP,tC,n,m,tn,tm); //还原现场
 		return;
 	}
+	//puts("consH");
 	consH(n0,TP,H,tTP,X); //展开递推关系TP,H
 	int t=0; 
 	for (int i=1;i<=m0;i++)
@@ -550,7 +586,7 @@ int main(int argc,char **arg){
 	printf("Rule 1.2 : %.5lf seconds.   (%.2lf %%) \n",(double)TIME[10]/CLOCKS_PER_SEC,100.0*TIME[10]/finish);
 	for (int i=2;i<=9;i++){
 		if (i==4 || i==5 || i==7 || i==8) continue;
-		if (i==6) printf("Rule 6-8 : %.5lf seconds.   (%.2lf %%) \n",(double)TIME[i]/CLOCKS_PER_SEC,100.0*TIME[i]/finish);
+		if (i==6) printf("Rule 5-8 : %.5lf seconds.   (%.2lf %%) \n",(double)TIME[i]/CLOCKS_PER_SEC,100.0*TIME[i]/finish);
 			else
 				  printf("Rule %d   : %.5lf seconds.   (%.2lf %%) \n",i,(double)TIME[i]/CLOCKS_PER_SEC,100.0*TIME[i]/finish);
 	}
