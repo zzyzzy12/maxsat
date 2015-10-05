@@ -253,8 +253,7 @@ bool rule6_8(int &n,int &m,int *TP,node *H,set<int> *C,int *X,int *degree){ //�
 				C[c2]=C[m--],C[c3]=C[m--]; //注意先改clause再删除clause
 			else
 				C[c3]=C[m--],C[c2]=C[m--];
-		}  
-		//puts("Rule 6");
+		}   
 		return true;
 	}
 	for (int z2=1;z2<=n;z2++){ //rule7对z1的degree不限制
@@ -273,8 +272,7 @@ bool rule6_8(int &n,int &m,int *TP,node *H,set<int> *C,int *X,int *degree){ //�
 			C[c1].erase(z1);
 		}else{				 //z2为(1,2)
 			C[c2].erase(z1);
-		}
-		//puts("Rule 7");
+		} 
 		return true;
 	}
 	//-----rule8
@@ -436,8 +434,10 @@ void getDegree(int n0,int m,set<int> *C,int *degree,int *TP,bool &D3){
    	for (int i=1;i<=m;i++)
      	for (it=C[i].begin();it!=C[i].end();it++)
 			degree[abs(*it)]++,DM++;
-	if (DM<=n*4) D3=true; //调节阀值
-	        else D3=false; 
+	if (DM<=n*3) D3=true; //调节阀值
+	        else D3=false;  
+
+	//D3=false;
 }
 void branch(int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<int> *C,set<int> *C0,int *TP,node* H,int Upbound){
 	set<int>::iterator it;
@@ -473,7 +473,7 @@ void branch(int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<int> *C,
 	//		puts("进入rule6-8");
 			if (rule6_8(n,m,TP,H,C,X,degree))   { TIME[6]+=clock()-start; COUNT[6]++; continue; } // 有问题
 			TIME[6]+=clock()-start;  
-		}
+		} 
 		start=clock();
 	//	puts("进入rule9");
 		if (rule9(m,TP,C,Upbound)) { TIME[9]+=clock()-start; COUNT[9]++; continue; } //done
@@ -482,8 +482,8 @@ void branch(int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<int> *C,
 	}
 	reUB(n,m,C,Upbound);
 	if (Upbound<=maxNum) return; 
-	/*printf("UB = %d\n",Upbound);
-	Output(maxNum); */
+/*	printf("UB = %d\n",Upbound);
+	Output(maxNum);  */
 	set<int> tC[MAXN];
 	int tn,tm,tTP[MAXN],k=0; 
 	memset(degree,0,sizeof(degree));
