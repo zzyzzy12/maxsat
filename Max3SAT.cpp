@@ -177,20 +177,10 @@ bool rule2(int n,int &m,int *X,int *TP,node *H,set<int> *C){  //不用管dgree
 	}
     return f; 
 }
-bool rule3(int n,int &m,int *X,int *TP,node *H,set<int> *C,int *degree){
-	int c[MAXN][2];
-	set<int>::iterator it; 
-    memset(c,0,sizeof(c));
-    for (int i=1;i<=m;i++)
-    	for (it=C[i].begin();it!=C[i].end();it++){
-    		int x=*it;
-    		if (degree[abs(x)]!=2) continue;
-    		if (x>0) c[x][0]=i;
-    		   else  c[-x][1]=i; 
-    	} 
+bool rule3(int n,int &m,int *X,int *TP,node *H,set<int> *C,vector<int> LC[MAXN][2]){ 
 	for (int x=1;x<=n;x++){
-		if (TP[x]!=-1 || degree[x]!=2) continue;
-		int c1=c[x][0],c2=c[x][1]; 
+		if (TP[x]!=-1 || LC[x][0].size()!=1 || LC[x][1].size()!=1) continue;
+		int c1=LC[x][0][0],c2=LC[x][1][0]; 
 		C[c1].insert(C[c2].begin(),C[c2].end()); //合并set
 		C[c1].erase(x),C[c1].erase(-x);
 		TP[x]=1,H[x].F=C[c2],H[x].F.erase(-x);// x由c2得来
@@ -199,8 +189,8 @@ bool rule3(int n,int &m,int *X,int *TP,node *H,set<int> *C,int *degree){
 	}
 	return false;
 } 
-bool rule5_7(int &n,int &m,int *TP,node *H,set<int> *C,int *X,int *degree){ //注意m为变参
-	int c[MAXN][3];
+bool rule5_7(int &n,int &m,int *TP,node *H,set<int> *C,int *X,vector<int> LC[MAXN][2]){ //注意m为变参
+	/*int c[MAXN][3];
 	set<int>::iterator it;  
     memset(c,0,sizeof(c));
     for (int i=1;i<=m;i++)
@@ -327,7 +317,7 @@ bool rule5_7(int &n,int &m,int *TP,node *H,set<int> *C,int *X,int *degree){ //�
 		C[c1].insert(n),C[c2].insert(n),C[d1].insert(n);  
 		C[d2]=C[m--];  //一定记住删除放在最后面
 		return true; 
-	}  
+	}   */
 	return false;
 }
 bool rule8(int &m,int *TP,set<int> *C,int &Upbound){
@@ -427,15 +417,19 @@ void reUB(int n,int m,set<int> *C,int &Upbound){
 		}
 	}
 }
-void getDegree(int n0,int m,set<int> *C,int *degree,int *TP,bool &D3){
+void getLC(int n0,int m,set<int> *C,vector<int> LC[MAXN][2],int *TP,bool &D3){
 	set<int>::iterator it;
 	int n=0,DM=0;
 	for (int i=1;i<=n0;i++)
 		if (TP[i]==-1) n++;
-	for (int i=0;i<MAXN;i++) degree[i]=0; 
+	for (int i=1;i<=n0;i++) LC[i][0].clear(),LC[i][1].clear();
    	for (int i=1;i<=m;i++)
-     	for (it=C[i].begin();it!=C[i].end();it++)
-			degree[abs(*it)]++,DM++;
+     	for (it=C[i].begin();it!=C[i].end();it++){
+     		int x=*it;
+			DM++;
+			if (x>0) LC[x][0].push_back(i);  // degree[x][0]纪录x为正的个数
+			    else LC[-x][1].push_back(i); // degree[x][1]纪录x为负的个数
+		}
 	if (DM<=n*3) D3=true; //调节阀值
 	        else D3=false;  
 
@@ -443,7 +437,7 @@ void getDegree(int n0,int m,set<int> *C,int *degree,int *TP,bool &D3){
 }
 void branch(int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<int> *C,set<int> *C0,int *TP,node* H,int Upbound){
 	set<int>::iterator it;
-	int degree[MAXN];
+	vector<int> LC[MAXN][2];
 	bool D3;
 	COUNT[0]++;
 	while (1){
@@ -466,14 +460,14 @@ void branch(int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<int> *C,
 		if (rule2(n,m,X,TP,H,C)) { TIME[2]+=clock()-start; COUNT[2]++; continue; } //done
 		TIME[2]+=clock()-start; 
 		start=clock();
-		getDegree(n,m,C,degree,TP,D3);
+		getLC(n,m,C,LC,TP,D3);
 	//	puts("进入rule3");
-		if (rule3(n,m,X,TP,H,C,degree)) { TIME[3]+=clock()-start; COUNT[3]++; continue; } //done
+		if (rule3(n,m,X,TP,H,C,LC)) { TIME[3]+=clock()-start; COUNT[3]++; continue; } //done
 		TIME[3]+=clock()-start; 
 		if (D3){ //阀值
 			start=clock(); 
 	//		puts("进入rule5-7");
-			if (rule5_7(n,m,TP,H,C,X,degree))   { TIME[5]+=clock()-start; COUNT[5]++; continue; } // 有问题
+			if (rule5_7(n,m,TP,H,C,X,LC))   { TIME[5]+=clock()-start; COUNT[5]++; continue; } // 有问题
 			TIME[5]+=clock()-start;  
 		} 
 		start=clock();
@@ -488,6 +482,7 @@ void branch(int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<int> *C,
 	Output(maxNum);  */
 	set<int> tC[MAXN];
 	int tn,tm,tTP[MAXN],k=0; 
+	int degree[MAXN];
 	memset(degree,0,sizeof(degree));
     for (int i=1;i<=m;i++)
     	for (it=C[i].begin();it!=C[i].end();it++)
