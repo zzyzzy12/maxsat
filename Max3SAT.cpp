@@ -9,7 +9,7 @@
 #include<queue>
 #include<stack>
 using namespace std;
-const int MAXN=1505;
+const int MAXN=505;
 //test 
 clock_t TIME[15];
 int COUNT[15];
@@ -74,9 +74,9 @@ void Output(int maxNum){
 	printf("NB_Branch   : %d\n",COUNT[0]);
 	printf("NB_Rule 1.1 : %d\n",COUNT[1]);
 	printf("NB_Rule 1.2 : %d\n",COUNT[4]);
-	for (int i=2;i<=9;i++){
-		if (i==4 || i==5 || i==7 || i==8) continue;
-		if (i==6) printf("NB_Rule 6-8 : %d\n",COUNT[i]);
+	for (int i=2;i<=8;i++){
+		if (i==4 || i==6 || i==7) continue;
+		if (i==5) printf("NB_Rule 5-7 : %d\n",COUNT[i]);
 			else
 				  printf("NB_Rule %d   : %d\n",i,COUNT[i]);
 	} 
@@ -199,7 +199,7 @@ bool rule3(int n,int &m,int *X,int *TP,node *H,set<int> *C,int *degree){
 	}
 	return false;
 } 
-bool rule6_8(int &n,int &m,int *TP,node *H,set<int> *C,int *X,int *degree){ //注意m为变参
+bool rule5_7(int &n,int &m,int *TP,node *H,set<int> *C,int *X,int *degree){ //注意m为变参
 	int c[MAXN][3];
 	set<int>::iterator it;  
     memset(c,0,sizeof(c));
@@ -216,6 +216,7 @@ bool rule6_8(int &n,int &m,int *TP,node *H,set<int> *C,int *X,int *degree){ //�
     			        else  c[x][2]=i;
     		}
     	}  
+    //-----rule5
 	for (int x=1;x<=n;x++){
 		if (TP[x]!=-1 || degree[x]!=3) continue;
 		int c1,c2,c3,y=0;
@@ -256,6 +257,7 @@ bool rule6_8(int &n,int &m,int *TP,node *H,set<int> *C,int *X,int *degree){ //�
 		}   
 		return true;
 	}
+	//-----rule6
 	for (int z2=1;z2<=n;z2++){ //rule7对z1的degree不限制
 		if (TP[z2]!=-1 || degree[z2]!=3) continue;
 		int c1,c2,c3;
@@ -275,7 +277,7 @@ bool rule6_8(int &n,int &m,int *TP,node *H,set<int> *C,int *X,int *degree){ //�
 		} 
 		return true;
 	}
-	//-----rule8
+	//-----rule7
 	for (int x=1;x<=n;x++){
 		if (TP[x]!=-1 || degree[x]!=3) continue;
 		int c1,c2,d1,d2;
@@ -328,7 +330,7 @@ bool rule6_8(int &n,int &m,int *TP,node *H,set<int> *C,int *X,int *degree){ //�
 	}  
 	return false;
 }
-bool rule9(int &m,int *TP,set<int> *C,int &Upbound){
+bool rule8(int &m,int *TP,set<int> *C,int &Upbound){
 	int p[MAXN][2];
 	set<int>::iterator it;
 	memset(p,0,sizeof(p));
@@ -437,7 +439,7 @@ void getDegree(int n0,int m,set<int> *C,int *degree,int *TP,bool &D3){
 	if (DM<=n*3) D3=true; //调节阀值
 	        else D3=false;  
 
-	//D3=false;
+	D3=true;
 }
 void branch(int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<int> *C,set<int> *C0,int *TP,node* H,int Upbound){
 	set<int>::iterator it;
@@ -470,19 +472,19 @@ void branch(int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<int> *C,
 		TIME[3]+=clock()-start; 
 		if (D3){ //阀值
 			start=clock(); 
-	//		puts("进入rule6-8");
-			if (rule6_8(n,m,TP,H,C,X,degree))   { TIME[6]+=clock()-start; COUNT[6]++; continue; } // 有问题
-			TIME[6]+=clock()-start;  
+	//		puts("进入rule5-7");
+			if (rule5_7(n,m,TP,H,C,X,degree))   { TIME[5]+=clock()-start; COUNT[5]++; continue; } // 有问题
+			TIME[5]+=clock()-start;  
 		} 
 		start=clock();
-	//	puts("进入rule9");
-		if (rule9(m,TP,C,Upbound)) { TIME[9]+=clock()-start; COUNT[9]++; continue; } //done
-		TIME[9]+=clock()-start;   
+	//	puts("进入rule8");
+		if (rule8(m,TP,C,Upbound)) { TIME[8]+=clock()-start; COUNT[8]++; continue; } //done
+		TIME[8]+=clock()-start;   
 		break;
 	}
 	reUB(n,m,C,Upbound);
 	if (Upbound<=maxNum) return; 
-/*	printf("UB = %d\n",Upbound);
+	/*printf("UB = %d\n",Upbound);
 	Output(maxNum);  */
 	set<int> tC[MAXN];
 	int tn,tm,tTP[MAXN],k=0; 
@@ -492,12 +494,13 @@ void branch(int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<int> *C,
 			degree[abs(*it)]++;	 
 	for (int i=1;i<=n;i++){
 		if (TP[i]!=-1) continue;
-		if (degree[k]==4) {
+		/*if (degree[k]==4) {
 			k=i;
 			break;
-		}
+		}*/
 		if (degree[k]<degree[i]) k=i; 
 	}
+	//puts("bravo");
 	if (k){
 		copy(tTP,C,TP,tC,n,m,tn,tm); //保护现场
 		TP[k]=0; //值确定
@@ -510,7 +513,7 @@ void branch(int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<int> *C,
 		back(tTP,C,TP,tC,n,m,tn,tm); //还原现场
 		return;
 	}
-	//puts("consH");
+//	puts("consH");
 	consH(n0,TP,H,tTP,X); //展开递推关系TP,H
 	int t=0; 
 	for (int i=1;i<=m0;i++)
@@ -559,9 +562,9 @@ int main(int argc,char **arg){
 	printf("reNew    : %.5lf seconds.   (%.2lf %%) \n",(double)TIME[0]/CLOCKS_PER_SEC,100.0*TIME[0]/finish);
 	printf("Rule 1.1 : %.5lf seconds.   (%.2lf %%) \n",(double)TIME[1]/CLOCKS_PER_SEC,100.0*TIME[1]/finish);
 	printf("Rule 1.2 : %.5lf seconds.   (%.2lf %%) \n",(double)TIME[10]/CLOCKS_PER_SEC,100.0*TIME[10]/finish);
-	for (int i=2;i<=9;i++){
-		if (i==4 || i==5 || i==7 || i==8) continue;
-		if (i==6) printf("Rule 6-8 : %.5lf seconds.   (%.2lf %%) \n",(double)TIME[i]/CLOCKS_PER_SEC,100.0*TIME[i]/finish);
+	for (int i=2;i<=8;i++){
+		if (i==4 || i==6 || i==7) continue;
+		if (i==5) printf("Rule 5-7 : %.5lf seconds.   (%.2lf %%) \n",(double)TIME[i]/CLOCKS_PER_SEC,100.0*TIME[i]/finish);
 			else
 				  printf("Rule %d   : %.5lf seconds.   (%.2lf %%) \n",i,(double)TIME[i]/CLOCKS_PER_SEC,100.0*TIME[i]/finish);
 	}
