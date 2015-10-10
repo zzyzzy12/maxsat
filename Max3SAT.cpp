@@ -38,10 +38,12 @@ void back(int *tTP,set<int> *C,int *TP,set<int> *tC,int &n,int &m,int tn,int tm)
 	for (int i=1;i<MAXN;i++) TP[i]=tTP[i]; //注意
 	for (int i=1;i<MAXN;i++) C[i]=tC[i];
 }
-void find3clause(int &c1,int &c2,int &c3,int x,int c[MAXN][3]){
+void find3clause(int &c1,int &c2,int &c3,int x,vector<int> LC[MAXN][2]){
 //input：找到degree 为3的variable x的3个子句
 //output：0
-	c1=c[x][0],c2=c[x][1],c3=c[x][2];
+	c1=LC[x][0][0],c2=LC[x][1][0];
+	if (LC[x][0].size()!=1) c3=LC[x][0][1];
+	                   else c3=LC[x][1][1]; 
 }
 bool reNew(int &m,int *X,int *TP,node *H,set<int> *C,int &Upbound){
 //input： 子句数m X是存当前赋值， TP是每个X的当前状态， H是递推关系， C是当前所有的子句
@@ -190,27 +192,12 @@ bool rule3(int n,int &m,int *X,int *TP,node *H,set<int> *C,vector<int> LC[MAXN][
 	return false;
 } 
 bool rule5_7(int &n,int &m,int *TP,node *H,set<int> *C,int *X,vector<int> LC[MAXN][2]){ //注意m为变参
-	/*int c[MAXN][3];
 	set<int>::iterator it;  
-    memset(c,0,sizeof(c));
-    for (int i=1;i<=m;i++)
-    	for (it=C[i].begin();it!=C[i].end();it++){
-    		int x=*it;
-    		if (degree[abs(x)]!=3) continue;
-    		if (x>0){
-    			if (!c[x][0]) c[x][0]=i;
-    			        else  c[x][2]=i;
-    		}else{
-    			x=-x;
-    			if (!c[x][1]) c[x][1]=i;
-    			        else  c[x][2]=i;
-    		}
-    	}  
     //-----rule5
 	for (int x=1;x<=n;x++){
-		if (TP[x]!=-1 || degree[x]!=3) continue;
+		if (TP[x]!=-1 || LC[x][0].size()+LC[x][1].size()!=3) continue;
 		int c1,c2,c3,y=0;
-		find3clause(c1,c2,c3,x,c); //找到这三个clause
+		find3clause(c1,c2,c3,x,LC); //找到这三个clause
 		for (it=C[c1].begin();it!=C[c1].end();it++){
 			if (*it==x) continue; //注意
 			if (TP[abs(*it)]!=-1) continue; //需要么
@@ -248,25 +235,40 @@ bool rule5_7(int &n,int &m,int *TP,node *H,set<int> *C,int *X,vector<int> LC[MAX
 		return true;
 	}
 	//-----rule6
-	for (int z2=1;z2<=n;z2++){ //rule7对z1的degree不限制
-		if (TP[z2]!=-1 || degree[z2]!=3) continue;
-		int c1,c2,c3;
-		find3clause(c1,c2,c3,z2,c); //找到这三个clause
-		//找到了degree=3的z2三个clause c1,c2,c3
-		int z1=0;
-		for (it=C[c1].begin();it!=C[c1].end();it++)
-			if (find(C[c2],*it) && TP[abs(*it)]==-1){ //是否需要限制TP[*it]
-				z1=*it;
-				break;
+	for (int y=1;y<=n;y++){ //rule6 复杂度最高到dm
+		if (TP[y]!=-1) continue; 
+		if (LC[y][0].size()==1){  //  y为(1,i)
+			int c1,c2,k,x;
+			c1=LC[y][0][0];
+			for (it=C[c1].begin();it!=C[c1].end();it++){
+				x=*it;
+				for (k=LC[y][1].size()-1;k>=0;k--){
+					c2=LC[y][1][k];
+					if (find(C[c2],x)) break;
+				}
+				if (k>=0) break;
 			}
-		if (!z1) continue;
-		if (find(C[c3],z2)){ //z2为(2,1)
-			C[c1].erase(z1);
-		}else{				 //z2为(1,2)
-			C[c2].erase(z1);
+			if (it==C[c1].end()) continue;
+			C[c2].erase(x);
+			return true;
+		}else
+		if (LC[y][1].size()==1){  //  y为(i,1)
+			int c1,c2,k,x;
+			c2=LC[y][1][0]; 
+			for (it=C[c2].begin();it!=C[c2].end();it++){
+				x=*it;
+				for (k=LC[y][0].size()-1;k>=0;k--){
+					c1=LC[y][0][k];
+					if (find(C[c1],x)) break; 
+				}
+				if (k>=0) break;
+			}
+			if (it==C[c2].end()) continue;
+			C[c1].erase(x);
+			return true;
 		} 
-		return true;
 	}
+	/*
 	//-----rule7
 	for (int x=1;x<=n;x++){
 		if (TP[x]!=-1 || degree[x]!=3) continue;
