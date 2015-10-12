@@ -267,59 +267,64 @@ bool rule5_7(int &n,int &m,int *TP,node *H,set<int> *C,int *X,vector<int> LC[MAX
 			C[c1].erase(x);
 			return true;
 		} 
-	}
-	/*
-	//-----rule7
+	} 
+   
+	//-----rule7 
 	for (int x=1;x<=n;x++){
-		if (TP[x]!=-1 || degree[x]!=3) continue;
-		int c1,c2,d1,d2;
-		find3clause(c1,c2,d1,x,c);
-		if (find(C[d1],x)) swap(c2,d1); // x (2,1)
-		              else swap(c1,d1); // x (1,2)
-		int y=0;
-		for (it=C[c1].begin();it!=C[c1].end();it++){
-			if (TP[abs(*it)]!=-1 || degree[abs(*it)]!=3) continue;
-			if (abs(*it)==x) continue;
-			if (find(C[c2],*it)){
-				y=abs(*it); //y满足:  y未赋值  y的degree=3  y!=x
-				break;
+		if (TP[x]!=-1) continue;
+		if (LC[x][0].size()==1){ // x为(1,i)   x=x' y
+			int c1,ci,D1,k,y;
+		    c1=LC[x][1][0],D1=LC[x][0][0];
+			for (it=C[c1].begin();it!=C[c1].end();it++){
+				y=*it;
+				if (y==-x) continue;  //注意
+				for (k=LC[x][1].size()-1;k>=1;k--){
+					ci=LC[x][1][k];
+					if (!find(C[ci],y)) break;
+				}
+				if (k==0) break; 
 			}
-		}
-		if (!y) continue; //找不到对应的y   
-		find3clause(c1,c2,d2,y,c);
-		if (find(C[d2],y)) swap(c2,d2);
-		              else swap(c1,d2);
-		TP[++n]=-1;
-		TP[x]=TP[y]=n;
-		if (find(C[d1],-x)){
-			H[x].fd=0;
-			H[x].F=C[d1],H[x].F.erase(-x);
-		}else{
-			H[x].fd=1;
-			H[x].F=C[d2]; 
-			if (find(C[d2],y)) H[x].F.erase(y);
-			              else H[x].F.erase(-y);
-		}
-		if (find(C[d2],-y)){
-			H[y].fd=0;
-			H[y].F.clear(),H[y].F.insert(-x);
-		}else{
-			H[y].fd=1;
-			H[y].F.clear(),H[y].F.insert(x);
-		}
-		if (find(C[c1],x)) C[c1].erase(x);
-		              else C[c1].erase(-x);
-		if (find(C[c2],x)) C[c2].erase(x);
-		              else C[c2].erase(-x);
-		if (find(C[d1],x)) C[d1].erase(x);
-		              else C[d1].erase(-x);
-		if (find(C[d2],y)) C[d2].erase(y);
-		              else C[d2].erase(-y);		
-		C[d1].insert(C[d2].begin(),C[d2].end());
-		C[c1].insert(n),C[c2].insert(n),C[d1].insert(n);  
-		C[d2]=C[m--];  //一定记住删除放在最后面
-		return true; 
-	}   */
+	        if (it==C[c1].end()) continue;
+		    TP[++n]=-1; //加入新点x'
+		    for (k=LC[x][1].size();k>=0;k--){
+		    	ci=LC[x][1][k];
+		    	C[ci].erase(-x),C[ci].erase(y);
+		    	C[ci].insert(n);
+		    }
+		    C[D1].erase(x);
+		    C[D1].insert(-n),C[D1].insert(y);
+		    TP[x]=1;
+		    H[x].F.clear();
+		    H[x].F.insert(n),H[x].F.insert(y);
+		    return true; 
+		}else
+		if (LC[x][1].size()==1){ // x为(i,1)
+			int c1,ci,D1,k,y;
+			c1=LC[x][0][0],D1=LC[x][1][0];
+			for (it=C[c1].begin();it!=C[c1].end();it++){
+				y=*it;
+				if (y==x) continue;  //注意
+				for (k=LC[x][0].size()-1;k>=1;k--){
+					ci=LC[x][0][k];
+					if (!find(C[ci],y)) break;
+				}
+				if (k==0) break; 
+			}
+			if (it==C[c1].end()) continue;
+			TP[++n]=-1; //加入新点x'
+			for (k=LC[x][0].size()-1;k>=0;k--){
+				ci=LC[x][0][k];
+				C[ci].erase(x),C[ci].erase(y);
+				C[ci].insert(n);
+			}
+			C[D1].erase(-x);
+			C[D1].insert(-n),C[D1].insert(y);
+			TP[x]=n,H[x].fd=0;
+			H[x].F.clear();
+			H[x].F.insert(-n),H[x].F.insert(-y);
+			return true;
+		} 
+	}  
 	return false;
 }
 bool rule8(int &m,int *TP,set<int> *C,int &Upbound){
@@ -481,7 +486,7 @@ void branch(int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<int> *C,
 	reUB(n,m,C,Upbound);
 	if (Upbound<=maxNum) return; 
 	/*printf("UB = %d\n",Upbound);
-	Output(maxNum);  */
+	Output(maxNum);   */
 	set<int> tC[MAXN];
 	int tn,tm,tTP[MAXN],k=0; 
 	int degree[MAXN];
