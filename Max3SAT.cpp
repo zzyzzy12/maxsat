@@ -84,6 +84,24 @@ void Output(int maxNum){
 	} 
 	puts("#################################");
 }
+void Output1(int x,set<int> *C,vector<int> LC[MAXN][2]){
+	set<int>::iterator it;
+	for (int i=0;i<LC[x][0].size();i++){
+		printf("(");
+		int c1=LC[x][0][i];
+		for (it=C[c1].begin();it!=C[c1].end();it++)
+			printf("%d ",*it);
+			puts(")");
+		}
+	for (int i=0;i<LC[x][1].size();i++){
+		printf("(");
+		int c1=LC[x][1][i];
+		for (it=C[c1].begin();it!=C[c1].end();it++)
+			printf("%d ",*it);
+			puts(")");				
+	}
+	puts("--------");
+}
 void initial(int &n,int &m,set<int> *C){ //读取数据
 //input：读入数据
   char s[100];
@@ -249,6 +267,8 @@ bool rule5_7(int &n,int &m,int *TP,node *H,set<int> *C,int *X,vector<int> LC[MAX
 				if (k>=0) break;
 			}
 			if (it==C[c1].end()) continue;
+          /*  puts("--rule6---");
+			Output1(y,C,LC);  */
 			C[c2].erase(x);
 			return true;
 		}else
@@ -264,6 +284,8 @@ bool rule5_7(int &n,int &m,int *TP,node *H,set<int> *C,int *X,vector<int> LC[MAX
 				if (k>=0) break;
 			}
 			if (it==C[c2].end()) continue;
+         /*   puts("--rule6---");
+			Output1(y,C,LC);  */
 			C[c1].erase(x);
 			return true;
 		} 
@@ -284,6 +306,9 @@ bool rule5_7(int &n,int &m,int *TP,node *H,set<int> *C,int *X,vector<int> LC[MAX
 				if (k==0) break; 
 			}
 	        if (it==C[c1].end()) continue;
+         /*  puts("--rule7---");
+			Output1(x,C,LC); 
+			*/
 		    TP[++n]=-1; //加入新点x'
 		    for (k=LC[x][1].size()-1;k>=0;k--){
 		    	ci=LC[x][1][k];
@@ -310,6 +335,9 @@ bool rule5_7(int &n,int &m,int *TP,node *H,set<int> *C,int *X,vector<int> LC[MAX
 				if (k==0) break; 
 			}
 			if (it==C[c1].end()) continue;
+          /*  puts("--rule7---");
+			Output1(x,C,LC); 
+			*/
 			TP[++n]=-1; //加入新点x'
 			for (k=LC[x][0].size()-1;k>=0;k--){
 				ci=LC[x][0][k];
@@ -323,7 +351,7 @@ bool rule5_7(int &n,int &m,int *TP,node *H,set<int> *C,int *X,vector<int> LC[MAX
 			H[x].F.insert(-n),H[x].F.insert(-y);
 			return true;
 		} 
-	}  
+	}   
 	return false;
 }
 bool rule8(int &m,int *TP,set<int> *C,int &Upbound){
@@ -491,7 +519,7 @@ void branch(int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<int> *C,
 	reUB(n,m,C,Upbound);
 	if (Upbound<=maxNum) return; 
 	/*printf("UB = %d\n",Upbound);
-	Output(maxNum);   */
+	Output(maxNum);     */
 	set<int> tC[MAXN];
 	int tn,tm,tTP[MAXN],k=0; 
 	int degree[MAXN];
@@ -520,7 +548,7 @@ void branch(int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<int> *C,
 		back(tTP,C,TP,tC,n,m,tn,tm); //还原现场
 		return;
 	}
-//	puts("consH");
+	//puts("consH");
 	memset(used,false,sizeof(used));
 	consH(n0,TP,H,tTP,X); //展开递推关系TP,H
 	int t=0; 
