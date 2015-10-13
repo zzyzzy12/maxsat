@@ -268,10 +268,9 @@ bool rule5_7(int &n,int &m,int *TP,node *H,set<int> *C,int *X,vector<int> LC[MAX
 			return true;
 		} 
 	} 
-   
 	//-----rule7 
 	for (int x=1;x<=n;x++){
-		if (TP[x]!=-1) continue;
+		if (TP[x]!=-1) continue; 
 		if (LC[x][0].size()==1){ // x为(1,i)   x=x' y
 			int c1,ci,D1,k,y;
 		    c1=LC[x][1][0],D1=LC[x][0][0];
@@ -286,17 +285,17 @@ bool rule5_7(int &n,int &m,int *TP,node *H,set<int> *C,int *X,vector<int> LC[MAX
 			}
 	        if (it==C[c1].end()) continue;
 		    TP[++n]=-1; //加入新点x'
-		    for (k=LC[x][1].size();k>=0;k--){
+		    for (k=LC[x][1].size()-1;k>=0;k--){
 		    	ci=LC[x][1][k];
 		    	C[ci].erase(-x),C[ci].erase(y);
-		    	C[ci].insert(n);
+		    	C[ci].insert(-n);
 		    }
 		    C[D1].erase(x);
-		    C[D1].insert(-n),C[D1].insert(y);
+		    C[D1].insert(n),C[D1].insert(y);
 		    TP[x]=1;
 		    H[x].F.clear();
 		    H[x].F.insert(n),H[x].F.insert(y);
-		    return true; 
+		    return true;  
 		}else
 		if (LC[x][1].size()==1){ // x为(i,1)
 			int c1,ci,D1,k,y;
@@ -358,6 +357,7 @@ bool rule8(int &m,int *TP,set<int> *C,int &Upbound){
 	}
 	return false;
 }  
+bool used[MAXN];
 void searchH(int i,int n,int *TP,node *H,int *X){
 //展开递推关系
 //判断第i个变量的值, 通过H
@@ -366,6 +366,11 @@ void searchH(int i,int n,int *TP,node *H,int *X){
 //      0 denotes literal x is not in C
 	set<int>::iterator it;
     if (TP[i]==0) return; //值是确定的   
+    if (used[i]){
+    	puts("Error!!");
+    	return;
+    }
+    used[i]=true;
 	if (TP[i]>1){ //其值依赖于H[i].fx与H[i].F的值
 		searchH(TP[i],n,TP,H,X);
 		if (X[TP[i]]==0){    //根据rule8规则
@@ -516,6 +521,7 @@ void branch(int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<int> *C,
 		return;
 	}
 //	puts("consH");
+	memset(used,false,sizeof(used));
 	consH(n0,TP,H,tTP,X); //展开递推关系TP,H
 	int t=0; 
 	for (int i=1;i<=m0;i++)
