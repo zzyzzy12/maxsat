@@ -9,7 +9,7 @@
 #include<queue>
 #include<stack>
 using namespace std;
-const int MAXN=805;
+const int MAXN=605;
 //test 
 clock_t TIME[15];
 int COUNT[15];
@@ -38,7 +38,7 @@ void back(int *tTP,set<int> *C,int *TP,set<int> *tC,int &n,int &m,int tn,int tm)
 	for (int i=1;i<MAXN;i++) TP[i]=tTP[i]; //注意
 	for (int i=1;i<MAXN;i++) C[i]=tC[i];
 }
-void find3clause(int &c1,int &c2,int &c3,int x,vector<int> LC[MAXN][2]){
+void find3clause(int &c1,int &c2,int &c3,int x,vector<int> LC[][2]){
 //input：找到degree 为3的variable x的3个子句
 //output：0
 	c1=LC[x][0][0],c2=LC[x][1][0];
@@ -71,7 +71,7 @@ bool reNew(int &m,int *X,int *TP,node *H,set<int> *C,int &Upbound){
 	return false;
 }
 void Output(int maxNum){ 
-	system("clear");
+	//system("clear");
 	printf("MaxNum = %d\n",maxNum);
 	printf("NB_Branch   : %d\n",COUNT[0]);
 	printf("NB_Rule 1.1 : %d\n",COUNT[1]);
@@ -84,7 +84,7 @@ void Output(int maxNum){
 	} 
 	puts("#################################");
 }
-void Output1(int x,set<int> *C,vector<int> LC[MAXN][2]){
+void Output1(int x,set<int> *C,vector<int> LC[][2]){
 	set<int>::iterator it;
 	for (int i=0;i<LC[x][0].size();i++){
 		printf("(");
@@ -197,7 +197,7 @@ bool rule2(int n,int &m,int *X,int *TP,node *H,set<int> *C){  //不用管dgree
 	}
     return f; 
 }
-bool rule3(int n,int &m,int *X,int *TP,node *H,set<int> *C,vector<int> LC[MAXN][2]){ 
+bool rule3(int n,int &m,int *X,int *TP,node *H,set<int> *C,vector<int> LC[][2]){ 
 	for (int x=1;x<=n;x++){
 		if (TP[x]!=-1 || LC[x][0].size()!=1 || LC[x][1].size()!=1) continue;
 		int c1=LC[x][0][0],c2=LC[x][1][0]; 
@@ -209,7 +209,7 @@ bool rule3(int n,int &m,int *X,int *TP,node *H,set<int> *C,vector<int> LC[MAXN][
 	}
 	return false;
 } 
-bool rule5_7(int &n,int &m,int *TP,node *H,set<int> *C,int *X,vector<int> LC[MAXN][2]){ //注意m为变参
+bool rule5_7(int &n,int &m,int *TP,node *H,set<int> *C,int *X,vector<int> LC[][2]){ //注意m为变参
 	set<int>::iterator it;  
     //-----rule5
 	for (int x=1;x<=n;x++){
@@ -422,8 +422,7 @@ bool rule8(int &m,int *TP,set<int> *C,int &Upbound){
 		return true;
 	}
 	return false;
-}  
-bool used[MAXN];
+}   
 void searchH(int i,int n,int *TP,node *H,int *X){
 //展开递推关系
 //判断第i个变量的值, 通过H
@@ -431,12 +430,7 @@ void searchH(int i,int n,int *TP,node *H,int *X){
 //output：1 denotes literal x is in C
 //      0 denotes literal x is not in C
 	set<int>::iterator it;
-    if (TP[i]==0) return; //值是确定的   
-    if (used[i]){
-    	puts("Error!!");
-    	return;
-    }
-    used[i]=true;
+    if (TP[i]==0) return; //值是确定的     
 	if (TP[i]>1){ //其值依赖于H[i].fx与H[i].F的值
 		searchH(TP[i],n,TP,H,X);
 		if (X[TP[i]]==0){    //根据rule8规则
@@ -495,7 +489,7 @@ void reUB(int n,int m,set<int> *C,int &Upbound){
 		}
 	}
 }
-void getLC(int n0,int m,set<int> *C,vector<int> LC[MAXN][2],int *TP,bool &D3){
+void getLC(int n0,int m,set<int> *C,vector<int> LC[][2],int *TP,bool &D3){
 	set<int>::iterator it;
 	int n=0,DM=0;
 	for (int i=1;i<=n0;i++)
@@ -513,9 +507,10 @@ void getLC(int n0,int m,set<int> *C,vector<int> LC[MAXN][2],int *TP,bool &D3){
 
 	D3=true;
 }
+vector<int> LC[MAXN][2];
+int degree[MAXN];
 void branch(int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<int> *C,set<int> *C0,int *TP,node* H,int Upbound){
 	set<int>::iterator it;
-	vector<int> LC[MAXN][2];
 	bool D3;
 	COUNT[0]++;
 	while (1){
@@ -560,17 +555,12 @@ void branch(int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<int> *C,
 	Output(maxNum);      */
 	set<int> tC[MAXN];
 	int tn,tm,tTP[MAXN],k=0; 
-	int degree[MAXN];
 	memset(degree,0,sizeof(degree));
     for (int i=1;i<=m;i++)
     	for (it=C[i].begin();it!=C[i].end();it++)
 			degree[abs(*it)]++;	 
 	for (int i=1;i<=n;i++){
-		if (TP[i]!=-1) continue;
-		/*if (degree[k]==4) {
-			k=i;
-			break;
-		}*/
+		if (TP[i]!=-1) continue; 
 		if (degree[k]<degree[i]) k=i; 
 	}
 	//puts("bravo");
@@ -586,8 +576,7 @@ void branch(int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<int> *C,
 		back(tTP,C,TP,tC,n,m,tn,tm); //还原现场
 		return;
 	}
-	//puts("consH");
-	memset(used,false,sizeof(used));
+	//puts("consH"); 
 	consH(n0,TP,H,tTP,X); //展开递推关系TP,H
 	int t=0; 
 	for (int i=1;i<=m0;i++)
