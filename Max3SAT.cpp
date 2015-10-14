@@ -9,7 +9,7 @@
 #include<queue>
 #include<stack>
 using namespace std;
-const int MAXN=505;
+const int MAXN=805;
 //test 
 clock_t TIME[15];
 int COUNT[15];
@@ -252,14 +252,14 @@ bool rule5_7(int &n,int &m,int *TP,node *H,set<int> *C,int *X,vector<int> LC[MAX
 		}   
 		return true;
 	}
-	//-----rule6
+	//-----rule6_1
 	for (int y=1;y<=n;y++){ //rule6 复杂度最高到dm
 		if (TP[y]!=-1) continue; 
 		if (LC[y][0].size()==1){  //  y为(1,i)
 			int c1,c2,k,x;
 			c1=LC[y][0][0];
 			for (it=C[c1].begin();it!=C[c1].end();it++){
-				x=*it;
+				x=*it; 
 				for (k=LC[y][1].size()-1;k>=0;k--){
 					c2=LC[y][1][k];
 					if (find(C[c2],x)) break;
@@ -269,14 +269,14 @@ bool rule5_7(int &n,int &m,int *TP,node *H,set<int> *C,int *X,vector<int> LC[MAX
 			if (it==C[c1].end()) continue;
           /*  puts("--rule6---");
 			Output1(y,C,LC);  */
-			C[c2].erase(x);
+			C[c2].erase(x); 
 			return true;
 		}else
 		if (LC[y][1].size()==1){  //  y为(i,1)
 			int c1,c2,k,x;
 			c2=LC[y][1][0]; 
 			for (it=C[c2].begin();it!=C[c2].end();it++){
-				x=*it;
+				x=*it; 
 				for (k=LC[y][0].size()-1;k>=0;k--){
 					c1=LC[y][0][k];
 					if (find(C[c1],x)) break; 
@@ -286,10 +286,48 @@ bool rule5_7(int &n,int &m,int *TP,node *H,set<int> *C,int *X,vector<int> LC[MAX
 			if (it==C[c2].end()) continue;
          /*   puts("--rule6---");
 			Output1(y,C,LC);  */
-			C[c1].erase(x);
+			C[c1].erase(x); 
 			return true;
 		} 
 	} 
+    //-----rule6_2
+	for (int x=1;x<=n;x++){
+		if (TP[x]!=-1) continue;
+		if (LC[x][0].size()==1){  // x为(1,i)
+			int c1,D,k,y;
+			D=LC[x][0][0];
+			for (it=C[D].begin();it!=C[D].end();it++){
+				y=*it;
+				if (y==x) continue;
+				for (k=LC[x][1].size()-1;k>=0;k--){
+					c1=LC[x][1][k];
+					if (find(C[c1],-y) && C[c1].size()>2) break;
+				}
+				if (k>=0) break;
+			}
+			if (it==C[D].end()) continue;
+			C[c1].clear();
+			C[c1].insert(-x),C[c1].insert(-y);
+			return true;
+		}else
+		if (LC[x][1].size()==1){ // x为(i,1)
+			int c1,D,k,y;
+			D=LC[x][1][0];
+			for (it=C[D].begin();it!=C[D].end();it++){
+				y=*it;
+				if (y==-x) continue;
+				for (k=LC[x][0].size()-1;k>=0;k--){
+					c1=LC[x][0][k];
+					if (find(C[c1],-y) && C[c1].size()>2) break;
+				}
+				if (k>=0) break;
+			}
+			if (it==C[D].end()) continue;
+			C[c1].clear();
+			C[c1].insert(x),C[c1].insert(-y);
+			return true;
+		}
+	}
 	//-----rule7 
 	for (int x=1;x<=n;x++){
 		if (TP[x]!=-1) continue; 
@@ -518,8 +556,8 @@ void branch(int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<int> *C,
 	}
 	reUB(n,m,C,Upbound);
 	if (Upbound<=maxNum) return; 
-	/*printf("UB = %d\n",Upbound);
-	Output(maxNum);     */
+/*	printf("UB = %d\n",Upbound);
+	Output(maxNum);      */
 	set<int> tC[MAXN];
 	int tn,tm,tTP[MAXN],k=0; 
 	int degree[MAXN];
