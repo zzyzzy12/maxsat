@@ -9,8 +9,8 @@
 #include<queue>
 #include<stack>
 using namespace std;
-const int NB_V=605;
-const int NB_C=605;
+const int NB_V=1505;
+const int NB_C=2505;
 //test 
 clock_t TIME[15];
 int COUNT[15];
@@ -26,7 +26,7 @@ bool find(set<int> C,int x){
 //      0 denotes literal x is not in C
 	return C.find(x)!=C.end();//C.find(x)返回值: x在C中则返回x的位置，否则返回C.end
 } 
-void back(map<int,int> &tTP,set<int> *C,int *TP,map<int,set<int> > &tC,int &n,int &m,int tn,int tm){
+void back(int *TP,set<int> *C,int &n,int &m,map<int,int> &tTP,map<int,set<int> > &tC,int tn,int tm){
 //input：把tTP的数据还原到TP里去
 //output：no exist     
 	for (map<int,int>::iterator it=tTP.begin();it!=tTP.end();it++)
@@ -170,8 +170,9 @@ bool rule1_2(int n,int &m,int *X,int *TP,node *H,set<int> *C,int &Upbound,map<in
 	//if (f) puts("rule1.2");
 	return f;
 }
+int p1[NB_V],p2[NB_V],h1[NB_V],h2[NB_V];
 bool rule2(int n,int &m,int *X,int *TP,node *H,set<int> *C,map<int,int> &tTP){  //不用管dgree
-	int p1[NB_V],p2[NB_V],h1[NB_V],h2[NB_V],x; 
+	int x; 
 	bool f=false;
 	set<int>::iterator it;
 	memset(p1,0,sizeof(p1));
@@ -209,7 +210,7 @@ bool rule2(int n,int &m,int *X,int *TP,node *H,set<int> *C,map<int,int> &tTP){  
 	}
     return f; 
 }
-bool rule3(int n,int &m,int *X,int *TP,node *H,set<int> *C,vector<int> LC[][2],map<int,set<int> > &tC){  
+bool rule3(int n,int &m,int *X,int *TP,node *H,set<int> *C,vector<int> LC[][2],map<int,int> &tTP,map<int,set<int> > &tC){  
 	for (int x=1;x<=n;x++){
 		if (TP[x]!=-1 || LC[x][0].size()!=1 || LC[x][1].size()!=1) continue;
 		int c1=LC[x][0][0],c2=LC[x][1][0]; 
@@ -217,6 +218,8 @@ bool rule3(int n,int &m,int *X,int *TP,node *H,set<int> *C,vector<int> LC[][2],m
 			tC[c1]=C[c1]; //----纪录改变
 		if (tC.find(c2)==tC.end())
 			tC[c2]=C[c2]; //----纪录改变
+		if (tTP.find(x)==tTP.end())
+			tTP[x]=TP[x]; //----纪录改变
 		C[c1].insert(C[c2].begin(),C[c2].end()); //合并set
 		C[c1].erase(x),C[c1].erase(-x);
 		TP[x]=1,H[x].F=C[c2],H[x].F.erase(-x);// x由c2得来
@@ -481,11 +484,11 @@ void searchH(int i,int n,int *TP,node *H,int *X,map<int,int> &tTP){
 //      0 denotes literal x is not in C
 	set<int>::iterator it; 
     if (TP[i]==0) return; //值是确定的     
+	if (tTP.find(i)==tTP.end())
+		tTP[i]=TP[i]; //---纪录变化
 	if (TP[i]>1){ //其值依赖于H[i].fx与H[i].F的值
 		searchH(TP[i],n,TP,H,X,tTP);
 		if (X[TP[i]]==0){    //根据rule8规则
-			if (tTP.find(i)==tTP.end())
-				tTP[i]=TP[i]; //---纪录变化
 			TP[i]=0,X[i]=H[i].fd; //根据rule8规则
 			return;
 		}
@@ -498,9 +501,7 @@ void searchH(int i,int n,int *TP,node *H,int *X,map<int,int> &tTP){
 			t=1;
 			break;
 		}
-	}
-	if (tTP.find(i)==tTP.end())
-		tTP[i]=TP[i]; //---纪录变化
+	} 
 	TP[i]=0,X[i]=t;
 }
 void consH(int n,int *TP,node *H,int *X,map<int,int> &tTP){
@@ -564,14 +565,19 @@ void branch(int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<int> *C,
     map<int,set<int> > tC;
     int tn=n,tm=m;
 	bool D3; 
-	COUNT[0]++;
+	tTP.clear();
+	tC.clear();
+	COUNT[0]++; 
 	while (1){
 		clock_t start;
 		start=clock();
 	//	puts("进入reNew");
 		while (reNew(m,X,TP,H,C,Upbound,tC)); //done
 		TIME[0]+=clock()-start;
-		if (Upbound<=maxNum) return;
+		if (Upbound<=maxNum){
+			back(TP,C,n,m,tTP,tC,tn,tm); //还原现场
+			return;
+		}
 		start=clock();
 	//	puts("进入rule1_1");
 		if (rule1_1(n,m,X,TP,H,C,tC)) { TIME[1]+=clock()-start; COUNT[1]++; continue; } //done
@@ -587,7 +593,7 @@ void branch(int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<int> *C,
 		start=clock();
 		getLC(n,m,C,LC,TP,D3);
 	//	puts("进入rule3");
-		if (rule3(n,m,X,TP,H,C,LC,tC)) { TIME[3]+=clock()-start; COUNT[3]++; continue; } //done
+		if (rule3(n,m,X,TP,H,C,LC,tTP,tC)) { TIME[3]+=clock()-start; COUNT[3]++; continue; } //done
 		TIME[3]+=clock()-start; 
 		if (D3){ //阀值
 			start=clock(); 
@@ -600,9 +606,12 @@ void branch(int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<int> *C,
 		if (rule8(m,TP,C,Upbound,tC)) { TIME[8]+=clock()-start; COUNT[8]++; continue; } //done
 		TIME[8]+=clock()-start;   
 		break;
-	}
+	} 
 	reUB(n,m,C,Upbound);
-	if (Upbound<=maxNum) return; 
+	if (Upbound<=maxNum){
+		back(TP,C,n,m,tTP,tC,tn,tm); //还原现场
+		return; 
+	}
 /*	printf("UB = %d\n",Upbound);
 	Output(maxNum);      */
 	int k=0; 
@@ -614,17 +623,19 @@ void branch(int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<int> *C,
 		if (TP[i]!=-1) continue; 
 		if (degree[k]<degree[i]) k=i; 
 	}
-	//puts("bravo");
+	//puts("bravo");  
 	if (k){ 
+		if (tTP.find(k)==tTP.end())
+			tTP[k]=TP[k]; //---纪录变化
 		TP[k]=0; //值确定
 		X[k]=0;
 		branch(n,m,n0,m0,X,maxNum,ans,C,C0,TP,H,Upbound); 
 		X[k]=1;
-		branch(n,m,n0,m0,X,maxNum,ans,C,C0,TP,H,Upbound);
-		back(tTP,C,TP,tC,n,m,tn,tm); //还原现场
+		branch(n,m,n0,m0,X,maxNum,ans,C,C0,TP,H,Upbound); 
+		back(TP,C,n,m,tTP,tC,tn,tm); //还原现场 
 		return;
 	}
-	//puts("consH"); 
+	//puts("consH");  
 	consH(n0,TP,H,X,tTP); //展开递推关系TP,H
 	int t=0; 
 	for (int i=1;i<=m0;i++)
@@ -638,7 +649,7 @@ void branch(int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<int> *C,
 		maxNum=t;
 		for (int i=1;i<=n0;i++) ans[i]=X[i];
 	}
-	back(tTP,C,TP,tC,n,m,tn,tm); //还原现场
+	back(TP,C,n,m,tTP,tC,tn,tm); //还原现场
 	return;
 }
 set<int> C[NB_C],C0[NB_C];
@@ -647,7 +658,6 @@ int TP[NB_V]; //TP存变量的状态是 -1 未知  0 为确定值  1 由H[i].F�
 node H[NB_V];
 int main(int argc,char **arg){
     freopen(arg[1],"r",stdin);
-    //freopen("output.txt","w",stdout);
     int n,m,n0,maxNum=0;
     clock_t start,finish; 
     start=clock();
