@@ -17,26 +17,23 @@ int COUNT[15];
 struct node{
 	set<int> F;
 	int fd;
-};
+}; 
+
 bool find(set<int> C,int x){
 //input：clause C and literal x
 //output：1 denotes literal x is in C
 //      0 denotes literal x is not in C
 	return C.find(x)!=C.end();//C.find(x)返回值: x在C中则返回x的位置，否则返回C.end
-}
-void copy(int *tTP,set<int> *C,int *TP,set<int> *tC,int n,int m,int &tn,int &tm){
-//input：把TP的数据存到tTP里去
-//output：no exist
-	tn=n,tm=m;
-	for (int i=1;i<MAXN;i++) tTP[i]=TP[i];
-	for (int i=1;i<MAXN;i++) tC[i]=C[i];
-}
-void back(int *tTP,set<int> *C,int *TP,set<int> *tC,int &n,int &m,int tn,int tm){
+} 
+void back(map<int,int> tTP,set<int> *C,int *TP,map<int,set<int> > tC,int &n,int &m,int tn,int tm){
 //input：把tTP的数据还原到TP里去
-//output：no exist
-	n=tn,m=tm;
-	for (int i=1;i<MAXN;i++) TP[i]=tTP[i]; //注意
-	for (int i=1;i<MAXN;i++) C[i]=tC[i];
+//output：no exist     
+	for (map<int,int>::iterator it=tTP.begin();it!=tTP.end();it++)
+		TP[it->first]=it->second; 
+    for (map<int,set<int> >::iterator it=tC.begin();it!=tC.end();it++) 
+		C[it->first]=it->second; 
+	n=tn;
+	m=tm;
 }
 void find3clause(int &c1,int &c2,int &c3,int x,vector<int> LC[][2]){
 //input：找到degree 为3的variable x的3个子句
@@ -45,20 +42,24 @@ void find3clause(int &c1,int &c2,int &c3,int x,vector<int> LC[][2]){
 	if (LC[x][0].size()!=1) c3=LC[x][0][1];
 	                   else c3=LC[x][1][1]; 
 }
-bool reNew(int &m,int *X,int *TP,node *H,set<int> *C,int &Upbound){
+bool reNew(int &m,int *X,int *TP,node *H,set<int> *C,int &Upbound,map<int,set<int> > &tC){
 //input： 子句数m X是存当前赋值， TP是每个X的当前状态， H是递推关系， C是当前所有的子句
 //output：1 至少做了一次操作：{1.子句为空，去掉子句；2.如果一个子句的字符值为1，去掉该子句； 如果为0,删去该子句中的字符}
 //      0 无操作
 	set<int>::iterator it;
 	for (int i=1;i<=m;i++){ //一个个clause看，是否为空，是否有值确定了
 		if (C[i].size()==0){
+			if (tC.find(i)==tC.end())
+			    tC[i]=C[i];//----纪录改变
 			C[i]=C[m--]; 
 			Upbound--;
 			return true;
 		}
 		for (it=C[i].begin();it!=C[i].end();it++){
 			if (TP[abs(*it)]!=0) continue; //要值确定了才
-			if (X[abs(*it)]==1){
+			if (tC.find(i)==tC.end())
+			    tC[i]=C[i];//----纪录改变
+			if (X[abs(*it)]==1){ 
 				if (*it>0) C[i]=C[m--];
 					  else C[i].erase(*it);
 			}else{
@@ -119,9 +120,9 @@ void initial(int &n,int &m,set<int> *C){ //读取数据
     }
   }
 }
-bool rule1_1(int n,int &m,int *X,int *TP,node *H,set<int> *C){  
+bool rule1_1(int n,int &m,int *X,int *TP,node *H,set<int> *C,map<int,set<int> > &tC){  
 	set<int>::iterator it;
-	bool f=false;
+	bool f=false; 
 	for (int i=1;i<=m;i++){
 		int p[MAXN];
 		memset(p,0,sizeof(p));
@@ -130,6 +131,8 @@ bool rule1_1(int n,int &m,int *X,int *TP,node *H,set<int> *C){
 			if (x>0) p[x]++;
 			    else x=-x,p[x]--;
 			if (!p[x]){
+				if (tC.find(i)==tC.end())
+			    	tC[i]=C[i];//----纪录改变
 				C[i--]=C[m--]; 
 				f=true;
 				break;
@@ -139,9 +142,9 @@ bool rule1_1(int n,int &m,int *X,int *TP,node *H,set<int> *C){
 	//if (f) puts("rule1.1");
 	return f;
 }
-bool rule1_2(int n,int &m,int *X,int *TP,node *H,set<int> *C,int &Upbound){
+bool rule1_2(int n,int &m,int *X,int *TP,node *H,set<int> *C,int &Upbound,map<int,set<int> > &tC){
 	bool f=false;
-	int p[MAXN][2];
+	int p[MAXN][2]; 
 	memset(p,0,sizeof(p));
 	for (int i=1;i<=m;i++){
 		if (C[i].size()!=1) continue;
@@ -152,6 +155,10 @@ bool rule1_2(int n,int &m,int *X,int *TP,node *H,set<int> *C,int &Upbound){
 	for (int x=1;x<=n;x++){
 		if (TP[x]!=-1) continue;
 		if (!p[x][0] || !p[x][1]) continue;
+		if (tC.find(p[x][0])==tC.end())
+			 tC[p[x][0]]=C[p[x][0]];//----纪录改变 
+		if (tC.find(p[x][1])==tC.end())
+			 tC[p[x][1]]=C[p[x][1]];//----纪录改变 
 		if (p[x][0]>p[x][1])
 			C[p[x][0]]=C[m--],C[p[x][1]]=C[m--];
 		else
@@ -162,8 +169,8 @@ bool rule1_2(int n,int &m,int *X,int *TP,node *H,set<int> *C,int &Upbound){
 	//if (f) puts("rule1.2");
 	return f;
 }
-bool rule2(int n,int &m,int *X,int *TP,node *H,set<int> *C){  //不用管dgree
-	int p1[MAXN],p2[MAXN],h1[MAXN],h2[MAXN],x;
+bool rule2(int n,int &m,int *X,int *TP,node *H,set<int> *C,map<int,int> &tTP){  //不用管dgree
+	int p1[MAXN],p2[MAXN],h1[MAXN],h2[MAXN],x; 
 	bool f=false;
 	set<int>::iterator it;
 	memset(p1,0,sizeof(p1));
@@ -185,11 +192,15 @@ bool rule2(int n,int &m,int *X,int *TP,node *H,set<int> *C){  //不用管dgree
 	for (int z=1;z<=n;z++){
 		if (TP[z]!=-1) continue;
 		if (h1[z]>=p2[z]){
+			if (tTP.find(z)==tTP.end())
+				tTP[z]=TP[z]; //----纪录改变
 			TP[z]=0;
 			X[z]=1;
 			f=true;
 		}else
 		if (h2[z]>=p1[z]){
+			if (tTP.find(z)==tTP.end())
+				tTP[z]=TP[z]; //----纪录改变
 			TP[z]=0;
 			X[z]=0;
 			f=true;
@@ -197,10 +208,14 @@ bool rule2(int n,int &m,int *X,int *TP,node *H,set<int> *C){  //不用管dgree
 	}
     return f; 
 }
-bool rule3(int n,int &m,int *X,int *TP,node *H,set<int> *C,vector<int> LC[][2]){ 
+bool rule3(int n,int &m,int *X,int *TP,node *H,set<int> *C,vector<int> LC[][2],map<int,set<int> > &tC){  
 	for (int x=1;x<=n;x++){
 		if (TP[x]!=-1 || LC[x][0].size()!=1 || LC[x][1].size()!=1) continue;
 		int c1=LC[x][0][0],c2=LC[x][1][0]; 
+		if (tC.find(c1)==tC.end())
+			tC[c1]=C[c1]; //----纪录改变
+		if (tC.find(c2)==tC.end())
+			tC[c2]=C[c2]; //----纪录改变
 		C[c1].insert(C[c2].begin(),C[c2].end()); //合并set
 		C[c1].erase(x),C[c1].erase(-x);
 		TP[x]=1,H[x].F=C[c2],H[x].F.erase(-x);// x由c2得来
@@ -209,8 +224,8 @@ bool rule3(int n,int &m,int *X,int *TP,node *H,set<int> *C,vector<int> LC[][2]){
 	}
 	return false;
 } 
-bool rule5_7(int &n,int &m,int *TP,node *H,set<int> *C,int *X,vector<int> LC[][2]){ //注意m为变参
-	set<int>::iterator it;  
+bool rule5_7(int &n,int &m,int *TP,node *H,set<int> *C,int *X,vector<int> LC[][2],map<int,set<int> > &tC,map<int,int> &tTP){ //注意m为变参
+	set<int>::iterator it;   
     //-----rule5
 	for (int x=1;x<=n;x++){
 		if (TP[x]!=-1 || LC[x][0].size()+LC[x][1].size()!=3) continue;
@@ -231,7 +246,15 @@ bool rule5_7(int &n,int &m,int *TP,node *H,set<int> *C,int *X,vector<int> LC[][2
 			}
 		}
 		if (!y) continue; //找不到对应的y
-		if (find(C[c3],x)){ //x为(2,1)
+		if (tTP.find(x)==tTP.end())
+			tTP[x]=TP[x]; //----纪录改变 
+		if (tC.find(c1)==tC.end())
+			tC[c1]=C[c1]; //----纪录改变 
+		if (tC.find(c2)==tC.end())
+			tC[c2]=C[c2]; //----纪录改变 
+		if (tC.find(c3)==tC.end())
+			tC[c3]=C[c3]; //----纪录改变 
+		if (find(C[c3],x)){ //x为(2,1) 
 			TP[x]=1; //x的值由c2推出
 			H[x].F=C[c2],H[x].F.erase(-x);
 			C[c2].insert(C[c3].begin(),C[c3].end());
@@ -267,6 +290,8 @@ bool rule5_7(int &n,int &m,int *TP,node *H,set<int> *C,int *X,vector<int> LC[][2
 				if (k>=0) break;
 			}
 			if (it==C[c1].end()) continue;
+			if (tC.find(c2)==tC.end())
+				tC[c2]=C[c2]; //----纪录改变  
           /*  puts("--rule6---");
 			Output1(y,C,LC);  */
 			C[c2].erase(x); 
@@ -284,6 +309,8 @@ bool rule5_7(int &n,int &m,int *TP,node *H,set<int> *C,int *X,vector<int> LC[][2
 				if (k>=0) break;
 			}
 			if (it==C[c2].end()) continue;
+			if (tC.find(c1)==tC.end())
+				tC[c1]=C[c1]; //----纪录改变 
          /*   puts("--rule6---");
 			Output1(y,C,LC);  */
 			C[c1].erase(x); 
@@ -306,6 +333,8 @@ bool rule5_7(int &n,int &m,int *TP,node *H,set<int> *C,int *X,vector<int> LC[][2
 				if (k>=0) break;
 			}
 			if (it==C[D].end()) continue;
+			if (tC.find(c1)==tC.end())
+				tC[c1]=C[c1]; //----纪录改变  
 			C[c1].clear();
 			C[c1].insert(-x),C[c1].insert(-y);
 			return true;
@@ -323,6 +352,8 @@ bool rule5_7(int &n,int &m,int *TP,node *H,set<int> *C,int *X,vector<int> LC[][2
 				if (k>=0) break;
 			}
 			if (it==C[D].end()) continue;
+			if (tC.find(c1)==tC.end())
+				tC[c1]=C[c1]; //----纪录改变  
 			C[c1].clear();
 			C[c1].insert(x),C[c1].insert(-y);
 			return true;
@@ -350,11 +381,17 @@ bool rule5_7(int &n,int &m,int *TP,node *H,set<int> *C,int *X,vector<int> LC[][2
 		    TP[++n]=-1; //加入新点x'
 		    for (k=LC[x][1].size()-1;k>=0;k--){
 		    	ci=LC[x][1][k];
+				if (tC.find(ci)==tC.end())
+					tC[ci]=C[ci]; //----纪录改变  
 		    	C[ci].erase(-x),C[ci].erase(y);
 		    	C[ci].insert(-n);
 		    }
+			if (tC.find(D1)==tC.end())
+				tC[D1]=C[D1]; //----纪录改变  
 		    C[D1].erase(x);
 		    C[D1].insert(n),C[D1].insert(y);
+		    if (tTP.find(x)==tTP.end())
+		    	tTP[x]=TP[x]; 
 		    TP[x]=1;
 		    H[x].F.clear();
 		    H[x].F.insert(n),H[x].F.insert(y);
@@ -379,11 +416,17 @@ bool rule5_7(int &n,int &m,int *TP,node *H,set<int> *C,int *X,vector<int> LC[][2
 			TP[++n]=-1; //加入新点x'
 			for (k=LC[x][0].size()-1;k>=0;k--){
 				ci=LC[x][0][k];
+				if (tC.find(ci)==tC.end())
+					tC[ci]=C[ci]; //----纪录改变  
 				C[ci].erase(x),C[ci].erase(y);
 				C[ci].insert(n);
 			}
+			if (tC.find(D1)==tC.end())
+				tC[D1]=C[D1]; //----纪录改变  
 			C[D1].erase(-x);
 			C[D1].insert(-n),C[D1].insert(y);
+			if (tTP.find(x)==tTP.end())
+				tTP[x]=TP[x]; 
 			TP[x]=n,H[x].fd=0;
 			H[x].F.clear();
 			H[x].F.insert(-n),H[x].F.insert(-y);
@@ -392,7 +435,7 @@ bool rule5_7(int &n,int &m,int *TP,node *H,set<int> *C,int *X,vector<int> LC[][2
 	}   
 	return false;
 }
-bool rule8(int &m,int *TP,set<int> *C,int &Upbound){
+bool rule8(int &m,int *TP,set<int> *C,int &Upbound,map<int,set<int> > &tC){
 	int p[MAXN][2];
 	set<int>::iterator it;
 	memset(p,0,sizeof(p));
@@ -413,6 +456,12 @@ bool rule8(int &m,int *TP,set<int> *C,int &Upbound){
 		if (x[1]>0) p1=p[x[1]][1];
 			   else p1=p[-x[1]][0];
 		if (!p0 || !p1) continue;
+		if (tC.find(p1)==tC.end())
+			tC[p1]=C[p1]; //----纪录改变  
+		if (tC.find(i)==tC.end())
+			tC[i]=C[i]; //----纪录改变  
+	    if (tC.find(p0)==tC.end())
+			tC[p0]=C[p0]; //----纪录改变  
 		C[p1].insert(-x[0]); //先插入 后删除
 		if (i>p0)
 			C[i]=C[m--],C[p0]=C[m--];
@@ -423,17 +472,19 @@ bool rule8(int &m,int *TP,set<int> *C,int &Upbound){
 	}
 	return false;
 }   
-void searchH(int i,int n,int *TP,node *H,int *X){
+void searchH(int i,int n,int *TP,node *H,int *X,map<int,int> &tTP){
 //展开递推关系
 //判断第i个变量的值, 通过H
 //input：i is the existing extentable variableclause C and literal x
 //output：1 denotes literal x is in C
 //      0 denotes literal x is not in C
-	set<int>::iterator it;
+	set<int>::iterator it; 
     if (TP[i]==0) return; //值是确定的     
 	if (TP[i]>1){ //其值依赖于H[i].fx与H[i].F的值
-		searchH(TP[i],n,TP,H,X);
+		searchH(TP[i],n,TP,H,X,tTP);
 		if (X[TP[i]]==0){    //根据rule8规则
+			if (tTP.find(i)==tTP.end())
+				tTP[i]=TP[i]; //---纪录变化
 			TP[i]=0,X[i]=H[i].fd; //根据rule8规则
 			return;
 		}
@@ -441,25 +492,22 @@ void searchH(int i,int n,int *TP,node *H,int *X){
 	int t=0;  //只看H[i].F的值
 	for (it=H[i].F.begin();it!=H[i].F.end();it++){
 		int x=*it;
-		searchH(abs(x),n,TP,H,X);
+		searchH(abs(x),n,TP,H,X,tTP);
 		if ((x>0 && X[x]==1) || (x<0 && X[-x]==0)){
 			t=1;
 			break;
 		}
 	}
+	if (tTP.find(i)==tTP.end())
+		tTP[i]=TP[i]; //---纪录变化
 	TP[i]=0,X[i]=t;
 }
-void consH(int n,int *TP,node *H,int *tTP,int *X){
+void consH(int n,int *TP,node *H,int *X,map<int,int> &tTP){
 //根据H,把X的值全构造出来
 //input：clause C and literal x
 //output：1 denotes literal x is in C
-//      0 denotes literal x is not in C 
-	for (int i=1;i<=n;i++) tTP[i]=TP[i]; 
-	for (int i=1;i<=n;i++) searchH(i,n,TP,H,X);
-}
-void reTP(int n,int *TP,int *tTP){
-//还原tp
-	for (int i=1;i<=n;i++) TP[i]=tTP[i];
+//      0 denotes literal x is not in C  
+	for (int i=1;i<=n;i++) searchH(i,n,TP,H,X,tTP);
 }
 void reUB(int n,int m,set<int> *C,int &Upbound){
 	int unit[n+5][2];
@@ -511,41 +559,44 @@ vector<int> LC[MAXN][2];
 int degree[MAXN];
 void branch(int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<int> *C,set<int> *C0,int *TP,node* H,int Upbound){
 	set<int>::iterator it;
-	bool D3;
+    map<int,int > tTP;
+    map<int,set<int> > tC;
+    int tn=n,tm=m;
+	bool D3; 
 	COUNT[0]++;
 	while (1){
 		clock_t start;
 		start=clock();
 	//	puts("进入reNew");
-		while (reNew(m,X,TP,H,C,Upbound)); //done
+		while (reNew(m,X,TP,H,C,Upbound,tC)); //done
 		TIME[0]+=clock()-start;
 		if (Upbound<=maxNum) return;
 		start=clock();
 	//	puts("进入rule1_1");
-		if (rule1_1(n,m,X,TP,H,C)) { TIME[1]+=clock()-start; COUNT[1]++; continue; } //done
+		if (rule1_1(n,m,X,TP,H,C,tC)) { TIME[1]+=clock()-start; COUNT[1]++; continue; } //done
 		TIME[1]+=clock()-start; 
 		start=clock();
 	//	puts("进入rule1_2");
-		if (rule1_2(n,m,X,TP,H,C,Upbound)) { TIME[10]+=clock()-start; COUNT[4]++; continue; } //done
+		if (rule1_2(n,m,X,TP,H,C,Upbound,tC)) { TIME[10]+=clock()-start; COUNT[4]++; continue; } //done
 		TIME[10]+=clock()-start; 
 		start=clock();
 	//	puts("进入rule2");
-		if (rule2(n,m,X,TP,H,C)) { TIME[2]+=clock()-start; COUNT[2]++; continue; } //done
+		if (rule2(n,m,X,TP,H,C,tTP)) { TIME[2]+=clock()-start; COUNT[2]++; continue; } //done
 		TIME[2]+=clock()-start; 
 		start=clock();
 		getLC(n,m,C,LC,TP,D3);
 	//	puts("进入rule3");
-		if (rule3(n,m,X,TP,H,C,LC)) { TIME[3]+=clock()-start; COUNT[3]++; continue; } //done
+		if (rule3(n,m,X,TP,H,C,LC,tC)) { TIME[3]+=clock()-start; COUNT[3]++; continue; } //done
 		TIME[3]+=clock()-start; 
 		if (D3){ //阀值
 			start=clock(); 
 	//		puts("进入rule5-7");
-			if (rule5_7(n,m,TP,H,C,X,LC))   { TIME[5]+=clock()-start; COUNT[5]++; continue; } // 有问题
+			if (rule5_7(n,m,TP,H,C,X,LC,tC,tTP))   { TIME[5]+=clock()-start; COUNT[5]++; continue; } //done
 			TIME[5]+=clock()-start;  
 		} 
 		start=clock();
 	//	puts("进入rule8");
-		if (rule8(m,TP,C,Upbound)) { TIME[8]+=clock()-start; COUNT[8]++; continue; } //done
+		if (rule8(m,TP,C,Upbound,tC)) { TIME[8]+=clock()-start; COUNT[8]++; continue; } //done
 		TIME[8]+=clock()-start;   
 		break;
 	}
@@ -553,8 +604,7 @@ void branch(int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<int> *C,
 	if (Upbound<=maxNum) return; 
 /*	printf("UB = %d\n",Upbound);
 	Output(maxNum);      */
-	set<int> tC[MAXN];
-	int tn,tm,tTP[MAXN],k=0; 
+	int k=0; 
 	memset(degree,0,sizeof(degree));
     for (int i=1;i<=m;i++)
     	for (it=C[i].begin();it!=C[i].end();it++)
@@ -564,20 +614,17 @@ void branch(int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<int> *C,
 		if (degree[k]<degree[i]) k=i; 
 	}
 	//puts("bravo");
-	if (k){
-		copy(tTP,C,TP,tC,n,m,tn,tm); //保护现场
+	if (k){ 
 		TP[k]=0; //值确定
 		X[k]=0;
-		branch(n,m,n0,m0,X,maxNum,ans,C,C0,TP,H,Upbound);
-		back(tTP,C,TP,tC,n,m,tn,tm); //还原现场
-		TP[k]=0; //----大错点----不加则死循环---
+		branch(n,m,n0,m0,X,maxNum,ans,C,C0,TP,H,Upbound); 
 		X[k]=1;
 		branch(n,m,n0,m0,X,maxNum,ans,C,C0,TP,H,Upbound);
 		back(tTP,C,TP,tC,n,m,tn,tm); //还原现场
 		return;
 	}
 	//puts("consH"); 
-	consH(n0,TP,H,tTP,X); //展开递推关系TP,H
+	consH(n0,TP,H,X,tTP); //展开递推关系TP,H
 	int t=0; 
 	for (int i=1;i<=m0;i++)
 		for (it=C0[i].begin();it!=C0[i].end();it++){
@@ -590,7 +637,7 @@ void branch(int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<int> *C,
 		maxNum=t;
 		for (int i=1;i<=n0;i++) ans[i]=X[i];
 	}
-	reTP(n0,TP,tTP);
+	back(tTP,C,TP,tC,n,m,tn,tm); //还原现场
 	return;
 }
 int main(int argc,char **arg){
