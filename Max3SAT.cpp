@@ -9,7 +9,8 @@
 #include<queue>
 #include<stack>
 using namespace std;
-const int MAXN=605;
+const int NB_V=605;
+const int NB_C=605;
 //test 
 clock_t TIME[15];
 int COUNT[15];
@@ -25,7 +26,7 @@ bool find(set<int> C,int x){
 //      0 denotes literal x is not in C
 	return C.find(x)!=C.end();//C.find(x)返回值: x在C中则返回x的位置，否则返回C.end
 } 
-void back(map<int,int> tTP,set<int> *C,int *TP,map<int,set<int> > tC,int &n,int &m,int tn,int tm){
+void back(map<int,int> &tTP,set<int> *C,int *TP,map<int,set<int> > &tC,int &n,int &m,int tn,int tm){
 //input：把tTP的数据还原到TP里去
 //output：no exist     
 	for (map<int,int>::iterator it=tTP.begin();it!=tTP.end();it++)
@@ -124,7 +125,7 @@ bool rule1_1(int n,int &m,int *X,int *TP,node *H,set<int> *C,map<int,set<int> > 
 	set<int>::iterator it;
 	bool f=false; 
 	for (int i=1;i<=m;i++){
-		int p[MAXN];
+		int p[NB_V];
 		memset(p,0,sizeof(p));
 		for (it=C[i].begin();it!=C[i].end();it++){ 
 			int x=*it;
@@ -144,7 +145,7 @@ bool rule1_1(int n,int &m,int *X,int *TP,node *H,set<int> *C,map<int,set<int> > 
 }
 bool rule1_2(int n,int &m,int *X,int *TP,node *H,set<int> *C,int &Upbound,map<int,set<int> > &tC){
 	bool f=false;
-	int p[MAXN][2]; 
+	int p[NB_V][2]; 
 	memset(p,0,sizeof(p));
 	for (int i=1;i<=m;i++){
 		if (C[i].size()!=1) continue;
@@ -170,7 +171,7 @@ bool rule1_2(int n,int &m,int *X,int *TP,node *H,set<int> *C,int &Upbound,map<in
 	return f;
 }
 bool rule2(int n,int &m,int *X,int *TP,node *H,set<int> *C,map<int,int> &tTP){  //不用管dgree
-	int p1[MAXN],p2[MAXN],h1[MAXN],h2[MAXN],x; 
+	int p1[NB_V],p2[NB_V],h1[NB_V],h2[NB_V],x; 
 	bool f=false;
 	set<int>::iterator it;
 	memset(p1,0,sizeof(p1));
@@ -436,7 +437,7 @@ bool rule5_7(int &n,int &m,int *TP,node *H,set<int> *C,int *X,vector<int> LC[][2
 	return false;
 }
 bool rule8(int &m,int *TP,set<int> *C,int &Upbound,map<int,set<int> > &tC){
-	int p[MAXN][2];
+	int p[NB_V][2];
 	set<int>::iterator it;
 	memset(p,0,sizeof(p));
 	for (int i=1;i<=m;i++){
@@ -555,8 +556,8 @@ void getLC(int n0,int m,set<int> *C,vector<int> LC[][2],int *TP,bool &D3){
 
 	D3=true;
 }
-vector<int> LC[MAXN][2];
-int degree[MAXN];
+vector<int> LC[NB_V][2];
+int degree[NB_V];
 void branch(int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<int> *C,set<int> *C0,int *TP,node* H,int Upbound){
 	set<int>::iterator it;
     map<int,int > tTP;
@@ -640,16 +641,16 @@ void branch(int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<int> *C,
 	back(tTP,C,TP,tC,n,m,tn,tm); //还原现场
 	return;
 }
+set<int> C[NB_C],C0[NB_C];
+int ans[NB_V],X[NB_V];
+int TP[NB_V]; //TP存变量的状态是 -1 未知  0 为确定值  1 由H[i].F得到  2看H[i].fx之后得到
+node H[NB_V];
 int main(int argc,char **arg){
     freopen(arg[1],"r",stdin);
     //freopen("output.txt","w",stdout);
     int n,m,n0,maxNum=0;
     clock_t start,finish; 
     start=clock();
-	set<int> C[MAXN],C0[MAXN];
-	int ans[MAXN],X[MAXN];
-	int TP[MAXN]; //TP存变量的状态是 -1 未知  0 为确定值  1 由H[i].F得到  2看H[i].fx之后得到
-    node H[MAXN];
     initial(n,m,C0);
     n0=n; 
     memset(TP,-1,sizeof(TP));
