@@ -9,8 +9,8 @@
 #include<queue>
 #include<stack>
 using namespace std;
-const int NB_V=1505;
-const int NB_C=2505;
+const int NB_V=2505;
+const int NB_C=4505;
 //test 
 clock_t TIME[15];
 int COUNT[15];
@@ -236,9 +236,7 @@ bool rule5_7(int &n,int &m,int *TP,node *H,set<int> *C,int *X,vector<int> LC[][2
 		int c1,c2,c3,y=0;
 		find3clause(c1,c2,c3,x,LC); //找到这三个clause
 		for (it=C[c1].begin();it!=C[c1].end();it++){
-			if (*it==x) continue; //注意
-			if (TP[abs(*it)]!=-1) continue; //需要么
-    	//	if (degree[abs(*it)]!=3) continue; //注意限制y的degree=3  *it的正负不用限制
+			if (*it==x) continue; //注意 
 			if (find(C[c2],-*it)){
 				y=*it;
 				break;
@@ -249,33 +247,15 @@ bool rule5_7(int &n,int &m,int *TP,node *H,set<int> *C,int *X,vector<int> LC[][2
 				break;
 			}
 		}
-		if (!y) continue; //找不到对应的y
-		if (tTP.find(x)==tTP.end())
-			tTP[x]=TP[x]; //----纪录改变 
-		if (tC.find(c1)==tC.end())
-			tC[c1]=C[c1]; //----纪录改变 
-		if (tC.find(c2)==tC.end())
-			tC[c2]=C[c2]; //----纪录改变 
-		if (tC.find(c3)==tC.end())
-			tC[c3]=C[c3]; //----纪录改变 
+		if (!y) continue; //找不到对应的y 
 		if (find(C[c3],x)){ //x为(2,1) 
-			TP[x]=1; //x的值由c2推出
-			H[x].F=C[c2],H[x].F.erase(-x);
-			C[c2].insert(C[c3].begin(),C[c3].end());
-			C[c2].erase(x),C[c2].erase(-x);
-			if (c1>c3) //多个删除注意顺序
-				C[c1]=C[m--],C[c3]=C[m--]; //注意先改clause再删除clause
-			else
-				C[c3]=C[m--],C[c1]=C[m--];
+			if (tC.find(c1)==tC.end())
+				tC[c1]=C[c1]; //----纪录改变 
+			C[c1]=C[m--];
 		}else{				//x为(1,2)
-			TP[x]=1; //x的值由c1推出
-			H[x].F=C[c1],H[x].F.erase(x);
-			C[c1].insert(C[c3].begin(),C[c3].end());
-			C[c1].erase(x),C[c1].erase(-x);
-			if (c2>c3)  //多个删除注意顺序
-				C[c2]=C[m--],C[c3]=C[m--]; //注意先改clause再删除clause
-			else
-				C[c3]=C[m--],C[c2]=C[m--];
+			if (tC.find(c2)==tC.end())
+				tC[c2]=C[c2]; //----纪录改变 
+			C[c2]=C[m--];
 		}   
 		return true;
 	}
@@ -296,8 +276,6 @@ bool rule5_7(int &n,int &m,int *TP,node *H,set<int> *C,int *X,vector<int> LC[][2
 			if (it==C[c1].end()) continue;
 			if (tC.find(c2)==tC.end())
 				tC[c2]=C[c2]; //----纪录改变  
-          /*  puts("--rule6---");
-			Output1(y,C,LC);  */
 			C[c2].erase(x); 
 			return true;
 		}else
@@ -315,8 +293,6 @@ bool rule5_7(int &n,int &m,int *TP,node *H,set<int> *C,int *X,vector<int> LC[][2
 			if (it==C[c2].end()) continue;
 			if (tC.find(c1)==tC.end())
 				tC[c1]=C[c1]; //----纪录改变 
-         /*   puts("--rule6---");
-			Output1(y,C,LC);  */
 			C[c1].erase(x); 
 			return true;
 		} 
