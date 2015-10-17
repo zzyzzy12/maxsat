@@ -229,37 +229,8 @@ bool rule3(int n,int &m,int *X,int *TP,node *H,set<int> *C,vector<int> LC[][2],m
 	return false;
 } 
 bool rule5_7(int &n,int &m,int *TP,node *H,set<int> *C,int *X,vector<int> LC[][2],map<int,set<int> > &tC,map<int,int> &tTP){ //注意m为变参
-	set<int>::iterator it;   
-    //-----rule5
-	for (int x=1;x<=n;x++){
-		if (TP[x]!=-1 || LC[x][0].size()+LC[x][1].size()!=3) continue;
-		int c1,c2,c3,y=0;
-		find3clause(c1,c2,c3,x,LC); //找到这三个clause
-		for (it=C[c1].begin();it!=C[c1].end();it++){
-			if (*it==x) continue; //注意 
-			if (find(C[c2],-*it)){
-				y=*it;
-				break;
-			}
-			if (find(C[c3],-x) && find(C[c3],-*it)){ //注意C3必须是包含-x的才可以
-				y=*it;
-				swap(c2,c3);
-				break;
-			}
-		}
-		if (!y) continue; //找不到对应的y 
-		if (find(C[c3],x)){ //x为(2,1) 
-			if (tC.find(c1)==tC.end())
-				tC[c1]=C[c1]; //----纪录改变 
-			C[c1]=C[m--];
-		}else{				//x为(1,2)
-			if (tC.find(c2)==tC.end())
-				tC[c2]=C[c2]; //----纪录改变 
-			C[c2]=C[m--];
-		}   
-		return true;
-	}
-	//-----rule6_1
+	set<int>::iterator it;    
+	/*//-----rule6_1
 	for (int y=1;y<=n;y++){ //rule6 复杂度最高到dm
 		if (TP[y]!=-1) continue; 
 		if (LC[y][0].size()==1){  //  y为(1,i)
@@ -308,15 +279,19 @@ bool rule5_7(int &n,int &m,int *TP,node *H,set<int> *C,int *X,vector<int> LC[][2
 				if (y==x) continue;
 				for (k=LC[x][1].size()-1;k>=0;k--){
 					c1=LC[x][1][k];
-					if (find(C[c1],-y) && C[c1].size()>2) break;
+					if (find(C[c1],-y) && (LC[x][1].size()==2 || C[c1].size()>2)) break; 
 				}
 				if (k>=0) break;
 			}
 			if (it==C[D].end()) continue;
 			if (tC.find(c1)==tC.end())
 				tC[c1]=C[c1]; //----纪录改变  
-			C[c1].clear();
-			C[c1].insert(-x),C[c1].insert(-y);
+			if (LC[x][1].size()==2) 
+				C[c1]=C[m--];
+			else{
+				C[c1].clear();
+				C[c1].insert(-x),C[c1].insert(-y);
+			}
 			return true;
 		}else
 		if (LC[x][1].size()==1){ // x为(i,1)
@@ -327,18 +302,22 @@ bool rule5_7(int &n,int &m,int *TP,node *H,set<int> *C,int *X,vector<int> LC[][2
 				if (y==-x) continue;
 				for (k=LC[x][0].size()-1;k>=0;k--){
 					c1=LC[x][0][k];
-					if (find(C[c1],-y) && C[c1].size()>2) break;
+					if (find(C[c1],-y) && (LC[x][0].size()==2 || C[c1].size()>2)) break;
 				}
 				if (k>=0) break;
 			}
 			if (it==C[D].end()) continue;
 			if (tC.find(c1)==tC.end())
 				tC[c1]=C[c1]; //----纪录改变  
-			C[c1].clear();
-			C[c1].insert(x),C[c1].insert(-y);
+			if (LC[x][0].size()==2) 
+				C[c1]=C[m--];
+			else{
+				C[c1].clear();
+				C[c1].insert(-x),C[c1].insert(-y);
+			}
 			return true;
 		}
-	}
+	}*/
 	//-----rule7 
 	for (int x=1;x<=n;x++){
 		if (TP[x]!=-1) continue; 
@@ -354,10 +333,7 @@ bool rule5_7(int &n,int &m,int *TP,node *H,set<int> *C,int *X,vector<int> LC[][2
 				}
 				if (k==0) break; 
 			}
-	        if (it==C[c1].end()) continue;
-         /*  puts("--rule7---");
-			Output1(x,C,LC); 
-			*/
+	        if (it==C[c1].end()) continue; 
 		    TP[++n]=-1; //加入新点x'
 		    for (k=LC[x][1].size()-1;k>=0;k--){
 		    	ci=LC[x][1][k];
@@ -389,10 +365,7 @@ bool rule5_7(int &n,int &m,int *TP,node *H,set<int> *C,int *X,vector<int> LC[][2
 				}
 				if (k==0) break; 
 			}
-			if (it==C[c1].end()) continue;
-          /*  puts("--rule7---");
-			Output1(x,C,LC); 
-			*/
+			if (it==C[c1].end()) continue; 
 			TP[++n]=-1; //加入新点x'
 			for (k=LC[x][0].size()-1;k>=0;k--){
 				ci=LC[x][0][k];
