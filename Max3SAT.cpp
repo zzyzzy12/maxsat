@@ -75,8 +75,7 @@ bool reNew(int &m,int *X,int *TP,node *H,set<int> *C,int &Upbound,map<int,set<in
 void Output(int maxNum){ 
 	//system("clear");
 	printf("MaxNum = %d\n",maxNum);
-	printf("NB_Branch   : %d\n",COUNT[0]);
-	printf("NB_Rule 1.1 : %d\n",COUNT[1]);
+	printf("NB_Branch   : %d\n",COUNT[0]); 
 	printf("NB_Rule 1.2 : %d\n",COUNT[4]);
 	for (int i=2;i<=8;i++){
 		if (i==4 || i==6 || i==7) continue;
@@ -121,7 +120,7 @@ void initial(int &n,int &m,set<int> *C){ //读取数据
     }
   }
 }
-bool rule1_1(int n,int &m,int *X,int *TP,node *H,set<int> *C,map<int,set<int> > &tC){  
+bool rule1_1(int &m,set<int> *C){  
 	set<int>::iterator it;
 	bool f=false; 
 	for (int i=1;i<=m;i++){
@@ -131,9 +130,7 @@ bool rule1_1(int n,int &m,int *X,int *TP,node *H,set<int> *C,map<int,set<int> > 
 			int x=*it;
 			if (x>0) p[x]++;
 			    else x=-x,p[x]--;
-			if (!p[x]){
-				if (tC.find(i)==tC.end())
-			    	tC[i]=C[i];//----纪录改变
+			if (!p[x]){ 
 				C[i--]=C[m--]; 
 				f=true;
 				break;
@@ -554,10 +551,6 @@ void branch(int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<int> *C,
 			return;
 		}
 		start=clock();
-	//	puts("进入rule1_1");
-		if (rule1_1(n,m,X,TP,H,C,tC)) { TIME[1]+=clock()-start; COUNT[1]++; continue; } //done
-		TIME[1]+=clock()-start; 
-		start=clock();
 	//	puts("进入rule1_2");
 		if (rule1_2(n,m,X,TP,H,C,Upbound,tC)) { TIME[10]+=clock()-start; COUNT[4]++; continue; } //done
 		TIME[10]+=clock()-start; 
@@ -638,7 +631,7 @@ int main(int argc,char **arg){
     start=clock();
     initial(n,m,C0);
     n0=n; 
-    memset(TP,-1,sizeof(TP));
+    memset(TP,-1,sizeof(TP)); 
 	for (int i=1;i<=m;i++) C[i]=C0[i]; 
 	memset(X,-1,sizeof(X));
     memset(TIME,0,sizeof(TIME));
@@ -657,8 +650,7 @@ int main(int argc,char **arg){
 	//printf("RULE 6  %.5lf seconds.     %.5lf seconds.\n",(double)TIME[20]/CLOCKS_PER_SEC,(double)TIME[21]/CLOCKS_PER_SEC);
     //printf("RULE 7  %.5lf seconds.     %.5lf seconds.\n",(double)TIME[22]/CLOCKS_PER_SEC,(double)TIME[23]/CLOCKS_PER_SEC);
 	printf("Total time is %.5lf seconds.\n",(double)finish/CLOCKS_PER_SEC);
-	printf("reNew    : %.5lf seconds.   (%.2lf %%) \n",(double)TIME[0]/CLOCKS_PER_SEC,100.0*TIME[0]/finish);
-	printf("Rule 1.1 : %.5lf seconds.   (%.2lf %%) \n",(double)TIME[1]/CLOCKS_PER_SEC,100.0*TIME[1]/finish);
+	printf("reNew    : %.5lf seconds.   (%.2lf %%) \n",(double)TIME[0]/CLOCKS_PER_SEC,100.0*TIME[0]/finish); 
 	printf("Rule 1.2 : %.5lf seconds.   (%.2lf %%) \n",(double)TIME[10]/CLOCKS_PER_SEC,100.0*TIME[10]/finish);
 	for (int i=2;i<=8;i++){
 		if (i==4 || i==6 || i==7) continue;
