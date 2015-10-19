@@ -48,29 +48,30 @@ bool reNew(int &m,int *X,int *TP,node *H,set<int> *C,int &Upbound,map<int,set<in
 //output：1 至少做了一次操作：{1.子句为空，去掉子句；2.如果一个子句的字符值为1，去掉该子句； 如果为0,删去该子句中的字符}
 //      0 无操作
 	set<int>::iterator it;
+	bool f=false;
 	for (int i=1;i<=m;i++){ //一个个clause看，是否为空，是否有值确定了
 		if (C[i].size()==0){
 			if (tC.find(i)==tC.end())
 			    tC[i]=C[i];//----纪录改变
-			C[i]=C[m--]; 
+			C[i--]=C[m--]; 
 			Upbound--;
-			return true;
+			continue;
 		}
 		for (it=C[i].begin();it!=C[i].end();it++){
 			if (TP[abs(*it)]!=0) continue; //要值确定了才
 			if (tC.find(i)==tC.end())
 			    tC[i]=C[i];//----纪录改变
 			if (X[abs(*it)]==1){ 
-				if (*it>0) C[i]=C[m--];
-					  else C[i].erase(*it);
+				if (*it>0) C[i--]=C[m--];
+					  else f=true,C[i].erase(*it);
 			}else{
-				if (*it<0) C[i]=C[m--];
-					  else C[i].erase(*it);
+				if (*it<0) C[i--]=C[m--];
+					  else f=true,C[i].erase(*it);
 			}
-			return true;
+			break;
 		}
-	}
-	return false;
+	} 
+	return f;
 }
 void Output(int maxNum){ 
 	//system("clear");
@@ -79,7 +80,7 @@ void Output(int maxNum){
 	printf("NB_Rule 1.2 : %d\n",COUNT[4]);
 	for (int i=2;i<=8;i++){
 		if (i==4 || i==6 || i==7) continue;
-		if (i==5) printf("NB_Rule 5-7 : %d\n",COUNT[i]);
+		if (i==5) printf("NB_Rule 6-7 : %d\n",COUNT[i]);
 			else
 				  printf("NB_Rule %d   : %d\n",i,COUNT[i]);
 	} 
@@ -225,7 +226,7 @@ bool rule3(int n,int &m,int *X,int *TP,node *H,set<int> *C,vector<int> LC[][2],m
 	}
 	return false;
 } 
-bool rule5_7(int &n,int &m,int *TP,node *H,set<int> *C,int *X,vector<int> LC[][2],map<int,set<int> > &tC,map<int,int> &tTP){ //注意m为变参
+bool rule6_7(int &n,int &m,int *TP,node *H,set<int> *C,int *X,vector<int> LC[][2],map<int,set<int> > &tC,map<int,int> &tTP){ //注意m为变参
 	set<int>::iterator it;    
 	//-----rule6_1
 	for (int x=1;x<=n;x++){ //rule6 复杂度最高到dm
@@ -566,7 +567,7 @@ void branch(int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<int> *C,
 		if (D3){ //阀值
 			start=clock(); 
 	//		puts("进入rule5-7");
-			if (rule5_7(n,m,TP,H,C,X,LC,tC,tTP))   { TIME[5]+=clock()-start; COUNT[5]++; continue; } //done
+			if (rule6_7(n,m,TP,H,C,X,LC,tC,tTP))   { TIME[5]+=clock()-start; COUNT[5]++; continue; } //done
 			TIME[5]+=clock()-start;  
 		} 
 		start=clock();
@@ -647,14 +648,12 @@ int main(int argc,char **arg){
 	finish=clock()-start;
 	double sum=0;
 	for (int i=0;i<=10;i++) sum+=TIME[i];
-	//printf("RULE 6  %.5lf seconds.     %.5lf seconds.\n",(double)TIME[20]/CLOCKS_PER_SEC,(double)TIME[21]/CLOCKS_PER_SEC);
-    //printf("RULE 7  %.5lf seconds.     %.5lf seconds.\n",(double)TIME[22]/CLOCKS_PER_SEC,(double)TIME[23]/CLOCKS_PER_SEC);
 	printf("Total time is %.5lf seconds.\n",(double)finish/CLOCKS_PER_SEC);
 	printf("reNew    : %.5lf seconds.   (%.2lf %%) \n",(double)TIME[0]/CLOCKS_PER_SEC,100.0*TIME[0]/finish); 
 	printf("Rule 1.2 : %.5lf seconds.   (%.2lf %%) \n",(double)TIME[10]/CLOCKS_PER_SEC,100.0*TIME[10]/finish);
 	for (int i=2;i<=8;i++){
 		if (i==4 || i==6 || i==7) continue;
-		if (i==5) printf("Rule 5-7 : %.5lf seconds.   (%.2lf %%) \n",(double)TIME[i]/CLOCKS_PER_SEC,100.0*TIME[i]/finish);
+		if (i==5) printf("Rule 6-7 : %.5lf seconds.   (%.2lf %%) \n",(double)TIME[i]/CLOCKS_PER_SEC,100.0*TIME[i]/finish);
 			else
 				  printf("Rule %d   : %.5lf seconds.   (%.2lf %%) \n",i,(double)TIME[i]/CLOCKS_PER_SEC,100.0*TIME[i]/finish);
 	}
