@@ -43,12 +43,11 @@ void find3clause(int &c1,int &c2,int &c3,int x,vector<int> LC[][2]){
 	if (LC[x][0].size()!=1) c3=LC[x][0][1];
 	                   else c3=LC[x][1][1]; 
 }
-bool reNew(int &m,int *X,int *TP,node *H,set<int> *C,int &Upbound,map<int,set<int> > &tC){
+void reNew(int &m,int *X,int *TP,node *H,set<int> *C,int &Upbound,map<int,set<int> > &tC){
 //input： 子句数m X是存当前赋值， TP是每个X的当前状态， H是递推关系， C是当前所有的子句
 //output：1 至少做了一次操作：{1.子句为空，去掉子句；2.如果一个子句的字符值为1，去掉该子句； 如果为0,删去该子句中的字符}
 //      0 无操作
-	set<int>::iterator it;
-	bool f=false;
+	set<int>::iterator it; 
 	for (int i=1;i<=m;i++){ //一个个clause看，是否为空，是否有值确定了
 		if (C[i].size()==0){
 			if (tC.find(i)==tC.end())
@@ -63,15 +62,14 @@ bool reNew(int &m,int *X,int *TP,node *H,set<int> *C,int &Upbound,map<int,set<in
 			    tC[i]=C[i];//----纪录改变
 			if (X[abs(*it)]==1){ 
 				if (*it>0) C[i--]=C[m--];
-					  else f=true,C[i].erase(*it);
+					  else C[i--].erase(*it);
 			}else{
 				if (*it<0) C[i--]=C[m--];
-					  else f=true,C[i].erase(*it);
+					  else C[i--].erase(*it);
 			}
 			break;
 		}
-	} 
-	return f;
+	}  
 }
 void Output(int maxNum){ 
 	//system("clear");
@@ -545,7 +543,7 @@ void branch(int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<int> *C,
 		clock_t start;
 		start=clock();
 	//	puts("进入reNew");
-		while (reNew(m,X,TP,H,C,Upbound,tC)); //done
+		reNew(m,X,TP,H,C,Upbound,tC); //done
 		TIME[0]+=clock()-start;
 		if (Upbound<=maxNum){
 			back(TP,C,n,m,tTP,tC,tn,tm); //还原现场
