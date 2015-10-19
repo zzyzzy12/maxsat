@@ -233,89 +233,112 @@ bool rule5_7(int &n,int &m,int *TP,node *H,set<int> *C,int *X,vector<int> LC[][2
 	//-----rule6_1
 	for (int x=1;x<=n;x++){ //rule6 复杂度最高到dm
 		if (TP[x]!=-1) continue; 
-		//clock_t  start=clock();
+		clock_t  start=clock();
 		if (LC[x][0].size()==1){  //  x为(1,i)
-			int c1,c2,k,y;
+			int c1,c2=0;
 			c1=LC[x][0][0];
-			for (it=C[c1].begin();it!=C[c1].end();it++){
-				y=*it; 
-				for (k=LC[x][1].size()-1;k>=0;k--){
-					c2=LC[x][1][k];
-					if (find(C[c2],y)) break;
-				}
-				if (k>=0) break;
+			for (it=C[c1].begin();it!=C[c1].end();it++){ 
+				int p1=0,p2=0,y=*it,k=1;
+				if (y>0) k=0;
+				    else y=-y; 
+				while (p1<LC[x][1].size() && p2<LC[y][k].size()){
+					if (LC[x][1][p1]==LC[y][k][p2]){
+						c2=LC[x][1][p1];
+						break;
+					}
+					if (LC[x][1][p1]<LC[y][k][p2]) p1++;
+					                          else p2++;
+				} 
+				if (c2) break;
 			}
-		//	TIME[20]=clock()-start;
-			if (it==C[c1].end()) continue;
+			if (!c2) continue;  
 			if (tC.find(c2)==tC.end())
 				tC[c2]=C[c2]; //----纪录改变  
-			C[c2].erase(y); 
+			C[c2].erase(*it); 
 			return true;
 		}else
 		if (LC[x][1].size()==1){  //  x为(i,1)
-			int c1,c2,k,y;
-			c2=LC[x][1][0]; 
-			for (it=C[c2].begin();it!=C[c2].end();it++){
-				y=*it; 
-				for (k=LC[x][0].size()-1;k>=0;k--){
-					c1=LC[x][0][k];
-					if (find(C[c1],y)) break; 
-				}
-				if (k>=0) break;
+			int c1=0,c2;
+			c2=LC[x][1][0];
+			for (it=C[c2].begin();it!=C[c2].end();it++){ 
+				int p1=0,p2=0,y=*it,k=1;
+				if (y>0) k=0;
+				    else y=-y;
+				while (p1<LC[x][0].size() && p2<LC[y][k].size()){
+					if (LC[x][0][p1]==LC[y][k][p2]){
+						c1=LC[x][0][p1];
+						break;
+					}
+					if (LC[x][0][p1]<LC[y][k][p2]) p1++;
+					                          else p2++;
+				} 
+				if (c1) break;
 			}
-			if (it==C[c2].end()) continue;
+			if (!c1) continue; 
 			if (tC.find(c1)==tC.end())
-				tC[c1]=C[c1]; //----纪录改变 
-			C[c1].erase(y); 
-			return true;
+				tC[c1]=C[c1]; //----纪录改变  tC[c1]=C[c1]; //----纪录改变  
+			C[c1].erase(*it); 
+			return true; 
 		} 
 	} 
     //-----rule6_2
 	for (int x=1;x<=n;x++){
 		if (TP[x]!=-1) continue;
 		if (LC[x][0].size()==1){  // x为(1,i)
-			int c1,D,k,y;
+			int c1=0,D;
 			D=LC[x][0][0];
 			for (it=C[D].begin();it!=C[D].end();it++){
-				y=*it;
+				int p1=0,p2=0,y=*it,k=0;
+				if (y>0) k=1;
+				    else y=-y; 
 				if (y==x) continue;
-				for (k=LC[x][1].size()-1;k>=0;k--){
-					c1=LC[x][1][k];
-					if (find(C[c1],-y) && (LC[x][1].size()==2 || C[c1].size()>2)) break; 
+				while (p1<LC[x][1].size() && p2<LC[y][k].size()){ 
+					if (LC[x][1][p1]==LC[y][k][p2] && (LC[x][1].size()==2 || C[LC[x][1][p1]].size()>2)){
+						c1=LC[x][1][p1];
+						break;
+					} 
+					if (LC[x][1][p1]<LC[y][k][p2]) p1++;
+					                         else  p2++;
 				}
-				if (k>=0) break;
+				if (c1) break; 
 			}
-			if (it==C[D].end()) continue;
+			if (!c1) continue;
 			if (tC.find(c1)==tC.end())
 				tC[c1]=C[c1]; //----纪录改变  
 			if (LC[x][1].size()==2) 
 				C[c1]=C[m--];
 			else{
 				C[c1].clear();
-				C[c1].insert(-x),C[c1].insert(-y);
+				C[c1].insert(-x),C[c1].insert(-*it);
 			}
 			return true;
 		}else
 		if (LC[x][1].size()==1){ // x为(i,1)
-			int c1,D,k,y;
+			int c1,D;
 			D=LC[x][1][0];
 			for (it=C[D].begin();it!=C[D].end();it++){
-				y=*it;
-				if (y==-x) continue;
-				for (k=LC[x][0].size()-1;k>=0;k--){
-					c1=LC[x][0][k];
-					if (find(C[c1],-y) && (LC[x][0].size()==2 || C[c1].size()>2)) break;
+				int p1=0,p2=0,y=*it,k=0;
+				if (y>0) k=1;
+				    else y=-y; 
+				if (y==x) continue;
+				while (p1<LC[x][0].size() && p2<LC[y][k].size()){ 
+					if (LC[x][0][p1]==LC[y][k][p2] && (LC[x][0].size()==2 || C[LC[x][0][p1]].size()>2)){
+						c1=LC[x][0][p1];
+						break;
+					} 
+					if (LC[x][0][p1]<LC[y][k][p2]) p1++;
+					                         else  p2++;
 				}
-				if (k>=0) break;
+				if (c1) break; 
 			}
-			if (it==C[D].end()) continue;
+			if (!c1) continue;
 			if (tC.find(c1)==tC.end())
 				tC[c1]=C[c1]; //----纪录改变  
 			if (LC[x][0].size()==2) 
 				C[c1]=C[m--];
 			else{
 				C[c1].clear();
-				C[c1].insert(-x),C[c1].insert(-y);
+				C[c1].insert(-x),C[c1].insert(-*it);
 			}
 			return true;
 		}
@@ -323,6 +346,7 @@ bool rule5_7(int &n,int &m,int *TP,node *H,set<int> *C,int *X,vector<int> LC[][2
 	//-----rule7 
 	for (int x=1;x<=n;x++){
 		if (TP[x]!=-1) continue; 
+		clock_t start=clock();
 		if (LC[x][0].size()==1){ // x为(1,i)   x=x' y
 			int c1,ci,D1,k,y;
 		    c1=LC[x][1][0],D1=LC[x][0][0];
@@ -335,7 +359,7 @@ bool rule5_7(int &n,int &m,int *TP,node *H,set<int> *C,int *X,vector<int> LC[][2
 				}
 				if (k==0) break; 
 			}
-	        if (it==C[c1].end()) continue; 
+	        if (it==C[c1].end()) continue;   
 		    TP[++n]=-1; //加入新点x'
 		    for (k=LC[x][1].size()-1;k>=0;k--){
 		    	ci=LC[x][1][k];
@@ -367,7 +391,7 @@ bool rule5_7(int &n,int &m,int *TP,node *H,set<int> *C,int *X,vector<int> LC[][2
 				}
 				if (k==0) break; 
 			}
-			if (it==C[c1].end()) continue; 
+			if (it==C[c1].end()) continue;  
 			TP[++n]=-1; //加入新点x'
 			for (k=LC[x][0].size()-1;k>=0;k--){
 				ci=LC[x][0][k];
@@ -630,7 +654,8 @@ int main(int argc,char **arg){
 	finish=clock()-start;
 	double sum=0;
 	for (int i=0;i<=10;i++) sum+=TIME[i];
-	printf("RULE 6  %.5lf seconds.\n",(double)TIME[20]/CLOCKS_PER_SEC);
+	//printf("RULE 6  %.5lf seconds.     %.5lf seconds.\n",(double)TIME[20]/CLOCKS_PER_SEC,(double)TIME[21]/CLOCKS_PER_SEC);
+    //printf("RULE 7  %.5lf seconds.     %.5lf seconds.\n",(double)TIME[22]/CLOCKS_PER_SEC,(double)TIME[23]/CLOCKS_PER_SEC);
 	printf("Total time is %.5lf seconds.\n",(double)finish/CLOCKS_PER_SEC);
 	printf("reNew    : %.5lf seconds.   (%.2lf %%) \n",(double)TIME[0]/CLOCKS_PER_SEC,100.0*TIME[0]/finish);
 	printf("Rule 1.1 : %.5lf seconds.   (%.2lf %%) \n",(double)TIME[1]/CLOCKS_PER_SEC,100.0*TIME[1]/finish);
