@@ -12,8 +12,8 @@ using namespace std;
 const int NB_V=2505;
 const int NB_C=4505;
 //test 
-clock_t TIME[15];
-int COUNT[15];
+clock_t TIME[25];
+int COUNT[25];
 
 struct node{
 	set<int> F;
@@ -230,41 +230,43 @@ bool rule3(int n,int &m,int *X,int *TP,node *H,set<int> *C,vector<int> LC[][2],m
 } 
 bool rule5_7(int &n,int &m,int *TP,node *H,set<int> *C,int *X,vector<int> LC[][2],map<int,set<int> > &tC,map<int,int> &tTP){ //注意m为变参
 	set<int>::iterator it;    
-	/*//-----rule6_1
-	for (int y=1;y<=n;y++){ //rule6 复杂度最高到dm
-		if (TP[y]!=-1) continue; 
-		if (LC[y][0].size()==1){  //  y为(1,i)
-			int c1,c2,k,x;
-			c1=LC[y][0][0];
+	//-----rule6_1
+	for (int x=1;x<=n;x++){ //rule6 复杂度最高到dm
+		if (TP[x]!=-1) continue; 
+		//clock_t  start=clock();
+		if (LC[x][0].size()==1){  //  x为(1,i)
+			int c1,c2,k,y;
+			c1=LC[x][0][0];
 			for (it=C[c1].begin();it!=C[c1].end();it++){
-				x=*it; 
-				for (k=LC[y][1].size()-1;k>=0;k--){
-					c2=LC[y][1][k];
-					if (find(C[c2],x)) break;
+				y=*it; 
+				for (k=LC[x][1].size()-1;k>=0;k--){
+					c2=LC[x][1][k];
+					if (find(C[c2],y)) break;
 				}
 				if (k>=0) break;
 			}
+		//	TIME[20]=clock()-start;
 			if (it==C[c1].end()) continue;
 			if (tC.find(c2)==tC.end())
 				tC[c2]=C[c2]; //----纪录改变  
-			C[c2].erase(x); 
+			C[c2].erase(y); 
 			return true;
 		}else
-		if (LC[y][1].size()==1){  //  y为(i,1)
-			int c1,c2,k,x;
-			c2=LC[y][1][0]; 
+		if (LC[x][1].size()==1){  //  x为(i,1)
+			int c1,c2,k,y;
+			c2=LC[x][1][0]; 
 			for (it=C[c2].begin();it!=C[c2].end();it++){
-				x=*it; 
-				for (k=LC[y][0].size()-1;k>=0;k--){
-					c1=LC[y][0][k];
-					if (find(C[c1],x)) break; 
+				y=*it; 
+				for (k=LC[x][0].size()-1;k>=0;k--){
+					c1=LC[x][0][k];
+					if (find(C[c1],y)) break; 
 				}
 				if (k>=0) break;
 			}
 			if (it==C[c2].end()) continue;
 			if (tC.find(c1)==tC.end())
 				tC[c1]=C[c1]; //----纪录改变 
-			C[c1].erase(x); 
+			C[c1].erase(y); 
 			return true;
 		} 
 	} 
@@ -317,7 +319,7 @@ bool rule5_7(int &n,int &m,int *TP,node *H,set<int> *C,int *X,vector<int> LC[][2
 			}
 			return true;
 		}
-	}*/
+	} 
 	//-----rule7 
 	for (int x=1;x<=n;x++){
 		if (TP[x]!=-1) continue; 
@@ -628,6 +630,7 @@ int main(int argc,char **arg){
 	finish=clock()-start;
 	double sum=0;
 	for (int i=0;i<=10;i++) sum+=TIME[i];
+	printf("RULE 6  %.5lf seconds.\n",(double)TIME[20]/CLOCKS_PER_SEC);
 	printf("Total time is %.5lf seconds.\n",(double)finish/CLOCKS_PER_SEC);
 	printf("reNew    : %.5lf seconds.   (%.2lf %%) \n",(double)TIME[0]/CLOCKS_PER_SEC,100.0*TIME[0]/finish);
 	printf("Rule 1.1 : %.5lf seconds.   (%.2lf %%) \n",(double)TIME[1]/CLOCKS_PER_SEC,100.0*TIME[1]/finish);
@@ -639,6 +642,6 @@ int main(int argc,char **arg){
 				  printf("Rule %d   : %.5lf seconds.   (%.2lf %%) \n",i,(double)TIME[i]/CLOCKS_PER_SEC,100.0*TIME[i]/finish);
 	}
 	printf("(%.2lf %%) \n\n",100.0*sum/finish);
-	Output(maxNum); 
+	Output(maxNum);  
     return 0;
 }
