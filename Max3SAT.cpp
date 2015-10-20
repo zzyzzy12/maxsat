@@ -226,7 +226,7 @@ bool rule3(int n,int &m,int *X,int *TP,node *H,set<int> *C,vector<int> LC[][2],m
 } 
 bool rule6_7(int &n,int &m,int *TP,node *H,set<int> *C,int *X,vector<int> LC[][2],map<int,set<int> > &tC,map<int,int> &tTP,vector<int> &LX){ //注意m为变参
 	set<int>::iterator it;    
-	vector<int>::iterator t1;
+	vector<int>::iterator t1,p1,p2;
 	//-----rule6_1
 	for (t1=LX.begin();t1!=LX.end();t1++){
 		int x=*t1;
@@ -234,16 +234,16 @@ bool rule6_7(int &n,int &m,int *TP,node *H,set<int> *C,int *X,vector<int> LC[][2
 			int c1,c2=0;
 			c1=LC[x][0][0];
 			for (it=C[c1].begin();it!=C[c1].end();it++){ 
-				int p1=0,p2=0,y=*it,k=1;
+				int y=*it,k=1;
 				if (y>0) k=0;
 				    else y=-y; 
-				while (p1<LC[x][1].size() && p2<LC[y][k].size()){
-					if (LC[x][1][p1]==LC[y][k][p2]){
-						c2=LC[x][1][p1];
+				for (p1=LC[x][1].begin(),p2=LC[y][k].begin();p1!=LC[x][1].end() && p2!=LC[y][k].end();){ 
+					if (*p1==*p2){
+						c2=*p1;
 						break;
 					}
-					if (LC[x][1][p1]<LC[y][k][p2]) p1++;
-					                          else p2++;
+					if (*p1<*p2) p1++;
+					        else p2++;
 				} 
 				if (c2) break;
 			}
@@ -257,16 +257,16 @@ bool rule6_7(int &n,int &m,int *TP,node *H,set<int> *C,int *X,vector<int> LC[][2
 			int c1=0,c2;
 			c2=LC[x][1][0];
 			for (it=C[c2].begin();it!=C[c2].end();it++){ 
-				int p1=0,p2=0,y=*it,k=1;
+				int y=*it,k=1;
 				if (y>0) k=0;
 				    else y=-y;
-				while (p1<LC[x][0].size() && p2<LC[y][k].size()){
-					if (LC[x][0][p1]==LC[y][k][p2]){
-						c1=LC[x][0][p1];
+				for (p1=LC[x][0].begin(),p2=LC[y][k].begin();p1!=LC[x][0].end() && p2!=LC[y][k].end();){  
+					if (*p1==*p2){
+						c1=*p1;
 						break;
 					}
-					if (LC[x][0][p1]<LC[y][k][p2]) p1++;
-					                          else p2++;
+					if (*p1<*p2) p1++;
+					        else p2++;
 				} 
 				if (c1) break;
 			}
@@ -285,17 +285,17 @@ bool rule6_7(int &n,int &m,int *TP,node *H,set<int> *C,int *X,vector<int> LC[][2
 			int c1=0,D;
 			D=LC[x][0][0];
 			for (it=C[D].begin();it!=C[D].end();it++){
-				int p1=0,p2=0,y=*it,k=0;
+				int y=*it,k=0;
 				if (y>0) k=1;
 				    else y=-y; 
 				if (y==x) continue;
-				while (p1<LC[x][1].size() && p2<LC[y][k].size()){ 
-					if (LC[x][1][p1]==LC[y][k][p2] && (LC[x][1].size()==2 || C[LC[x][1][p1]].size()>2)){
-						c1=LC[x][1][p1];
+				for (p1=LC[x][1].begin(),p2=LC[y][k].begin();p1!=LC[x][1].end() && p2!=LC[y][k].end();){ 
+					if (*p1==*p2 && (LC[x][1].size()==2 || C[*p1].size()>2)){
+						c1=*p1;
 						break;
 					} 
-					if (LC[x][1][p1]<LC[y][k][p2]) p1++;
-					                         else  p2++;
+					if (*p1<*p2) p1++;
+					       else  p2++;
 				}
 				if (c1) break; 
 			}
@@ -311,20 +311,20 @@ bool rule6_7(int &n,int &m,int *TP,node *H,set<int> *C,int *X,vector<int> LC[][2
 			LX.erase(t1++);
 			return true;
 		}else{ // x为(i,1)
-			int c1,D;
+			int c1=0,D;
 			D=LC[x][1][0];
 			for (it=C[D].begin();it!=C[D].end();it++){
-				int p1=0,p2=0,y=*it,k=0;
+				int y=*it,k=0;
 				if (y>0) k=1;
 				    else y=-y; 
 				if (y==x) continue;
-				while (p1<LC[x][0].size() && p2<LC[y][k].size()){ 
-					if (LC[x][0][p1]==LC[y][k][p2] && (LC[x][0].size()==2 || C[LC[x][0][p1]].size()>2)){
-						c1=LC[x][0][p1];
+				for (p1=LC[x][0].begin(),p2=LC[y][k].begin();p1!=LC[x][0].end() && p2!=LC[y][k].end();){ 
+					if (*p1==*p2 && (LC[x][0].size()==2 || C[*p1].size()>2)){
+						c1=*p1;
 						break;
 					} 
-					if (LC[x][0][p1]<LC[y][k][p2]) p1++;
-					                         else  p2++;
+					if (*p1<*p2) p1++;
+					       else  p2++;
 				}
 				if (c1) break; 
 			}
@@ -570,7 +570,7 @@ void branch(int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<int> *C,
 		TIME[3]+=clock()-start; 
 		if (D3){ //阀值
 			start=clock(); 
-	//		puts("进入rule5-7");
+	//		puts("进入rule6-7");
 			if (rule6_7(n,m,TP,H,C,X,LC,tC,tTP,LX))   { TIME[5]+=clock()-start; COUNT[5]++; continue; } //done
 			TIME[5]+=clock()-start;  
 		} 
