@@ -224,12 +224,12 @@ bool rule3(int n,int &m,int *X,int *TP,node *H,set<int> *C,vector<int> LC[][2],m
 	}
 	return false;
 } 
-bool rule6_7(int &n,int &m,int *TP,node *H,set<int> *C,int *X,vector<int> LC[][2],map<int,set<int> > &tC,map<int,int> &tTP){ //注意m为变参
+bool rule6_7(int &n,int &m,int *TP,node *H,set<int> *C,int *X,vector<int> LC[][2],map<int,set<int> > &tC,map<int,int> &tTP,vector<int> &LX){ //注意m为变参
 	set<int>::iterator it;    
+	vector<int>::iterator t1;
 	//-----rule6_1
-	for (int x=1;x<=n;x++){ //rule6 复杂度最高到dm
-		if (TP[x]!=-1) continue; 
-		clock_t  start=clock();
+	for (t1=LX.begin();t1!=LX.end();t1++){
+		int x=*t1;
 		if (LC[x][0].size()==1){  //  x为(1,i)
 			int c1,c2=0;
 			c1=LC[x][0][0];
@@ -251,9 +251,9 @@ bool rule6_7(int &n,int &m,int *TP,node *H,set<int> *C,int *X,vector<int> LC[][2
 			if (tC.find(c2)==tC.end())
 				tC[c2]=C[c2]; //----纪录改变  
 			C[c2].erase(*it); 
+			LX.erase(t1++);
 			return true;
-		}else
-		if (LC[x][1].size()==1){  //  x为(i,1)
+		}else{  //  x为(i,1)
 			int c1=0,c2;
 			c2=LC[x][1][0];
 			for (it=C[c2].begin();it!=C[c2].end();it++){ 
@@ -274,12 +274,13 @@ bool rule6_7(int &n,int &m,int *TP,node *H,set<int> *C,int *X,vector<int> LC[][2
 			if (tC.find(c1)==tC.end())
 				tC[c1]=C[c1]; //----纪录改变  tC[c1]=C[c1]; //----纪录改变  
 			C[c1].erase(*it); 
+			LX.erase(t1++);
 			return true; 
 		} 
 	} 
     //-----rule6_2
-	for (int x=1;x<=n;x++){
-		if (TP[x]!=-1) continue;
+	for (t1=LX.begin();t1!=LX.end();t1++){
+		int x=*t1;
 		if (LC[x][0].size()==1){  // x为(1,i)
 			int c1=0,D;
 			D=LC[x][0][0];
@@ -307,9 +308,9 @@ bool rule6_7(int &n,int &m,int *TP,node *H,set<int> *C,int *X,vector<int> LC[][2
 				C[c1].clear();
 				C[c1].insert(-x),C[c1].insert(-*it);
 			}
+			LX.erase(t1++);
 			return true;
-		}else
-		if (LC[x][1].size()==1){ // x为(i,1)
+		}else{ // x为(i,1)
 			int c1,D;
 			D=LC[x][1][0];
 			for (it=C[D].begin();it!=C[D].end();it++){
@@ -336,13 +337,13 @@ bool rule6_7(int &n,int &m,int *TP,node *H,set<int> *C,int *X,vector<int> LC[][2
 				C[c1].clear();
 				C[c1].insert(-x),C[c1].insert(-*it);
 			}
+			LX.erase(t1++);
 			return true;
 		}
 	} 
 	//-----rule7 
 	for (int x=1;x<=n;x++){
-		if (TP[x]!=-1) continue; 
-		clock_t start=clock();
+		if (TP[x]!=-1) continue;  
 		if (LC[x][0].size()==1){ // x为(1,i)   x=x' y
 			int c1,ci,D1,k,y;
 		    c1=LC[x][1][0],D1=LC[x][0][0];
@@ -510,7 +511,7 @@ void reUB(int n,int m,set<int> *C,int &Upbound){
 		}
 	}
 }
-void getLC(int n0,int m,set<int> *C,vector<int> LC[][2],int *TP,bool &D3){
+void getLC(int n0,int m,set<int> *C,vector<int> LC[][2],int *TP,bool &D3,vector<int> &LX){
 	set<int>::iterator it;
 	int n=0,DM=0;
 	for (int i=1;i<=n0;i++)
@@ -523,12 +524,17 @@ void getLC(int n0,int m,set<int> *C,vector<int> LC[][2],int *TP,bool &D3){
 			if (x>0) LC[x][0].push_back(i);  // degree[x][0]纪录x为正的个数
 			    else LC[-x][1].push_back(i); // degree[x][1]纪录x为负的个数
 		}
-	if (DM<=n*3) D3=true; //调节阀值
+	LX.clear();
+	for (int x=1;x<=n0;x++)
+		if (TP[x]==-1 && (LC[x][0].size()==1 || LC[x][1].size()==1))
+			LX.push_back(x);
+	if (DM<=n*4) D3=true; //调节阀值
 	        else D3=false;  
 
 	D3=true;
 }
 vector<int> LC[NB_V][2];
+vector<int> LX;
 int degree[NB_V];
 void branch(int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<int> *C,set<int> *C0,int *TP,node* H,int Upbound){
 	set<int>::iterator it;
@@ -558,14 +564,14 @@ void branch(int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<int> *C,
 		if (rule2(n,m,X,TP,H,C,tTP)) { TIME[2]+=clock()-start; COUNT[2]++; continue; } //done
 		TIME[2]+=clock()-start; 
 		start=clock();
-		getLC(n,m,C,LC,TP,D3);
+		getLC(n,m,C,LC,TP,D3,LX);
 	//	puts("进入rule3");
 		if (rule3(n,m,X,TP,H,C,LC,tTP,tC)) { TIME[3]+=clock()-start; COUNT[3]++; continue; } //done
 		TIME[3]+=clock()-start; 
 		if (D3){ //阀值
 			start=clock(); 
 	//		puts("进入rule5-7");
-			if (rule6_7(n,m,TP,H,C,X,LC,tC,tTP))   { TIME[5]+=clock()-start; COUNT[5]++; continue; } //done
+			if (rule6_7(n,m,TP,H,C,X,LC,tC,tTP,LX))   { TIME[5]+=clock()-start; COUNT[5]++; continue; } //done
 			TIME[5]+=clock()-start;  
 		} 
 		start=clock();
@@ -580,29 +586,78 @@ void branch(int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<int> *C,
 		return; 
 	}
 /*	printf("UB = %d\n",Upbound);
-	Output(maxNum);      */
-	int k=0; 
-	memset(degree,0,sizeof(degree));
-    for (int i=1;i<=m;i++)
-    	for (it=C[i].begin();it!=C[i].end();it++)
-			degree[abs(*it)]++;	 
-	for (int i=1;i<=n;i++){
-		if (TP[i]!=-1) continue; 
-		if (degree[k]<degree[i]) k=i; 
-	}
-	//puts("bravo");  
-	if (k){ 
-		if (tTP.find(k)==tTP.end())
-			tTP[k]=TP[k]; //---纪录变化
-		TP[k]=0; //值确定
-		X[k]=0;
-		branch(n,m,n0,m0,X,maxNum,ans,C,C0,TP,H,Upbound); 
-		X[k]=1;
-		branch(n,m,n0,m0,X,maxNum,ans,C,C0,TP,H,Upbound); 
-		back(TP,C,n,m,tTP,tC,tn,tm); //还原现场 
-		return;
-	}
-	//puts("consH");  
+	Output(maxNum);      */ 
+	/*if (LX.size()){
+		int x=LX[0],num=0;
+		for (vector<int>::iterator t1=LX.begin();t1!=LX.end();t1++){
+			int y=*t1;
+			if (LC[y][0].size()==1 && LC[y][1].size()>num) x=y,num=LC[y][1].size();
+			if (LC[y][1].size()==1 && LC[y][0].size()>num) x=y,num=LC[y][0].size();
+		} 
+		if (tTP.find(x)==tTP.end())
+			tTP[x]=TP[x]; //---纪录变化
+		TP[x]=0;
+		if (LC[x][0].size()==1){
+			int D=LC[x][0][0];
+			if (tC.find(D)==tC.end())
+				tC[D]=C[D]; 
+			X[x]=0;
+			branch(n,m,n0,m0,X,maxNum,ans,C,C0,TP,H,Upbound); 
+			X[x]=1;
+			for (it=C[D].begin();it!=C[D].end();it++){
+				int y=*it;
+				if (TP[abs(y)]!=-1) continue;
+				if (tTP.find(abs(y))==tTP.end())
+					tTP[abs(y)]=-1; //---纪录变化
+				TP[abs(y)]=0;
+				if (y<0) X[-y]=1;
+				    else X[y]=0;
+			}
+			branch(n,m,n0,m0,X,maxNum,ans,C,C0,TP,H,Upbound); 
+			back(TP,C,n,m,tTP,tC,tn,tm); //还原现场 
+			return;			
+		}else{
+			int D=LC[x][1][0];
+			if (tC.find(D)==tC.end())
+				tC[D]=C[D]; 
+			X[x]=1;
+			branch(n,m,n0,m0,X,maxNum,ans,C,C0,TP,H,Upbound); 
+			X[x]=0;
+			for (it=C[D].begin();it!=C[D].end();it++){
+				int y=*it;
+				if (TP[abs(y)]!=-1) continue;
+				if (tTP.find(abs(y))==tTP.end())
+					tTP[abs(y)]=-1; //---纪录变化
+				TP[abs(y)]=0;
+				if (y<0) X[-y]=1;
+				    else X[y]=0;
+			}
+			branch(n,m,n0,m0,X,maxNum,ans,C,C0,TP,H,Upbound); 
+			back(TP,C,n,m,tTP,tC,tn,tm); //还原现场 
+			return;	
+		}
+	}else*/{
+		int k=0;
+		memset(degree,0,sizeof(degree));
+   		for (int i=1;i<=m;i++)
+    		for (it=C[i].begin();it!=C[i].end();it++)
+				degree[abs(*it)]++;	 
+		for (int i=1;i<=n;i++){
+			if (TP[i]!=-1) continue; 
+			if (degree[k]<degree[i]) k=i; 
+		}  
+		if (k){ 
+			if (tTP.find(k)==tTP.end())
+				tTP[k]=TP[k]; //---纪录变化
+			TP[k]=0; //值确定
+			X[k]=0;
+			branch(n,m,n0,m0,X,maxNum,ans,C,C0,TP,H,Upbound); 
+			X[k]=1;
+			branch(n,m,n0,m0,X,maxNum,ans,C,C0,TP,H,Upbound); 
+			back(TP,C,n,m,tTP,tC,tn,tm); //还原现场 
+			return;
+		}
+	} 
 	consH(n0,TP,H,X,tTP); //展开递推关系TP,H
 	int t=0; 
 	for (int i=1;i<=m0;i++)
