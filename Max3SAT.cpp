@@ -77,10 +77,8 @@ void Output(int maxNum){
 	printf("NB_Branch   : %d\n",COUNT[0]); 
 	printf("NB_Rule 1.2 : %d\n",COUNT[4]);
 	for (int i=2;i<=8;i++){
-		if (i==4 || i==6 || i==7) continue;
-		if (i==5) printf("NB_Rule 6-7 : %d\n",COUNT[i]);
-			else
-				  printf("NB_Rule %d   : %d\n",i,COUNT[i]);
+		if (i==4 || i==5) continue;
+		printf("NB_Rule %d   : %d\n",i,COUNT[i]);
 	} 
 	puts("#################################");
 }
@@ -224,7 +222,7 @@ bool rule3(int n,int &m,int *X,int *TP,node *H,set<int> *C,vector<int> LC[][2],m
 	}
 	return false;
 } 
-bool rule6_7(int &n,int &m,int *TP,node *H,set<int> *C,int *X,vector<int> LC[][2],map<int,set<int> > &tC,map<int,int> &tTP,vector<int> &LX){ //注意m为变参
+void rule6(int &n,int &m,int *TP,node *H,set<int> *C,int *X,vector<int> LC[][2],map<int,set<int> > &tC,vector<int> &LX){ //注意m为变参
 	set<int>::iterator it;    
 	vector<int>::iterator t1,p1,p2;
 	//-----rule6_1
@@ -250,8 +248,8 @@ bool rule6_7(int &n,int &m,int *TP,node *H,set<int> *C,int *X,vector<int> LC[][2
 			if (!c2) continue;  
 			if (tC.find(c2)==tC.end())
 				tC[c2]=C[c2]; //----纪录改变  
-			C[c2].erase(*it); 
-			return true;
+			C[c2].erase(*it);   
+			COUNT[6]++; 
 		}else{  //  x为(i,1)
 			int c1=0,c2;
 			c2=LC[x][1][0];
@@ -272,8 +270,8 @@ bool rule6_7(int &n,int &m,int *TP,node *H,set<int> *C,int *X,vector<int> LC[][2
 			if (!c1) continue; 
 			if (tC.find(c1)==tC.end())
 				tC[c1]=C[c1]; //----纪录改变  tC[c1]=C[c1]; //----纪录改变  
-			C[c1].erase(*it); 
-			return true; 
+			C[c1].erase(*it);  
+			COUNT[6]++; 
 		} 
 	} 
     //-----rule6_2
@@ -305,8 +303,8 @@ bool rule6_7(int &n,int &m,int *TP,node *H,set<int> *C,int *X,vector<int> LC[][2
 			else{
 				C[c1].clear();
 				C[c1].insert(-x),C[c1].insert(-*it);
-			}
-			return true;
+			} 
+			COUNT[6]++; 
 		}else{ // x为(i,1)
 			int c1=0,D;
 			D=LC[x][1][0];
@@ -333,10 +331,13 @@ bool rule6_7(int &n,int &m,int *TP,node *H,set<int> *C,int *X,vector<int> LC[][2
 			else{
 				C[c1].clear();
 				C[c1].insert(-x),C[c1].insert(-*it);
-			}
-			return true;
+			} 
+			COUNT[6]++; 
 		}
 	} 
+}
+bool rule7(int &n,int &m,int *TP,node *H,set<int> *C,int *X,vector<int> LC[][2],map<int,set<int> > &tC,map<int,int> &tTP,vector<int> &LX){ //注意m为变参
+	set<int>::iterator it;     
 	//-----rule7 
 	for (int x=1;x<=n;x++){
 		if (TP[x]!=-1) continue;  
@@ -567,8 +568,12 @@ void branch(int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<int> *C,
 		if (D3){ //阀值
 			start=clock(); 
 	//		puts("进入rule6-7");
-			if (rule6_7(n,m,TP,H,C,X,LC,tC,tTP,LX))   { TIME[5]+=clock()-start; COUNT[5]++; continue; } //done
-			TIME[5]+=clock()-start;  
+			rule6(n,m,TP,H,C,X,LC,tC,LX); //done
+			TIME[6]+=clock()-start; 
+			start=clock(); 
+	//		puts("进入rule6-7");
+			if (rule7(n,m,TP,H,C,X,LC,tC,tTP,LX))   { TIME[7]+=clock()-start; COUNT[7]++; continue; } //done
+			TIME[7]+=clock()-start;  
 		} 
 		start=clock();
 	//	puts("进入rule8");
@@ -581,79 +586,26 @@ void branch(int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<int> *C,
 		back(TP,C,n,m,tTP,tC,tn,tm); //还原现场
 		return; 
 	}
-/*	printf("UB = %d\n",Upbound);
-	Output(maxNum);      */ 
-	/*if (LX.size()){
-		int x=LX[0],num=0;
-		for (vector<int>::iterator t1=LX.begin();t1!=LX.end();t1++){
-			int y=*t1;
-			if (LC[y][0].size()==1 && LC[y][1].size()>num) x=y,num=LC[y][1].size();
-			if (LC[y][1].size()==1 && LC[y][0].size()>num) x=y,num=LC[y][0].size();
-		} 
-		if (tTP.find(x)==tTP.end())
-			tTP[x]=TP[x]; //---纪录变化
-		TP[x]=0;
-		if (LC[x][0].size()==1){
-			int D=LC[x][0][0];
-			if (tC.find(D)==tC.end())
-				tC[D]=C[D]; 
-			X[x]=0;
-			branch(n,m,n0,m0,X,maxNum,ans,C,C0,TP,H,Upbound); 
-			X[x]=1;
-			for (it=C[D].begin();it!=C[D].end();it++){
-				int y=*it;
-				if (TP[abs(y)]!=-1) continue;
-				if (tTP.find(abs(y))==tTP.end())
-					tTP[abs(y)]=-1; //---纪录变化
-				TP[abs(y)]=0;
-				if (y<0) X[-y]=1;
-				    else X[y]=0;
-			}
-			branch(n,m,n0,m0,X,maxNum,ans,C,C0,TP,H,Upbound); 
-			back(TP,C,n,m,tTP,tC,tn,tm); //还原现场 
-			return;			
-		}else{
-			int D=LC[x][1][0];
-			if (tC.find(D)==tC.end())
-				tC[D]=C[D]; 
-			X[x]=1;
-			branch(n,m,n0,m0,X,maxNum,ans,C,C0,TP,H,Upbound); 
-			X[x]=0;
-			for (it=C[D].begin();it!=C[D].end();it++){
-				int y=*it;
-				if (TP[abs(y)]!=-1) continue;
-				if (tTP.find(abs(y))==tTP.end())
-					tTP[abs(y)]=-1; //---纪录变化
-				TP[abs(y)]=0;
-				if (y<0) X[-y]=1;
-				    else X[y]=0;
-			}
-			branch(n,m,n0,m0,X,maxNum,ans,C,C0,TP,H,Upbound); 
-			back(TP,C,n,m,tTP,tC,tn,tm); //还原现场 
-			return;	
-		}
-	}else*/{
-		int k=0;
-		memset(degree,0,sizeof(degree));
-   		for (int i=1;i<=m;i++)
-    		for (it=C[i].begin();it!=C[i].end();it++)
-				degree[abs(*it)]++;	 
-		for (int i=1;i<=n;i++){
-			if (TP[i]!=-1) continue; 
-			if (degree[k]<degree[i]) k=i; 
-		}  
-		if (k){ 
-			if (tTP.find(k)==tTP.end())
-				tTP[k]=TP[k]; //---纪录变化
-			TP[k]=0; //值确定
-			X[k]=0;
-			branch(n,m,n0,m0,X,maxNum,ans,C,C0,TP,H,Upbound); 
-			X[k]=1;
-			branch(n,m,n0,m0,X,maxNum,ans,C,C0,TP,H,Upbound); 
-			back(TP,C,n,m,tTP,tC,tn,tm); //还原现场 
-			return;
-		}
-	} 
+	int k=0;
+	memset(degree,0,sizeof(degree));
+   	for (int i=1;i<=m;i++)
+    	for (it=C[i].begin();it!=C[i].end();it++)
+			degree[abs(*it)]++;	 
+	for (int i=1;i<=n;i++){
+		if (TP[i]!=-1) continue; 
+		if (degree[k]<degree[i]) k=i; 
+	}  
+	if (k){ 
+		if (tTP.find(k)==tTP.end())
+			tTP[k]=TP[k]; //---纪录变化
+		TP[k]=0; //值确定
+		X[k]=0;
+		branch(n,m,n0,m0,X,maxNum,ans,C,C0,TP,H,Upbound); 
+		X[k]=1;
+		branch(n,m,n0,m0,X,maxNum,ans,C,C0,TP,H,Upbound); 
+		back(TP,C,n,m,tTP,tC,tn,tm); //还原现场 
+		return;
+	}
 	consH(n0,TP,H,X,tTP); //展开递推关系TP,H
 	int t=0; 
 	for (int i=1;i<=m0;i++)
@@ -701,10 +653,8 @@ int main(int argc,char **arg){
 	printf("reNew    : %.5lf seconds.   (%.2lf %%) \n",(double)TIME[0]/CLOCKS_PER_SEC,100.0*TIME[0]/finish); 
 	printf("Rule 1.2 : %.5lf seconds.   (%.2lf %%) \n",(double)TIME[10]/CLOCKS_PER_SEC,100.0*TIME[10]/finish);
 	for (int i=2;i<=8;i++){
-		if (i==4 || i==6 || i==7) continue;
-		if (i==5) printf("Rule 6-7 : %.5lf seconds.   (%.2lf %%) \n",(double)TIME[i]/CLOCKS_PER_SEC,100.0*TIME[i]/finish);
-			else
-				  printf("Rule %d   : %.5lf seconds.   (%.2lf %%) \n",i,(double)TIME[i]/CLOCKS_PER_SEC,100.0*TIME[i]/finish);
+		if (i==4 || i==5) continue;
+		printf("Rule %d   : %.5lf seconds.   (%.2lf %%) \n",i,(double)TIME[i]/CLOCKS_PER_SEC,100.0*TIME[i]/finish);
 	}
 	printf("(%.2lf %%) \n\n",100.0*sum/finish);
 	Output(maxNum);  
