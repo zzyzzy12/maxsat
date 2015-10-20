@@ -251,7 +251,6 @@ bool rule6_7(int &n,int &m,int *TP,node *H,set<int> *C,int *X,vector<int> LC[][2
 			if (tC.find(c2)==tC.end())
 				tC[c2]=C[c2]; //----纪录改变  
 			C[c2].erase(*it); 
-			LX.erase(t1++);
 			return true;
 		}else{  //  x为(i,1)
 			int c1=0,c2;
@@ -274,7 +273,6 @@ bool rule6_7(int &n,int &m,int *TP,node *H,set<int> *C,int *X,vector<int> LC[][2
 			if (tC.find(c1)==tC.end())
 				tC[c1]=C[c1]; //----纪录改变  tC[c1]=C[c1]; //----纪录改变  
 			C[c1].erase(*it); 
-			LX.erase(t1++);
 			return true; 
 		} 
 	} 
@@ -308,7 +306,6 @@ bool rule6_7(int &n,int &m,int *TP,node *H,set<int> *C,int *X,vector<int> LC[][2
 				C[c1].clear();
 				C[c1].insert(-x),C[c1].insert(-*it);
 			}
-			LX.erase(t1++);
 			return true;
 		}else{ // x为(i,1)
 			int c1=0,D;
@@ -337,7 +334,6 @@ bool rule6_7(int &n,int &m,int *TP,node *H,set<int> *C,int *X,vector<int> LC[][2
 				C[c1].clear();
 				C[c1].insert(-x),C[c1].insert(-*it);
 			}
-			LX.erase(t1++);
 			return true;
 		}
 	} 
