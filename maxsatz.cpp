@@ -53,6 +53,17 @@ An actual unit clause is an existing clause before look-ahead starts
 #include <sys/types.h>
 #include <limits.h>
 
+#include <iostream>
+#include <cstdio>
+#include <cstring>
+#include <algorithm>
+#include <cmath>
+#include <map>
+#include <set>
+#include <queue>
+#include <stack>
+using namespace std;
+
 typedef signed char my_type;
 typedef unsigned char my_unsigned_type;
 
@@ -176,8 +187,7 @@ int saved_nb_clause[tab_variable_size];
 int saved_saved_clauses[tab_variable_size];
 int saved_new_clauses[tab_variable_size];
 
-#include "input.c"
-#include "rule6.cpp"  //---------------- 
+#include "input.c" 
 
 void remove_clauses(int var) {  //将与var赋值后确定可以满足的clause标记删去
   register int clause;
@@ -268,6 +278,136 @@ void print_values(int nb_var) { //输出解
   fclose(fp_out);			
 } 
 
+//----------------------------------------------------rule6------------------------------------------------------
+
+
+map<int,set<int> > tC;//-----------
+vector<int>  LC[4000][2]; //----------
+set<int>  C[4000]; //---------- 
+
+bool rule6(int &n,int &m){ //注意m为变参    
+
+  set<int>::iterator it;    
+  vector<int>::iterator p1,p2;
+  bool f=false; 
+  //-----rule6_1
+  for (int x=0;x<n;x++) 
+    if (LC[x][0].size()==1){  //  x为(1,i)
+      int c1,c2=-1;
+      c1=LC[x][0][0];
+      for (it=C[c1].begin();it!=C[c1].end();it++){ 
+        int y=*it,k=1;
+        if (y>0) k=0;
+            else y=-y; 
+        for (p1=LC[x][1].begin(),p2=LC[y][k].begin();p1!=LC[x][1].end() && p2!=LC[y][k].end();){ 
+          if (*p1==*p2){
+            c2=*p1;
+            break;
+          }
+          if (*p1<*p2) p1++;
+                  else p2++;
+        } 
+        if (c2) break;
+      }
+      if (c2==-1) continue;  
+      if (tC.find(c2)==tC.end())
+        tC[c2]=C[c2]; //----纪录改变  
+      C[c2].erase(*it);    
+      f=true;
+    }else
+    if (LC[x][1].size()==1){  //  x为(i,1)
+      int c1=-1,c2;
+      c2=LC[x][1][0];
+      for (it=C[c2].begin();it!=C[c2].end();it++){ 
+        int y=*it,k=1;
+        if (y>0) k=0;
+            else y=-y;
+        for (p1=LC[x][0].begin(),p2=LC[y][k].begin();p1!=LC[x][0].end() && p2!=LC[y][k].end();){  
+          if (*p1==*p2){
+            c1=*p1;
+            break;
+          }
+          if (*p1<*p2) p1++;
+                  else p2++;
+        } 
+        if (c1) break;
+      }
+      if (c1==-1) continue; 
+      if (tC.find(c1)==tC.end())
+        tC[c1]=C[c1]; //----纪录改变  tC[c1]=C[c1]; //----纪录改变  
+      C[c1].erase(*it);   
+      f=true;
+    }  
+    //-----rule6_2
+  for (int x=0;x<n;x++)
+    if (LC[x][0].size()==1){  // x为(1,i)
+      int c1=-1,D;
+      D=LC[x][0][0];
+      for (it=C[D].begin();it!=C[D].end();it++){
+        int y=*it,k=0;
+        if (y>0) k=1;
+            else y=-y; 
+        if (y==x) continue;
+        for (p1=LC[x][1].begin(),p2=LC[y][k].begin();p1!=LC[x][1].end() && p2!=LC[y][k].end();){ 
+          if (*p1==*p2 && (LC[x][1].size()==2 || C[*p1].size()>2)){
+            c1=*p1;
+            break;
+          } 
+          if (*p1<*p2) p1++;
+                 else  p2++;
+        }
+        if (c1) break; 
+      }
+      if (c1==-1) continue;
+      if (tC.find(c1)==tC.end())
+        tC[c1]=C[c1]; //----纪录改变  
+      if (LC[x][1].size()==2) 
+        C[c1]=C[m--];
+      else{
+        C[c1].clear();
+        C[c1].insert(-x),C[c1].insert(-*it);
+      }  
+      f=true;
+    }else
+    if (LC[x][1].size()==1){  // x为(i,1)
+      int c1=-1,D;
+      D=LC[x][1][0];
+      for (it=C[D].begin();it!=C[D].end();it++){
+        int y=*it,k=0;
+        if (y>0) k=1;
+            else y=-y; 
+        if (y==x) continue;
+        for (p1=LC[x][0].begin(),p2=LC[y][k].begin();p1!=LC[x][0].end() && p2!=LC[y][k].end();){ 
+          if (*p1==*p2 && (LC[x][0].size()==2 || C[*p1].size()>2)){
+            c1=*p1;
+            break;
+          } 
+          if (*p1<*p2) p1++;
+                 else  p2++;
+        }
+        if (c1) break; 
+      }
+      if (c1==-1) continue;
+      if (tC.find(c1)==tC.end())
+        tC[c1]=C[c1]; //----纪录改变  
+      if (LC[x][0].size()==2) 
+        C[c1]=C[m--];
+      else{
+        C[c1].clear();
+        C[c1].insert(-x),C[c1].insert(-*it);
+      }  
+      f=true;
+    } 
+  return f;
+}
+
+
+
+//----------------------------------------------------rule6------------------------------------------------------
+
+
+
+
 int backtracking() {  //进行回朔
   int var, index,clause, *position, saved;
       
@@ -316,7 +456,7 @@ int backtracking() {  //进行回朔
 int verify_solution() { //找出解的大小
   int i, nb=0, var, *vars_signs, clause_truth,cpt;
 
-  for (i=0; i<REAL_NB_CLAUSE; i++) {
+  for (i=0; i<REAL_NB_CLAUSE; i++) {  //下标从0开始
     clause_truth = FALSE;
     vars_signs = var_sign[i];
     for(var=*vars_signs; var!=NONE; var=*(vars_signs+=2)) 
