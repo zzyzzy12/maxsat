@@ -222,9 +222,10 @@ bool rule3(int n,int &m,int *X,int *TP,node *H,set<int> *C,vector<int> LC[][2],m
 	}
 	return false;
 } 
-void rule6(int &n,int &m,int *TP,node *H,set<int> *C,int *X,vector<int> LC[][2],map<int,set<int> > &tC,vector<int> &LX){ //注意m为变参
+bool rule6(int &n,int &m,int *TP,set<int> *C,vector<int> LC[][2],map<int,set<int> > &tC,vector<int> &LX){ //注意m为变参
 	set<int>::iterator it;    
 	vector<int>::iterator t1,p1,p2;
+	bool f=false;
 	//-----rule6_1
 	for (t1=LX.begin();t1!=LX.end();t1++){
 		int x=*t1;
@@ -250,6 +251,7 @@ void rule6(int &n,int &m,int *TP,node *H,set<int> *C,int *X,vector<int> LC[][2],
 				tC[c2]=C[c2]; //----纪录改变  
 			C[c2].erase(*it);   
 			COUNT[6]++; 
+			f=true;
 		}else{  //  x为(i,1)
 			int c1=0,c2;
 			c2=LC[x][1][0];
@@ -272,6 +274,7 @@ void rule6(int &n,int &m,int *TP,node *H,set<int> *C,int *X,vector<int> LC[][2],
 				tC[c1]=C[c1]; //----纪录改变  tC[c1]=C[c1]; //----纪录改变  
 			C[c1].erase(*it);  
 			COUNT[6]++; 
+			f=true;
 		} 
 	} 
     //-----rule6_2
@@ -305,6 +308,7 @@ void rule6(int &n,int &m,int *TP,node *H,set<int> *C,int *X,vector<int> LC[][2],
 				C[c1].insert(-x),C[c1].insert(-*it);
 			} 
 			COUNT[6]++; 
+			f=true;
 		}else{ // x为(i,1)
 			int c1=0,D;
 			D=LC[x][1][0];
@@ -333,8 +337,10 @@ void rule6(int &n,int &m,int *TP,node *H,set<int> *C,int *X,vector<int> LC[][2],
 				C[c1].insert(-x),C[c1].insert(-*it);
 			} 
 			COUNT[6]++; 
+			f=true;
 		}
 	} 
+	return f;
 }
 bool rule7(int &n,int &m,int *TP,node *H,set<int> *C,int *X,vector<int> LC[][2],map<int,set<int> > &tC,map<int,int> &tTP,vector<int> &LX){ //注意m为变参
 	set<int>::iterator it;     
@@ -568,7 +574,7 @@ void branch(int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<int> *C,
 		if (D3){ //阀值
 			start=clock(); 
 	//		puts("进入rule6-7");
-			rule6(n,m,TP,H,C,X,LC,tC,LX); //done
+			if (rule6(n,m,TP,C,LC,tC,LX)) { TIME[6]+=clock()-start; continue; } //done
 			TIME[6]+=clock()-start; 
 			start=clock(); 
 	//		puts("进入rule6-7");

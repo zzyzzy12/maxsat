@@ -92,8 +92,8 @@ typedef unsigned char my_unsigned_type;
 #define inverse_signe(signe) \
  (signe == POSITIVE) ? NEGATIVE : POSITIVE
 #define unsat(val) (val==0)?"UNS":"SAT"
-#define pop(stack) stack[--stack ## _fill_pointer]
-#define push(item, stack) stack[stack ## _fill_pointer++] = item
+#define _pop(stack) stack[--stack ## _fill_pointer]
+#define _push(item, stack) stack[stack ## _fill_pointer++] = item
 #define satisfiable() CLAUSE_STACK_fill_pointer == NB_CLAUSE
 
 #define NEGATIVE 0
@@ -177,6 +177,7 @@ int saved_saved_clauses[tab_variable_size];
 int saved_new_clauses[tab_variable_size];
 
 #include "input.c"
+#include "rule6.cpp"  //---------------- 
 
 void remove_clauses(int var) {  //将与var赋值后确定可以满足的clause标记删去
   register int clause;
@@ -186,7 +187,7 @@ void remove_clauses(int var) {  //将与var赋值后确定可以满足的clause�
   for(clause=*clauses; clause!=NONE; clause=*(++clauses)) {
     if (clause_state[clause] == ACTIVE) { //这个clause还是active的
       clause_state[clause] = PASSIVE;
-      push(clause, CLAUSE_STACK); //把这些删去的clause压到栈CLAUSE_STACK中
+      _push(clause, CLAUSE_STACK); //把这些删去的clause压到栈CLAUSE_STACK中
     }
   }
 }
@@ -199,13 +200,13 @@ int reduce_clauses(int var) { //将与var赋值后确定还不一定满足的cla
   for(clause=*clauses; clause!=NONE; clause=*(++clauses)) {
     if (clause_state[clause] == ACTIVE) {
       clause_length[clause]--; // 长度可以－1了
-      push(clause, REDUCEDCLAUSE_STACK);
+      _push(clause, REDUCEDCLAUSE_STACK);
       switch (clause_length[clause]) { //看长度的情况
       case 0: NB_EMPTY++;      
 	if (UB<=NB_EMPTY) return NONE;  //这种情况下才返回NONE
 	break;
       case 1:       //长度为1则是unit
-	push(clause, UNITCLAUSE_STACK); //将这些clause放入UNITCLAUSE_STACK中
+	_push(clause, UNITCLAUSE_STACK); //将这些clause放入UNITCLAUSE_STACK中
 	break;
       }
     }
@@ -221,11 +222,11 @@ int my_reduce_clauses(int var) {  //细分reduce_clauses操作
   for(clause=*clauses; clause!=NONE; clause=*(++clauses)) {
     if (clause_state[clause] == ACTIVE) {
       clause_length[clause]--;
-      push(clause, REDUCEDCLAUSE_STACK);
+      _push(clause, REDUCEDCLAUSE_STACK);
       switch (clause_length[clause]) {
       case 0: return clause; //长度为空
       case 1: 
-	push(clause, MY_UNITCLAUSE_STACK); //MY_UNITCLAUSE_STACK要干嘛？
+	_push(clause, MY_UNITCLAUSE_STACK); //MY_UNITCLAUSE_STACK要干嘛？
 	break;
       }
     }
@@ -241,11 +242,11 @@ int my_reduce_clauses_for_fl(int var) { //细分reduce_clauses操作
   for(clause=*clauses; clause!=NONE; clause=*(++clauses)) {
     if (clause_state[clause] == ACTIVE) {  //该clause是active的才处理
       clause_length[clause]--;
-      push(clause, REDUCEDCLAUSE_STACK);
+      _push(clause, REDUCEDCLAUSE_STACK);
       switch (clause_length[clause]) {
       case 0: return clause;  //clause为空了
       case 1: 
-	push(clause, UNITCLAUSE_STACK);  //成为了unit_clause
+	_push(clause, UNITCLAUSE_STACK);  //成为了unit_clause
 	break;
       }
     }
@@ -273,7 +274,7 @@ int backtracking() {  //进行回朔
   NB_BACK++;  //纪录一下分支个数
 
   do {
-    var = pop(VARIABLE_STACK); //把VARIABLE_STACK的一个个弹出来处理
+    var = _pop(VARIABLE_STACK); //把VARIABLE_STACK的一个个弹出来处理
     if (var_rest_value[var] == NONE) 
       var_state[var] = ACTIVE;
     else {
@@ -299,7 +300,7 @@ int backtracking() {  //进行回朔
       if (NB_EMPTY<UB) {
         	var_current_value[var] = var_rest_value[var]; 
 	        var_rest_value[var] = NONE;
-	        push(var, VARIABLE_STACK);  // 把var压回去
+	        _push(var, VARIABLE_STACK);  // 把var压回去
 	        if (reduce_clauses(var)==NONE)  //将包涵var为0的clause中的var删去，在这个过程中可能产生不能满足的clause 会调整UB
 	                 return NONE;
 	       remove_clauses(var);  //把包涵var为1的clause删去
@@ -358,7 +359,7 @@ int replace_clause(int newclause, int clause_to_replace, int *clauses) { //把cl
     if (clause==clause_to_replace) {
       *clauses=newclause;
       SAVED_CLAUSE_POSITIONS[SAVED_CLAUSES_fill_pointer]=clauses; //纪录一下被替换的是哪个位置
-      push(clause_to_replace, SAVED_CLAUSES); //存一下这个被替换的clause_to_replace
+      _push(clause_to_replace, SAVED_CLAUSES); //存一下这个被替换的clause_to_replace
       flag=TRUE; //正常来说是一定可以找到的
       break;
     }
@@ -425,9 +426,9 @@ int create_clause_from_conflict_clauses(int clause1, int clause2, int clause3) {
     var2=varssigns[0]; sign2=1-varssigns[1];
     var3=varssigns[2]; sign3=1-varssigns[3];  //clause1中的正负反过来
     create_binaryclause(var2, sign2, var3, sign3, clause2, clause3);
-    push(clause1, CLAUSES_TO_REMOVE); // 纪录删去哪些clause
-    push(clause2, CLAUSES_TO_REMOVE); // 纪录删去哪些clause
-    push(clause3, CLAUSES_TO_REMOVE); // 纪录删去哪些clause
+    _push(clause1, CLAUSES_TO_REMOVE); // 纪录删去哪些clause
+    _push(clause2, CLAUSES_TO_REMOVE); // 纪录删去哪些clause
+    _push(clause3, CLAUSES_TO_REMOVE); // 纪录删去哪些clause
     return TRUE;
   }
   else {
@@ -448,7 +449,7 @@ int search_linear_reason1(int var) { //搜一个变量
     clause=reason[fixed_var];  //reason来源不明
     vars_signs = var_sign[clause]; 
     new_fixed_var=NONE;
-    push(clause, LINEAR_REASON_STACK1); //纪录下来
+    _push(clause, LINEAR_REASON_STACK1); //纪录下来
     clause_involved[clause]=TRUE; //该clause牵扯其中
     for(index_var=*vars_signs; index_var!=NONE; index_var=*(vars_signs+=2)) {  //扫描该clause中的var
       if ((index_var!=fixed_var) && (reason[index_var]!=NO_REASON)) { //其不等于fixed_var 并且 ？
@@ -478,7 +479,7 @@ int search_linear_reason2(int var) {
            return FALSE;
     }
     else 
-      push(clause, LINEAR_REASON_STACK2);
+      _push(clause, LINEAR_REASON_STACK2);
     vars_signs = var_sign[clause]; new_fixed_var=NONE;  //同search_linear_reason1
     for(index_var=*vars_signs; index_var!=NONE; index_var=*(vars_signs+=2)) {
       if ((index_var!=fixed_var) && (reason[index_var]!=NO_REASON)) {
@@ -572,9 +573,9 @@ int non_linear_conflict(int empty_clause, int var1,int sign1, int var2, int sign
     create_complementary_binclause(LINEAR_REASON_STACK1[j],
 				                           LINEAR_REASON_STACK1[j+1],
 				                           LINEAR_REASON_STACK1[j-1]);
-    push(LINEAR_REASON_STACK1[j], CLAUSES_TO_REMOVE);
+    _push(LINEAR_REASON_STACK1[j], CLAUSES_TO_REMOVE);
   }
-  push(LINEAR_REASON_STACK1[j], CLAUSES_TO_REMOVE);
+  _push(LINEAR_REASON_STACK1[j], CLAUSES_TO_REMOVE);
   create_ternary_clauses(var, sign, var1, sign1, var2, sign2,
 			                   LINEAR_REASON_STACK1[2],
 			                   empty_clause, empty_clause);
@@ -582,9 +583,9 @@ int non_linear_conflict(int empty_clause, int var1,int sign1, int var2, int sign
 			                   LINEAR_REASON_STACK2[1],
 			                   LINEAR_REASON_STACK1[1],
 			                   LINEAR_REASON_STACK2[1]);
-  push(empty_clause, CLAUSES_TO_REMOVE);
-  push( LINEAR_REASON_STACK1[1], CLAUSES_TO_REMOVE);
-  push( LINEAR_REASON_STACK2[1], CLAUSES_TO_REMOVE);
+  _push(empty_clause, CLAUSES_TO_REMOVE);
+  _push( LINEAR_REASON_STACK1[1], CLAUSES_TO_REMOVE);
+  _push( LINEAR_REASON_STACK2[1], CLAUSES_TO_REMOVE);
   return TRUE;
 }
 
@@ -624,18 +625,18 @@ int linear_conflict(int clause) {
 			                LINEAR_REASON_STACK1[1], LINEAR_REASON_STACK2[1]);
 	for(j=1; j<LINEAR_REASON_STACK2_fill_pointer-1; j++) {
 	  create_complementary_binclause(LINEAR_REASON_STACK2[j],LINEAR_REASON_STACK2[j+1],LINEAR_REASON_STACK2[j-1]);
-	  push(LINEAR_REASON_STACK2[j], CLAUSES_TO_REMOVE);
+	  _push(LINEAR_REASON_STACK2[j], CLAUSES_TO_REMOVE);
 	}
-	push(LINEAR_REASON_STACK2[j], CLAUSES_TO_REMOVE);
+	_push(LINEAR_REASON_STACK2[j], CLAUSES_TO_REMOVE);
       }
-      push(clause, CLAUSES_TO_REMOVE);
+      _push(clause, CLAUSES_TO_REMOVE);
       for(j=1; j<LINEAR_REASON_STACK1_fill_pointer-1; j++) {
 	create_complementary_binclause(LINEAR_REASON_STACK1[j],
 				       LINEAR_REASON_STACK1[j+1],
 				       LINEAR_REASON_STACK1[j-1]);
-	push(LINEAR_REASON_STACK1[j], CLAUSES_TO_REMOVE);
+	_push(LINEAR_REASON_STACK1[j], CLAUSES_TO_REMOVE);
       }
-      push(LINEAR_REASON_STACK1[j], CLAUSES_TO_REMOVE);
+      _push(LINEAR_REASON_STACK1[j], CLAUSES_TO_REMOVE);
     }
     return TRUE;
   }
@@ -647,12 +648,12 @@ void remove_linear_reasons() {  //两个stack中的拿出来处理
   for(i=0; i<LINEAR_REASON_STACK1_fill_pointer; i++) {  
     clause=LINEAR_REASON_STACK1[i];
     clause_state[clause]=PASSIVE;  //关闭掉该cluase 区分passive positive
-    push(clause, CLAUSE_STACK);  //把修改的clause纪录下，放到CLAUSE_STACK中
+    _push(clause, CLAUSE_STACK);  //把修改的clause纪录下，放到CLAUSE_STACK中
   }
   for(i=1; i<LINEAR_REASON_STACK2_fill_pointer; i++) { //同上，除了栈不同
     clause=LINEAR_REASON_STACK2[i];
     clause_state[clause]=PASSIVE;
-    push(clause, CLAUSE_STACK); //把修改的clause纪录下，放到CLAUSE_STACK中
+    _push(clause, CLAUSE_STACK); //把修改的clause纪录下，放到CLAUSE_STACK中
   }
 }      
 
@@ -679,7 +680,7 @@ int assign_and_unitclause_process( int var, int value, int starting_point ) {
   var_current_value[var] = value; //把var赋值为value
   var_rest_value[var] = NONE;
   var_state[var] = PASSIVE;  //已经赋值
-  push(var, VARIABLE_STACK); //将其压到栈里去
+  _push(var, VARIABLE_STACK); //将其压到栈里去
   if ((clause=my_reduce_clauses_for_fl(var))==NO_CONFLICT) { //不冲突则删除?
     remove_clauses(var);  //把与这个变量相关的clause中都删去这个变量  返回值不管
     return my_unitclause_process( starting_point );
@@ -691,13 +692,13 @@ int assign_and_unitclause_process( int var, int value, int starting_point ) {
 
 int store_reason_clauses( int clause, int starting ) {
   int *vars_signs, var, i;
-  push(clause, REASON_STACK);
+  _push(clause, REASON_STACK);
   for(i=starting; i<REASON_STACK_fill_pointer; i++) {
     clause=REASON_STACK[i];
     vars_signs = var_sign[clause];  //把clause中的变量都拿出来看
     for(var=*vars_signs; var!=NONE; var=*(vars_signs+=2)) {
       if (reason[var]!=NO_REASON) {
-        push(reason[var], REASON_STACK);
+        _push(reason[var], REASON_STACK);
         reason[var]=NO_REASON;
       }
     }
@@ -710,7 +711,7 @@ void remove_reason_clauses() {  //把reason中的clause都拿出来处理
   for(i=0; i<REASON_STACK_fill_pointer; i++) {
     clause=REASON_STACK[i];
     clause_state[clause]=PASSIVE;
-    push(clause, CLAUSE_STACK);
+    _push(clause, CLAUSE_STACK);
   }
   REASON_STACK_fill_pointer=0;
 }
@@ -802,12 +803,12 @@ int lookahead() {
     }
     else 
     {
-      push(clause, REASON_STACK);
+      _push(clause, REASON_STACK);
       for(i=0; i<REASON_STACK_fill_pointer; i++) {
 	clause=REASON_STACK[i]; vars_signs = var_sign[clause];
 	for(var=*vars_signs; var!=NONE; var=*(vars_signs+=2)) {
 	  if (reason[var]!=NO_REASON) {
-	    push(reason[var], REASON_STACK);
+	    _push(reason[var], REASON_STACK);
 	    reason[var]=NO_REASON;
 	  }
 	}
@@ -818,7 +819,7 @@ int lookahead() {
 		    saved_variable_stack_fill_pointer);
       for(i=0; i<REASON_STACK_fill_pointer; i++) {
 	clause=REASON_STACK[i];
-	clause_state[clause]=PASSIVE; push(clause, CLAUSE_STACK);
+	clause_state[clause]=PASSIVE; _push(clause, CLAUSE_STACK);
       }
       REASON_STACK_fill_pointer=0;
       my_saved_clause_stack_fill_pointer=CLAUSE_STACK_fill_pointer;
@@ -840,7 +841,7 @@ int lookahead() {
     return NONE;
   for (i=0; i<CLAUSES_TO_REMOVE_fill_pointer; i++) {
     clause=CLAUSES_TO_REMOVE[i];
-    push(clause, CLAUSE_STACK); clause_state[clause]=PASSIVE;
+    _push(clause, CLAUSE_STACK); clause_state[clause]=PASSIVE;
   }
   CLAUSES_TO_REMOVE_fill_pointer=0;
   return conflict;
@@ -856,7 +857,7 @@ int satisfy_unitclause(int unitclause) {
       var_rest_value[var] = NONE;  
       reason[var]=unitclause;
       var_state[var] = PASSIVE;  //状态为已处理
-      push(var, VARIABLE_STACK);
+      _push(var, VARIABLE_STACK);
       if ((clause=my_reduce_clauses(var))==NO_CONFLICT) {
 	           remove_clauses(var);
            	 return NO_CONFLICT;
@@ -918,13 +919,13 @@ void create_unitclause(int lit, int subsumedclause, int *clauses) {
   var_sign[NB_CLAUSE]=vars_signs;
   clause_state[NB_CLAUSE]=ACTIVE;
   clause_length[NB_CLAUSE]=1;
-  push(NB_CLAUSE, UNITCLAUSE_STACK);
+  _push(NB_CLAUSE, UNITCLAUSE_STACK);
 
   for(clause=*clauses; clause!=NONE; clause=*(++clauses)) {
     if (clause==subsumedclause) {
       *clauses=NB_CLAUSE;
       SAVED_CLAUSE_POSITIONS[SAVED_CLAUSES_fill_pointer]=clauses;
-      push(subsumedclause, SAVED_CLAUSES);
+      _push(subsumedclause, SAVED_CLAUSES);
       flag=TRUE;
       break;
     }
@@ -990,9 +991,9 @@ int searching_two_clauses_to_fix_neglit(int clause, int lit) {
     if ((clause1!= NONE) && (clause_state[clause1]==ACTIVE)) { //这个clause是存在的并且是ACTIVE的
       fixing_clause[opp_lit1]=NONE;
       lit_involved_in_clause[opp_lit1]=NONE;
-      push(clause1, CLAUSE_STACK);
+      _push(clause1, CLAUSE_STACK);
       clause_state[clause1]=PASSIVE;
-      push(clause, CLAUSE_STACK);
+      _push(clause, CLAUSE_STACK);
       clause_state[clause]=PASSIVE;
       create_unitclause(lit, clause1, neg_in[lit-NB_VAR]);
       var1=get_var_from_lit(lit1);
@@ -1002,9 +1003,9 @@ int searching_two_clauses_to_fix_neglit(int clause, int lit) {
     }
     else {
       fixing_clause[lit1]=clause;
-      push(lit1, CANDIDATE_LITERALS);
+      _push(lit1, CANDIDATE_LITERALS);
       lit_involved_in_clause[lit1]=clause;
-      push(lit1, INVOLVED_LIT_STACK);
+      _push(lit1, INVOLVED_LIT_STACK);
     }
   }
   return FALSE;
@@ -1043,7 +1044,7 @@ int get_neg_clause_nb(int var) {
     if ((clause_state[clause] == ACTIVE) && (clause_length[clause]>0)) {  //要这个clause为active的且长度大于0
       switch(clause_length[clause]) {
       case 1: neg_clause1_nb++;           //长度为1
-	            push(clause, MY_UNITCLAUSE_STACK); break; //把其记到MY_UNITCLAUSE_STACK中
+	            _push(clause, MY_UNITCLAUSE_STACK); break; //把其记到MY_UNITCLAUSE_STACK中
       case 2: neg_clause2_nb++;          //长度为2
 	            if (searching_two_clauses_to_fix_neglit(clause, var+NB_VAR)==TRUE) {  //到该clause中看该变量
 	                 neg_clause2_nb-=2; neg_clause1_nb++; 
@@ -1076,9 +1077,9 @@ int searching_two_clauses_to_fix_poslit(int clause, int lit) {
     clause1=lit_involved_in_clause[lit1];
     if ((clause1!=NONE) && (clause_state[clause1]==ACTIVE)) {
       //  verify_resolvent(lit1, clause1, clause);
-      push(clause1, CLAUSE_STACK);
+      _push(clause1, CLAUSE_STACK);
       clause_state[clause1]=PASSIVE;
-      push(clause, CLAUSE_STACK);
+      _push(clause, CLAUSE_STACK);
       clause_state[clause]=PASSIVE;
       if (lit1<NB_VAR) {
 	create_unitclause(lit1, clause1, pos_in[lit1]);
@@ -1098,9 +1099,9 @@ int searching_two_clauses_to_fix_poslit(int clause, int lit) {
       if ((clause1!= NONE) && (clause_state[clause1]==ACTIVE)) {
 	fixing_clause[opp_lit1]=NONE;
 	//	verify_resolvent(lit, clause1, clause);
-	push(clause1, CLAUSE_STACK);
+	_push(clause1, CLAUSE_STACK);
 	clause_state[clause1]=PASSIVE;
-	push(clause, CLAUSE_STACK);
+	_push(clause, CLAUSE_STACK);
 	clause_state[clause]=PASSIVE;
 	create_unitclause(lit, clause1, pos_in[lit]);
 	var1=get_var_from_lit(lit1);
@@ -1110,7 +1111,7 @@ int searching_two_clauses_to_fix_poslit(int clause, int lit) {
       }
       else {
 	fixing_clause[lit1]=clause;
-	push(lit1, CANDIDATE_LITERALS);
+	_push(lit1, CANDIDATE_LITERALS);
       }
     }
   }
@@ -1126,11 +1127,11 @@ int get_pos_clause_nb(int var) {
       switch(clause_length[clause]) {
       case 1:
 	if (MY_UNITCLAUSE_STACK_fill_pointer>0) {
-	  clause1=pop(MY_UNITCLAUSE_STACK);
+	  clause1=_pop(MY_UNITCLAUSE_STACK);
 	  clause_state[clause]=PASSIVE;
-	  push(clause, CLAUSE_STACK);
+	  _push(clause, CLAUSE_STACK);
 	  clause_state[clause1]=PASSIVE;
-	  push(clause1, CLAUSE_STACK);
+	  _push(clause1, CLAUSE_STACK);
 	  nb_neg_clause_of_length1[var]--;
 	  NB_EMPTY++;
 	}
@@ -1170,7 +1171,7 @@ int satisfy_literal(int lit) {
       if (reduce_clauses(lit)==FALSE) return NONE;
       var_rest_value[lit]=NONE;
       var_state[lit] = PASSIVE;
-      push(lit, VARIABLE_STACK);
+      _push(lit, VARIABLE_STACK);
       remove_clauses(lit);
     }
     else
@@ -1183,7 +1184,7 @@ int satisfy_literal(int lit) {
       if (reduce_clauses(var)==FALSE) return NONE;
       var_rest_value[var]=NONE;
       var_state[var] = PASSIVE;
-      push(var, VARIABLE_STACK);
+      _push(var, VARIABLE_STACK);
       remove_clauses(var);
     }
     else
@@ -1196,7 +1197,7 @@ int assign_value(int var, int current_value, int rest_value) {  //给var赋值�
   if (var_state[var]==PASSIVE)
     printf("erreur1...\n");
   var_state[var] = PASSIVE;
-  push(var, VARIABLE_STACK);
+  _push(var, VARIABLE_STACK);
   var_current_value[var] = current_value; //给一个赋值
   var_rest_value[var] = rest_value;
   if (reduce_clauses(var)==NONE)   //注意区分redue与remove,reduce是去除clause中的该变量，也就是其赋值在这个clause中为0
@@ -1216,7 +1217,7 @@ int unitclause_process() {  //处理unit_clause
 	           var_current_value[var] = *(vars_signs+1);  //按照原来的正负来赋值
 	           var_rest_value[var] = NONE;  //之前的赋值？
 	           var_state[var] = PASSIVE;  //变为非active
-	           push(var, VARIABLE_STACK);  //记住变了哪些变量
+	           _push(var, VARIABLE_STACK);  //记住变了哪些变量
 	           if ((clause=reduce_clauses(var)) !=NONE) { //把var在出现的clause中抹除  为NONE则说明被upperbound限制住了
 	             remove_clauses(var);
 	             break;
@@ -1259,7 +1260,7 @@ int choose_and_instantiate_variable() {  //选择并且实例化一个变量
 	       var_current_value[var] = TRUE;
 	       var_rest_value[var] = NONE;
 	       var_state[var] = PASSIVE;
-	       push(var, VARIABLE_STACK);
+	       _push(var, VARIABLE_STACK);
 	       remove_clauses(var);
       }
       else if (get_pos_clause_nb(var) == 0) {
@@ -1267,7 +1268,7 @@ int choose_and_instantiate_variable() {  //选择并且实例化一个变量
 	       var_current_value[var] = FALSE;
 	       var_rest_value[var] = NONE;
 	       var_state[var] = PASSIVE;
-	       push(var, VARIABLE_STACK);  //压进VARIABLE_STACK纪录
+	       _push(var, VARIABLE_STACK);  //压进VARIABLE_STACK纪录
 	       remove_clauses(var);
       }
       else if (nb_neg_clause_of_length1[var]+NB_EMPTY>=UB) {

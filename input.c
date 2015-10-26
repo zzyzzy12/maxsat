@@ -209,7 +209,7 @@ void eliminate_redundance() {
   for (i=0; i<NB_CLAUSE; i++) {
     if (clause_state[i]==ACTIVE) {
       if (clause_length[i]==1)
-	push(i, UNITCLAUSE_STACK);
+	_push(i, UNITCLAUSE_STACK);
     }
   }
 }
