@@ -282,19 +282,19 @@ void print_values(int nb_var) { //输出解
 
 
 map<int,set<int> > tC;//-----------
-vector<int>  LC[4000][2]; //----------
-set<int>  C[4000]; //---------- 
+set<int>  LC[tab_variable_size][2]; //----------
+set<int>  C[tab_clause_size]; //---------- 
 
 bool rule6(int &n,int &m){ //注意m为变参    
 
   set<int>::iterator it;    
-  vector<int>::iterator p1,p2;
+  set<int>::iterator p1,p2;
   bool f=false; 
   //-----rule6_1
   for (int x=0;x<n;x++) 
     if (LC[x][0].size()==1){  //  x为(1,i)
       int c1,c2=-1;
-      c1=LC[x][0][0];
+      c1=*LC[x][0].begin();
       for (it=C[c1].begin();it!=C[c1].end();it++){ 
         int y=*it,k=1;
         if (y>0) k=0;
@@ -317,7 +317,7 @@ bool rule6(int &n,int &m){ //注意m为变参
     }else
     if (LC[x][1].size()==1){  //  x为(i,1)
       int c1=-1,c2;
-      c2=LC[x][1][0];
+      c2=*LC[x][1].begin();
       for (it=C[c2].begin();it!=C[c2].end();it++){ 
         int y=*it,k=1;
         if (y>0) k=0;
@@ -342,7 +342,7 @@ bool rule6(int &n,int &m){ //注意m为变参
   for (int x=0;x<n;x++)
     if (LC[x][0].size()==1){  // x为(1,i)
       int c1=-1,D;
-      D=LC[x][0][0];
+      D=*LC[x][0].begin();
       for (it=C[D].begin();it!=C[D].end();it++){
         int y=*it,k=0;
         if (y>0) k=1;
@@ -371,7 +371,7 @@ bool rule6(int &n,int &m){ //注意m为变参
     }else
     if (LC[x][1].size()==1){  // x为(i,1)
       int c1=-1,D;
-      D=LC[x][1][0];
+      D=*LC[x][1].begin();
       for (it=C[D].begin();it!=C[D].end();it++){
         int y=*it,k=0;
         if (y>0) k=1;
@@ -477,13 +477,13 @@ void reset_context(int saved_clause_stack_fill_pointer,int saved_reducedclause_s
   CLAUSE_STACK_fill_pointer = saved_clause_stack_fill_pointer;
 
   for (index = saved_reducedclause_stack_fill_pointer; index < REDUCEDCLAUSE_STACK_fill_pointer; index++) {	//将调整了的clause还原长度
-    clause = REDUCEDCLAUSE_STACK[index];
+    clause = REDUCEDCLAUSE_STACK[index];  //取出值
     clause_length[REDUCEDCLAUSE_STACK[index]]++; //还原长度
   }
   REDUCEDCLAUSE_STACK_fill_pointer = saved_reducedclause_stack_fill_pointer;
 
   for(index=saved_variable_stack_fill_pointer;index<VARIABLE_STACK_fill_pointer;index++) { //将去掉的var还原
-    var=VARIABLE_STACK[index];
+    var=VARIABLE_STACK[index];  //取出值
     reason[var]=NO_REASON; //一个标记
     var_state[var]=ACTIVE;
   }
@@ -572,7 +572,7 @@ int create_clause_from_conflict_clauses(int clause1, int clause2, int clause3) {
     return TRUE;
   }
   else {
-    return FALSE;
+    return FALSE;  //条件不满足，clause1-3选择有问题 
   }
 }
 
@@ -736,8 +736,7 @@ int linear_conflict(int clause) {
   for(var=*vars_signs; var!=NONE; var=*(vars_signs+=2)) {
     if (reason[var]!=NO_REASON) {
       varssigns[i++]=var; varssigns[i++]=*(vars_signs+1); 
-      if (i>4)
-	return FALSE;
+      if (i>4) return FALSE;
     }
   }
   if (i>4) return FALSE;
@@ -888,7 +887,7 @@ int failed_literal( int conflict ) {
             reset_context(my_saved_clause_stack_fill_pointer,
                           saved_reducedclause_stack_fill_pointer,
                           saved_unitclause_stack_fill_pointer,
-                          saved_variable_stack_fill_pointer);
+                          saved_variable_stack_fill_pointer); //重置 恢复
             remove_reason_clauses();
             my_saved_clause_stack_fill_pointer=CLAUSE_STACK_fill_pointer;
          } else {
@@ -896,13 +895,13 @@ int failed_literal( int conflict ) {
             reset_context(my_saved_clause_stack_fill_pointer,
                           saved_reducedclause_stack_fill_pointer,
                           saved_unitclause_stack_fill_pointer,
-                          saved_variable_stack_fill_pointer);
+                          saved_variable_stack_fill_pointer); //重置 恢复
           }
         } else {
           reset_context(my_saved_clause_stack_fill_pointer,
                         saved_reducedclause_stack_fill_pointer,
                         saved_unitclause_stack_fill_pointer,
-                        saved_variable_stack_fill_pointer);
+                        saved_variable_stack_fill_pointer); //重置 恢复
         }
         //!!There could be more conflicts than just one
         //} while( clause != NO_CONFLICT );
@@ -937,7 +936,7 @@ int lookahead() {
       reset_context(my_saved_clause_stack_fill_pointer, 
 		    saved_reducedclause_stack_fill_pointer,
 		    saved_unitclause_stack_fill_pointer,
-		    saved_variable_stack_fill_pointer);
+		    saved_variable_stack_fill_pointer);  //还原
       remove_linear_reasons();
       my_saved_clause_stack_fill_pointer=CLAUSE_STACK_fill_pointer;
     }
@@ -956,7 +955,7 @@ int lookahead() {
       reset_context(my_saved_clause_stack_fill_pointer, 
 		    saved_reducedclause_stack_fill_pointer,
 		    saved_unitclause_stack_fill_pointer,
-		    saved_variable_stack_fill_pointer);
+		    saved_variable_stack_fill_pointer); //还原
       for(i=0; i<REASON_STACK_fill_pointer; i++) {
 	clause=REASON_STACK[i];
 	clause_state[clause]=PASSIVE; _push(clause, CLAUSE_STACK);
@@ -969,19 +968,19 @@ int lookahead() {
     reset_context(my_saved_clause_stack_fill_pointer, 
 		  saved_reducedclause_stack_fill_pointer,
 		  saved_unitclause_stack_fill_pointer,
-		  saved_variable_stack_fill_pointer); 
+		  saved_variable_stack_fill_pointer);  //还原
     conflict += failed_literal( conflict );
   }
     
   reset_context(saved_clause_stack_fill_pointer, 
 		saved_reducedclause_stack_fill_pointer,
 		saved_unitclause_stack_fill_pointer,
-		saved_variable_stack_fill_pointer);
+		saved_variable_stack_fill_pointer); 
   if (conflict+NB_EMPTY>=UB) 
     return NONE;
   for (i=0; i<CLAUSES_TO_REMOVE_fill_pointer; i++) {
     clause=CLAUSES_TO_REMOVE[i];
-    _push(clause, CLAUSE_STACK); clause_state[clause]=PASSIVE;
+    _push(clause, CLAUSE_STACK); clause_state[clause]=PASSIVE;  //把clause_to_remove中的元素移走
   }
   CLAUSES_TO_REMOVE_fill_pointer=0;
   return conflict;
@@ -1156,7 +1155,7 @@ int simple_get_neg_clause_nb(int var) {
   int *clauses, clause, i;
   clauses = neg_in[var]; MY_UNITCLAUSE_STACK_fill_pointer=0;
 
-  for(clause=*clauses; clause!=NONE; clause=*(++clauses))
+  for(clause=*clauses; clause!=NONE; clause=*(++clauses)) //扫描¬var的所有clause
     if ((clause_state[clause] == ACTIVE) && (clause_length[clause]==2)) //把¬var中的长度为2的a且是ctive的clause找出来
       neg_clause2_nb++;
     nb_neg_clause_of_length2[var] = neg_clause2_nb;
@@ -1374,8 +1373,7 @@ int unitclause_process() {  //处理unit_clause
 
 int choose_and_instantiate_variable() {  //选择并且实例化一个变量
   int var, nb=0, chosen_var=NONE,cont=0, cont1; 
-  int  i;
-  float posi, nega;
+  int  i; 
   int a,b,c,clause;
   float poid, max_poid = -1.0; 
   my_type pos2, neg2, flag=0;
@@ -1475,8 +1473,9 @@ int choose_and_instantiate_variable() {  //选择并且实例化一个变量
   saved_saved_clauses[chosen_var]=SAVED_CLAUSES_fill_pointer;
   saved_new_clauses[chosen_var]=NEW_CLAUSES_fill_pointer;
   if (reduce_if_positive[chosen_var]<reduce_if_negative[chosen_var])
-    return assign_value(chosen_var, TRUE, FALSE); //赋正
-  else return assign_value(chosen_var, FALSE, TRUE); //赋负
+       return assign_value(chosen_var, TRUE, FALSE); //赋正
+  else 
+       return assign_value(chosen_var, FALSE, TRUE); //赋负
 
 }
 
@@ -1506,11 +1505,11 @@ int dpl() {
 
 void init() { //初始化数据,都清空
   int var, clause;
-  NB_EMPTY=0; REAL_NB_CLAUSE=NB_CLAUSE;
+  NB_EMPTY=0; REAL_NB_CLAUSE=NB_CLAUSE; //初始的NB_EMPTY为0   REAL_NB_CLAUSE纪录最初的CLAUSE个数
   UNITCLAUSE_STACK_fill_pointer=0;
   VARIABLE_STACK_fill_pointer=0;
   CLAUSE_STACK_fill_pointer = 0;
-  REDUCEDCLAUSE_STACK_fill_pointer = 0;
+  REDUCEDCLAUSE_STACK_fill_pointer = 0;  //所有栈都清空
   for (var=0; var<NB_VAR; var++) {
     reason[var]=NO_REASON;
     fixing_clause[var]=NONE;
@@ -1545,7 +1544,7 @@ int main(int argc, char *argv[]) {
   case TRUE:
     if (argc>2) UB=atoi(argv[2]); else UB=NB_CLAUSE;  //Upperbound = NuberOfClause 或者 用户输入
     init();  //初始化
-    dpl();   //执行程序
+    dpl();   //执行算法的代码
     break;
   case NONE: printf("An empty resolvant is found!\n"); break;
   }
