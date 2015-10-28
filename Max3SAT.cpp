@@ -1,13 +1,13 @@
-#include<iostream>
-#include<cstdio>
-#include<cstring>
-#include<algorithm>
-#include<cmath>
-#include<map>
-#include<time.h>
-#include<set>
-#include<queue>
-#include<stack>
+#include <iostream>
+#include <cstdio>
+#include <cstring>
+#include <algorithm>
+#include <cmath>
+#include <map>
+#include <time.h>
+#include <set>
+#include <queue>
+#include <stack>
 using namespace std;
 const int NB_V=2505;
 const int NB_C=4505;
@@ -165,7 +165,7 @@ bool rule1_2(int n,int &m,int *X,int *TP,node *H,set<int> *C,int &Upbound,map<in
 	return f;
 }
 int p1[NB_V],p2[NB_V],h1[NB_V],h2[NB_V];
-bool rule2(int n,int &m,int *X,int *TP,node *H,set<int> *C,map<int,int> &tTP){  //不用管dgree
+bool rule2(int n,int &m,int *X,int *TP,set<int> *C,map<int,int> &tTP){  //不用管dgree
 	int x; 
 	bool f=false;
 	set<int>::iterator it;
@@ -222,7 +222,7 @@ bool rule3(int n,int &m,int *X,int *TP,node *H,set<int> *C,vector<int> LC[][2],m
 	}
 	return false;
 } 
-bool rule6(int &n,int &m,int *TP,set<int> *C,vector<int> LC[][2],map<int,set<int> > &tC,vector<int> &LX){ //注意m为变参
+bool rule6(int &n,int &m,set<int> *C,vector<int> LC[][2],map<int,set<int> > &tC,vector<int> &LX){ //注意m为变参
 	set<int>::iterator it;    
 	vector<int>::iterator t1,p1,p2;
 	bool f=false;
@@ -564,7 +564,7 @@ void branch(int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<int> *C,
 		TIME[10]+=clock()-start; 
 		start=clock();
 	//	puts("进入rule2");
-		if (rule2(n,m,X,TP,H,C,tTP)) { TIME[2]+=clock()-start; COUNT[2]++; continue; } //done
+		if (rule2(n,m,X,TP,C,tTP)) { TIME[2]+=clock()-start; COUNT[2]++; continue; } //done
 		TIME[2]+=clock()-start; 
 		start=clock();
 		getLC(n,m,C,LC,TP,D3,LX);
@@ -574,7 +574,7 @@ void branch(int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<int> *C,
 		if (D3){ //阀值
 			start=clock(); 
 	//		puts("进入rule6-7");
-			if (rule6(n,m,TP,C,LC,tC,LX)) { TIME[6]+=clock()-start; continue; } //done
+			if (rule6(n,m,C,LC,tC,LX)) { TIME[6]+=clock()-start; continue; } //done
 			TIME[6]+=clock()-start; 
 			start=clock(); 
 	//		puts("进入rule6-7");
