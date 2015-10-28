@@ -279,40 +279,35 @@ void print_values(int nb_var) { //输出解
   fclose(fp_out);			
 } 
 
-//----------------------------------------------------rule2------------------------------------------------------
-int p1[tab_variable_size],p2[tab_variable_size],h1[tab_variable_size],h2[tab_variable_size];
+//----------------------------------------------------rule2------------------------------------------------------ 
+int Num_Rule2=0;
 bool rule2(int n,int m){  //不用管dgree 
-  bool f=false;
-  set<int>::iterator it;
-  memset(p1,0,sizeof(p1));
-  memset(p2,0,sizeof(p2));
-  memset(h1,0,sizeof(h1));
-  memset(h2,0,sizeof(h2));
-  for (int index = 0; index < m; index++){
-     if (clause_state[index]==PASSIVE) continue;
-     int* vars_signs = var_sign[index];
-     if (clause_length[index]==1){
-        for(int var=*vars_signs; var!=NONE; var=*(vars_signs+=2)){
-            if (var_state[var]==PASSIVE) continue; 
-            if (*(vars_signs+1)==TRUE) h1[var]++;
-                                  else h2[var]++; 
-        }
-     }else{
-        for(int var=*vars_signs; var!=NONE; var=*(vars_signs+=2)){
-            if (var_state[var]==PASSIVE) continue;
-            if (*(vars_signs+1)==TRUE) p1[var]++;
-                                  else p2[var]++; 
-        }
-     }
-  }
+  bool f=false; 
+  int *clause;
+  int p1,p2,h1,h2; 
   for (int z=0;z<n;z++){
     if (var_state[z]==PASSIVE) continue;
-    if (h1[z]>=p2[z]){
+    h1=h2=p1=p2=0;
+    clause=pos_in[z];
+    for (int C=*(clause);C!=NONE;C=*(++clause)){
+       if (clause_state[C]==PASSIVE) continue;
+       if (clause_length[C]==1) h1++;
+       p1++;
+    }
+    clause=neg_in[z];
+    for (int C=*(clause);C!=NONE;C=*(++clause)){
+       if (clause_state[C]==PASSIVE) continue;
+       if (clause_length[C]==1) h2++;
+       p2++;
+    }
+    if (h1>=p2){
       assign_value(z, TRUE, NONE); //赋正值
+      Num_Rule2++;
       f=true;
     }else
-    if (h2[z]>=p1[z]){
+    if (h2>=p1){
       assign_value(z, FALSE, NONE); //赋负值
+      Num_Rule2++;
       f=true;
     }
   }
@@ -1490,6 +1485,7 @@ int main(int argc, char *argv[]) {
 	 saved_input_file, ((double)(endtime-begintime)/CLK_TCK), 
 	 NB_BRANCHE, NB_BACK,
 	 UB, NB_VAR, INIT_NB_CLAUSE, NB_CLAUSE-INIT_NB_CLAUSE);
+  //printf("----RULE2: %d----\n",Num_Rule2);
   fclose(fp_time);
   return TRUE;
 }
