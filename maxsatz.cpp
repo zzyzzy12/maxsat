@@ -127,6 +127,7 @@ int saved_nb_empty[tab_variable_size];
 int my_unitclause_process(int starting_point);
 int simple_get_pos_clause_nb(int var) ;
 int simple_get_neg_clause_nb(int var) ;
+int assign_value(int var, int current_value, int rest_value); //自己提上来的
 my_unsigned_type nb_neg_clause_of_length1[tab_variable_size];
 my_unsigned_type nb_pos_clause_of_length1[tab_variable_size];
 my_unsigned_type nb_neg_clause_of_length2[tab_variable_size];
@@ -278,132 +279,46 @@ void print_values(int nb_var) { //输出解
   fclose(fp_out);			
 } 
 
-//----------------------------------------------------rule6------------------------------------------------------
-
-
-map<int,set<int> > tC;//-----------
-set<int>  LC[tab_variable_size][2]; //----------
-set<int>  C[tab_clause_size]; //---------- 
-
-bool rule6(int &n,int &m){ //注意m为变参    
-
-  set<int>::iterator it;    
-  set<int>::iterator p1,p2;
-  bool f=false; 
-  //-----rule6_1
-  for (int x=0;x<n;x++) 
-    if (LC[x][0].size()==1){  //  x为(1,i)
-      int c1,c2=-1;
-      c1=*LC[x][0].begin();
-      for (it=C[c1].begin();it!=C[c1].end();it++){ 
-        int y=*it,k=1;
-        if (y>0) k=0;
-            else y=-y; 
-        for (p1=LC[x][1].begin(),p2=LC[y][k].begin();p1!=LC[x][1].end() && p2!=LC[y][k].end();){ 
-          if (*p1==*p2){
-            c2=*p1;
-            break;
-          }
-          if (*p1<*p2) p1++;
-                  else p2++;
-        } 
-        if (c2) break;
-      }
-      if (c2==-1) continue;  
-      if (tC.find(c2)==tC.end())
-        tC[c2]=C[c2]; //----纪录改变  
-      C[c2].erase(*it);    
+//----------------------------------------------------rule2------------------------------------------------------
+int p1[tab_variable_size],p2[tab_variable_size],h1[tab_variable_size],h2[tab_variable_size];
+bool rule2(int n,int m){  //不用管dgree 
+  bool f=false;
+  set<int>::iterator it;
+  memset(p1,0,sizeof(p1));
+  memset(p2,0,sizeof(p2));
+  memset(h1,0,sizeof(h1));
+  memset(h2,0,sizeof(h2));
+  for (int index = 0; index < m; index++){
+     if (clause_state[index]==PASSIVE) continue;
+     int* vars_signs = var_sign[index];
+     if (clause_length[index]==1){
+        for(int var=*vars_signs; var!=NONE; var=*(vars_signs+=2)){
+            if (var_state[var]==PASSIVE) continue; 
+            if (*(vars_signs+1)==TRUE) h1[var]++;
+                                  else h2[var]++; 
+        }
+     }else{
+        for(int var=*vars_signs; var!=NONE; var=*(vars_signs+=2)){
+            if (var_state[var]==PASSIVE) continue;
+            if (*(vars_signs+1)==TRUE) p1[var]++;
+                                  else p2[var]++; 
+        }
+     }
+  }
+  for (int z=0;z<n;z++){
+    if (var_state[z]==PASSIVE) continue;
+    if (h1[z]>=p2[z]){
+      assign_value(z, TRUE, NONE); //赋正值
       f=true;
     }else
-    if (LC[x][1].size()==1){  //  x为(i,1)
-      int c1=-1,c2;
-      c2=*LC[x][1].begin();
-      for (it=C[c2].begin();it!=C[c2].end();it++){ 
-        int y=*it,k=1;
-        if (y>0) k=0;
-            else y=-y;
-        for (p1=LC[x][0].begin(),p2=LC[y][k].begin();p1!=LC[x][0].end() && p2!=LC[y][k].end();){  
-          if (*p1==*p2){
-            c1=*p1;
-            break;
-          }
-          if (*p1<*p2) p1++;
-                  else p2++;
-        } 
-        if (c1) break;
-      }
-      if (c1==-1) continue; 
-      if (tC.find(c1)==tC.end())
-        tC[c1]=C[c1]; //----纪录改变  tC[c1]=C[c1]; //----纪录改变  
-      C[c1].erase(*it);   
+    if (h2[z]>=p1[z]){
+      assign_value(z, FALSE, NONE); //赋负值
       f=true;
-    }  
-    //-----rule6_2
-  for (int x=0;x<n;x++)
-    if (LC[x][0].size()==1){  // x为(1,i)
-      int c1=-1,D;
-      D=*LC[x][0].begin();
-      for (it=C[D].begin();it!=C[D].end();it++){
-        int y=*it,k=0;
-        if (y>0) k=1;
-            else y=-y; 
-        if (y==x) continue;
-        for (p1=LC[x][1].begin(),p2=LC[y][k].begin();p1!=LC[x][1].end() && p2!=LC[y][k].end();){ 
-          if (*p1==*p2 && (LC[x][1].size()==2 || C[*p1].size()>2)){
-            c1=*p1;
-            break;
-          } 
-          if (*p1<*p2) p1++;
-                 else  p2++;
-        }
-        if (c1) break; 
-      }
-      if (c1==-1) continue;
-      if (tC.find(c1)==tC.end())
-        tC[c1]=C[c1]; //----纪录改变  
-      if (LC[x][1].size()==2) 
-        C[c1]=C[m--];
-      else{
-        C[c1].clear();
-        C[c1].insert(-x),C[c1].insert(-*it);
-      }  
-      f=true;
-    }else
-    if (LC[x][1].size()==1){  // x为(i,1)
-      int c1=-1,D;
-      D=*LC[x][1].begin();
-      for (it=C[D].begin();it!=C[D].end();it++){
-        int y=*it,k=0;
-        if (y>0) k=1;
-            else y=-y; 
-        if (y==x) continue;
-        for (p1=LC[x][0].begin(),p2=LC[y][k].begin();p1!=LC[x][0].end() && p2!=LC[y][k].end();){ 
-          if (*p1==*p2 && (LC[x][0].size()==2 || C[*p1].size()>2)){
-            c1=*p1;
-            break;
-          } 
-          if (*p1<*p2) p1++;
-                 else  p2++;
-        }
-        if (c1) break; 
-      }
-      if (c1==-1) continue;
-      if (tC.find(c1)==tC.end())
-        tC[c1]=C[c1]; //----纪录改变  
-      if (LC[x][0].size()==2) 
-        C[c1]=C[m--];
-      else{
-        C[c1].clear();
-        C[c1].insert(-x),C[c1].insert(-*it);
-      }  
-      f=true;
-    } 
-  return f;
+    }
+  }
+    return f; 
 }
-
-
-
-//----------------------------------------------------rule6------------------------------------------------------
+//----------------------------------------------------rule2------------------------------------------------------
 
 
 
@@ -461,10 +376,10 @@ int verify_solution() { //找出解的大小
     vars_signs = var_sign[i];
     for(var=*vars_signs; var!=NONE; var=*(vars_signs+=2)) 
       if (*(vars_signs+1) == var_current_value[var] ) { //其赋值和其正负是相同的，就是1
-	clause_truth = TRUE;   //有一个是1该clause就是1
-	break;
+	        clause_truth = TRUE;   //有一个是1该clause就是1
+        	break;
       }
-    if (clause_truth == FALSE) nb++;
+    if (clause_truth == FALSE) nb++; //把不满足的个数统计出来
   }
   return nb;
 }
@@ -1388,7 +1303,7 @@ int choose_and_instantiate_variable() {  //选择并且实例化一个变量
 
   for (clause=0; clause<NB_CLAUSE; clause++) 
     lit_to_fix[clause]=NONE;  //将其都清空
-
+  rule2(NB_VAR,NB_CLAUSE);
   for (var = 0; var < NB_VAR; var++) {
     if (var_state[var] == ACTIVE) {
       reduce_if_negative[var]=0; //纪录将var取正与取负的影响
