@@ -204,6 +204,7 @@ bool rule2(int n,int &m,int *X,int *TP,set<int> *C,map<int,int> &tTP){  //不用
 	}
     return f; 
 }
+bool canBeUse[NB_V];
 bool rule3(int n,int &m,int *X,int *TP,node *H,set<int> *C,vector<int> LC[][2],map<int,int> &tTP,map<int,set<int> > &tC){  
 	for (int x=1;x<=n;x++){
 		if (TP[x]!=-1 || LC[x][0].size()!=1 || LC[x][1].size()!=1) continue;
@@ -216,26 +217,32 @@ bool rule3(int n,int &m,int *X,int *TP,node *H,set<int> *C,vector<int> LC[][2],m
 			tTP[x]=TP[x]; //----纪录改变
 		C[c1].insert(C[c2].begin(),C[c2].end()); //合并set
 		C[c1].erase(x),C[c1].erase(-x);
+		//------------------
+		for (set<int>::iterator it=C[c1].begin();it!=C[c1].end();it++)
+			canBeUse[abs(*it)]=true;
+		//------------------
 		TP[x]=1,H[x].F=C[c2],H[x].F.erase(-x);// x由c2得来
 		C[c2]=C[m--]; //删掉c2
 		return true;
 	}
 	return false;
-} 
+}  
 bool rule6(int &n,int &m,set<int> *C,vector<int> LC[][2],map<int,set<int> > &tC,vector<int> &LX){ //注意m为变参
-	set<int>::iterator it;    
+	set<int>::iterator it;     
 	vector<int>::iterator t1,p1,p2;
 	bool f=false;
 	//-----rule6_1
 	for (t1=LX.begin();t1!=LX.end();t1++){
 		int x=*t1;
+		if (canBeUse[x]==false) continue;
 		if (LC[x][0].size()==1){  //  x为(1,i)
 			int c1,c2=0;
-			c1=LC[x][0][0];
+			c1=LC[x][0][0]; 
 			for (it=C[c1].begin();it!=C[c1].end();it++){ 
 				int y=*it,k=1;
 				if (y>0) k=0;
 				    else y=-y; 
+				if (canBeUse[y]==false) continue;
 				for (p1=LC[x][1].begin(),p2=LC[y][k].begin();p1!=LC[x][1].end() && p2!=LC[y][k].end();){ 
 					if (*p1==*p2){
 						c2=*p1;
@@ -259,6 +266,7 @@ bool rule6(int &n,int &m,set<int> *C,vector<int> LC[][2],map<int,set<int> > &tC,
 				int y=*it,k=1;
 				if (y>0) k=0;
 				    else y=-y;
+				if (canBeUse[y]==false) continue;
 				for (p1=LC[x][0].begin(),p2=LC[y][k].begin();p1!=LC[x][0].end() && p2!=LC[y][k].end();){  
 					if (*p1==*p2){
 						c1=*p1;
@@ -280,6 +288,7 @@ bool rule6(int &n,int &m,set<int> *C,vector<int> LC[][2],map<int,set<int> > &tC,
     //-----rule6_2
 	for (t1=LX.begin();t1!=LX.end();t1++){
 		int x=*t1;
+		if (canBeUse[x]==false) continue;
 		if (LC[x][0].size()==1){  // x为(1,i)
 			int c1=0,D;
 			D=LC[x][0][0];
@@ -287,6 +296,7 @@ bool rule6(int &n,int &m,set<int> *C,vector<int> LC[][2],map<int,set<int> > &tC,
 				int y=*it,k=0;
 				if (y>0) k=1;
 				    else y=-y; 
+				if (canBeUse[y]==false) continue;
 				if (y==x) continue;
 				for (p1=LC[x][1].begin(),p2=LC[y][k].begin();p1!=LC[x][1].end() && p2!=LC[y][k].end();){ 
 					if (*p1==*p2 && (LC[x][1].size()==2 || C[*p1].size()>2)){
@@ -316,6 +326,7 @@ bool rule6(int &n,int &m,set<int> *C,vector<int> LC[][2],map<int,set<int> > &tC,
 				int y=*it,k=0;
 				if (y>0) k=1;
 				    else y=-y; 
+				if (canBeUse[y]==false) continue;
 				if (y==x) continue;
 				for (p1=LC[x][0].begin(),p2=LC[y][k].begin();p1!=LC[x][0].end() && p2!=LC[y][k].end();){ 
 					if (*p1==*p2 && (LC[x][0].size()==2 || C[*p1].size()>2)){
@@ -548,6 +559,7 @@ void branch(int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<int> *C,
 	tTP.clear();
 	tC.clear();
 	COUNT[0]++; 
+	memset(canBeUse,false,sizeof(canBeUse));
 	while (1){
 		clock_t start;
 		start=clock();
@@ -574,7 +586,8 @@ void branch(int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<int> *C,
 		if (D3){ //阀值
 			start=clock(); 
 	//		puts("进入rule6-7");
-			if (rule6(n,m,C,LC,tC,LX)) { TIME[6]+=clock()-start; continue; } //done
+		//	if (rule6(n,m,C,LC,tC,LX)) { TIME[6]+=clock()-start; continue; } //done
+			memset(canBeUse,false,sizeof(canBeUse));//------
 			TIME[6]+=clock()-start; 
 			start=clock(); 
 	//		puts("进入rule6-7");
