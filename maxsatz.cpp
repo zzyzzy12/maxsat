@@ -1253,7 +1253,7 @@ bool rule3(int var){
      return true;
 }
 //---------------------------------rule 3--------------------------------- 
-
+bool c1c2[tab_variable_size][2];
 int choose_and_instantiate_variable() {  //选择并且实例化一个变量
   int var, nb=0, chosen_var=NONE,cont=0, cont1; 
   int  i; 
@@ -1321,22 +1321,40 @@ int choose_and_instantiate_variable() {  //选择并且实例化一个变量
       }
       else if (rule3(var)){   //----新加rule3
          var_state[var]=PASSIVE;
-         var_current_value[var]=TRUE;
+         var_current_value[var]=TRUE;  //这么赋值肯定出错
          _push(var,VARIABLE_STACK);
          int c1=r3c[0],c2=r3c[1]; //---拿出对应的c1,c2
          int *var_signs=var_sign[c1],nb=0;
          int *new_var_signs=NEW_CLAUSES[NEW_CLAUSES_fill_pointer++]; 
+         bool valid=true;
+         memset(c1c2,false,sizeof(c1c2));
          for (int lit=*var_signs;lit!=NONE;lit=*(++var_signs)){
               if (var_state[lit]==PASSIVE) continue;
+              if (c1c2[lit][0]){
+                  if (*(var_signs+1) == FALSE) continue; 
+                                    else{
+                                           valid=false;
+                                           break;
+                                    }
+              }
+              if (c1c2[lit][1]){
+                  if (*(var_signs+1) == TRUE) continue; 
+                                    else{
+                                           valid=false;
+                                           break;
+                                    }                
+              }
               *(new_var_signs++)=lit;
               *(new_var_signs++)=*(var_signs+1);
+              c1c2[lit][*(var_signs+1)]=TRUE;
               nb++;
               if (*(var_signs+1)==TRUE)
                   replace_clause(NB_CLAUSE, c1, pos_in[lit]);  //---- 
               else
                   replace_clause(NB_CLAUSE, c1, neg_in[lit]); 
 
-         }  
+         }  //c1 c2 要去重
+         if (!valid) continue;
          var_signs=var_sign[c2];
          for (int lit=*var_signs;lit!=NONE;lit=*(++var_signs)){
               if (var_state[lit]==PASSIVE) continue;
@@ -1344,9 +1362,9 @@ int choose_and_instantiate_variable() {  //选择并且实例化一个变量
               *(new_var_signs++)=*(var_signs+1);
               nb++;
               if (*(var_signs+1)==TRUE)
-                  replace_clause(NB_CLAUSE, c1, pos_in[lit]);  //---- 
+                  replace_clause(NB_CLAUSE, c2, pos_in[lit]);  //---- 
               else
-                  replace_clause(NB_CLAUSE, c1, neg_in[lit]); 
+                  replace_clause(NB_CLAUSE, c2, neg_in[lit]); 
 
          }            
          *(new_var_signs)=NONE;
