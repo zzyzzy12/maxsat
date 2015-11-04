@@ -81,8 +81,8 @@ typedef unsigned char my_unsigned_type;
 /* the tables of variables and clauses are statically allocated. Modify the 
    parameters tab_variable_size and tab_clause_size before compilation if 
    necessary */
-#define tab_variable_size  10000
-#define tab_clause_size 40000
+#define tab_variable_size  10000 
+#define tab_clause_size 40000   
 #define tab_unitclause_size \
  ((tab_clause_size/4<2000) ? 2000 : tab_clause_size/4)
 #define my_tab_variable_size \
@@ -422,6 +422,7 @@ int verify_binary_clauses(int *varssigns, int var1, int sign1, int var2, int sig
 int CLAUSES_TO_REMOVE[tab_clause_size]; //删除的clause?
 int CLAUSES_TO_REMOVE_fill_pointer=0;
 
+/*
 int create_clause_from_conflict_clauses(int clause1, int clause2, int clause3) { //一个剪枝规则，由冲突的clause来创造clause? 没有发现操作
   int var3, sign3, var2, sign2,*clauses2, *clauses3, *vars_signs,varssigns[4], i=0, var;
 
@@ -445,7 +446,7 @@ int create_clause_from_conflict_clauses(int clause1, int clause2, int clause3) {
   else {
     return FALSE;  //条件不满足，clause1-3选择有问题 
   }
-}
+}*/
 
 int LINEAR_REASON_STACK1[tab_clause_size];
 int LINEAR_REASON_STACK1_fill_pointer=0; //栈初始为0的大小
@@ -611,7 +612,7 @@ int linear_conflict(int clause) {
     }
   }
   if (i>4) return FALSE;
-  if (i==0) printf("bizzar...\n");
+  if (i==0) printf("bizzar...!!!!!!\n");
   else {
     for(j=0; j<LINEAR_REASON_STACK1_fill_pointer; j++) 
        clause_involved[LINEAR_REASON_STACK1[j]]=NONE;
@@ -1244,15 +1245,29 @@ int unitclause_process() {  //处理unit_clause
 }
 //---------------------------------rule 3--------------------------------- 
 bool rule3(int var){
+     return false; //屏蔽rule3 
      if (nb_pos_clause_of_length1[var]+
          nb_pos_clause_of_length2[var]+ 
          nb_pos_clause_of_length3[var]!=1) return false;
      if (nb_neg_clause_of_length1[var]+
          nb_neg_clause_of_length2[var]+ 
          nb_neg_clause_of_length3[var]!=1) return false;
-     return true;
+     return true; 
 }
 //---------------------------------rule 3--------------------------------- 
+//-------------------------------rule 6.1--------------------------------- 
+bool rule6_1(int var){
+     int pnb=nb_pos_clause_of_length1[var]+nb_pos_clause_of_length2[var]+nb_pos_clause_of_length3[var];
+     int nnb=nb_neg_clause_of_length1[var]+nb_neg_clause_of_length2[var]+nb_neg_clause_of_length3[var];
+     if (pnb==1){
+
+     }
+     if (nnb==1){
+
+     }
+     return false;
+}
+//-------------------------------rule 6.1--------------------------------- 
 bool c1c2[tab_variable_size][2];
 int choose_and_instantiate_variable() {  //选择并且实例化一个变量
   int var, nb=0, chosen_var=NONE,cont=0, cont1; 
@@ -1328,9 +1343,22 @@ int choose_and_instantiate_variable() {  //选择并且实例化一个变量
          int *new_var_signs=NEW_CLAUSES[NEW_CLAUSES_fill_pointer++]; 
          bool valid=true;
          memset(c1c2,false,sizeof(c1c2));
-         for (int lit=*var_signs;lit!=NONE;lit=*(++var_signs)){
+         for (int lit=*var_signs;lit!=NONE;lit=*(var_signs+=2)){
               if (var_state[lit]==PASSIVE) continue;
-              if (c1c2[lit][0]){
+              *(new_var_signs++)=lit;
+              *(new_var_signs++)=*(var_signs+1);
+              c1c2[lit][*(var_signs+1)]=TRUE;
+              nb++;
+              if (*(var_signs+1)==TRUE)
+                  replace_clause(NB_CLAUSE, c1, pos_in[lit]);  //---- 
+              else
+                  replace_clause(NB_CLAUSE, c1, neg_in[lit]); 
+
+         }  //c1 c2 要去重
+         var_signs=var_sign[c2];
+         for (int lit=*var_signs;lit!=NONE;lit=*(var_signs+=2)){
+              if (var_state[lit]==PASSIVE) continue;
+           /*   if (c1c2[lit][0]){  //false为负  true为正
                   if (*(var_signs+1) == FALSE) continue; 
                                     else{
                                            valid=false;
@@ -1344,20 +1372,7 @@ int choose_and_instantiate_variable() {  //选择并且实例化一个变量
                                            break;
                                     }                
               }
-              *(new_var_signs++)=lit;
-              *(new_var_signs++)=*(var_signs+1);
-              c1c2[lit][*(var_signs+1)]=TRUE;
-              nb++;
-              if (*(var_signs+1)==TRUE)
-                  replace_clause(NB_CLAUSE, c1, pos_in[lit]);  //---- 
-              else
-                  replace_clause(NB_CLAUSE, c1, neg_in[lit]); 
-
-         }  //c1 c2 要去重
-         if (!valid) continue;
-         var_signs=var_sign[c2];
-         for (int lit=*var_signs;lit!=NONE;lit=*(++var_signs)){
-              if (var_state[lit]==PASSIVE) continue;
+             // if (!valid) continue;  */
               *(new_var_signs++)=lit;
               *(new_var_signs++)=*(var_signs+1);
               nb++;
@@ -1375,7 +1390,10 @@ int choose_and_instantiate_variable() {  //选择并且实例化一个变量
          _push(c2,CLAUSES_TO_REMOVE);
          NB_CLAUSE++;
       }
-      else {
+      else if (rule6_1(var)){
+         continue;
+      } 
+     else{
 	       if (nb_neg_clause_of_length1[var]>nb_pos_clause_of_length1[var]) {
 	         cont+=nb_pos_clause_of_length1[var];
 	   }
