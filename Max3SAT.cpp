@@ -165,7 +165,7 @@ bool rule1_2(int n,int &m,int *X,int *TP,node *H,set<int> *C,int &Upbound,map<in
 	return f;
 }
 int p1[NB_V],p2[NB_V],h1[NB_V],h2[NB_V];
-bool rule2(int n,int &m,int *X,int *TP,set<int> *C,map<int,int> &tTP){  //不用管dgree
+bool rule2(int n,int &m,int *X,int *TP,set<int> *C,map<int,int> &tTP,int &Upbound,int maxNum){  //不用管dgree
 	int x; 
 	bool f=false;
 	set<int>::iterator it;
@@ -187,6 +187,8 @@ bool rule2(int n,int &m,int *X,int *TP,set<int> *C,map<int,int> &tTP){  //不用
 	}
 	for (int z=1;z<=n;z++){
 		if (TP[z]!=-1) continue;
+		if (h1[z]>h2[z]) Upbound-=h2[z];
+		if (h2[z]>h1[z]) Upbound-=h1[z];
 		if (h1[z]>=p2[z]){
 			if (tTP.find(z)==tTP.end())
 				tTP[z]=TP[z]; //----纪录改变
@@ -200,7 +202,21 @@ bool rule2(int n,int &m,int *X,int *TP,set<int> *C,map<int,int> &tTP){  //不用
 			TP[z]=0;
 			X[z]=0;
 			f=true;
-		}
+		}else
+        if (h1[z]+maxNum>=Upbound){
+            if (tTP.find(z)==tTP.end())
+                tTP[z]=TP[z]; //----纪录改变
+            TP[z]=0;
+            X[z]=1;
+            f=true;
+        }else
+        if (h2[z]+maxNum>=Upbound){
+            if (tTP.find(z)==tTP.end())
+                tTP[z]=TP[z]; //----纪录改变
+            TP[z]=0;
+            X[z]=0;
+            f=true;
+        }
 	}
     return f; 
 }
@@ -497,6 +513,7 @@ void consH(int n,int *TP,node *H,int *X,map<int,int> &tTP){
 //      0 denotes literal x is not in C  
 	for (int i=1;i<=n;i++) searchH(i,n,TP,H,X,tTP);
 }
+/*
 void reUB(int n,int m,set<int> *C,int &Upbound){
 	int unit[n+5][2];
 	set<int>::iterator it;
@@ -524,7 +541,7 @@ void reUB(int n,int m,set<int> *C,int &Upbound){
 				else unit[-x][0]--;
 		}
 	}
-}
+}*/
 void getLC(int n0,int m,set<int> *C,vector<int> LC[][2],int *TP,bool &D3,vector<int> &LX){
 	set<int>::iterator it;
 	int n=0,DM=0;
@@ -576,7 +593,7 @@ void branch(int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<int> *C,
 		TIME[10]+=clock()-start; 
 		start=clock();
 	//	puts("进入rule2");
-		if (rule2(n,m,X,TP,C,tTP)) { TIME[2]+=clock()-start; COUNT[2]++; continue; } //done
+		if (rule2(n,m,X,TP,C,tTP,Upbound,maxNum)) { TIME[2]+=clock()-start; COUNT[2]++; continue; } //done
 		TIME[2]+=clock()-start; 
 		start=clock();
 		getLC(n,m,C,LC,TP,D3,LX);
@@ -586,7 +603,7 @@ void branch(int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<int> *C,
 		if (D3){ //阀值
 			start=clock(); 
 	//		puts("进入rule6-7");
-		//	if (rule6(n,m,C,LC,tC,LX)) { TIME[6]+=clock()-start; continue; } //done
+			if (rule6(n,m,C,LC,tC,LX)) { TIME[6]+=clock()-start; continue; } //done
 			memset(canBeUse,false,sizeof(canBeUse));//------
 			TIME[6]+=clock()-start; 
 			start=clock(); 
@@ -600,7 +617,7 @@ void branch(int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<int> *C,
 		TIME[8]+=clock()-start;   
 		break;
 	} 
-	reUB(n,m,C,Upbound);
+	//reUB(n,m,C,Upbound);
 	if (Upbound<=maxNum){
 		back(TP,C,n,m,tTP,tC,tn,tm); //还原现场
 		return; 
