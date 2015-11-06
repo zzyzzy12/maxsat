@@ -9,8 +9,8 @@
 #include <queue>
 #include <stack>
 using namespace std;
-const int NB_V=5505;
-const int NB_C=10505;
+const int NB_V=20505;
+const int NB_C=50505;
 //test
 clock_t TIME[25];
 int COUNT[25];
@@ -164,7 +164,7 @@ bool rule1_2(int n,int &m,int *X,int *TP,node *H,set<int> *C,int &Upbound,map<in
 	//if (f) puts("rule1.2");
 	return f;
 }
-int p1[NB_V],p2[NB_V],h1[NB_V],h2[NB_V];
+int p1[NB_V],p2[NB_V],h1[NB_V],h2[NB_V],q1[NB_V],q2[NB_V],un[NB_V][2];
 bool rule2(int n,int &m,int *X,int *TP,set<int> *C,map<int,int> &tTP,int &Upbound,int maxNum){  //不用管dgree
 	int x;
 	bool f=false;
@@ -173,6 +173,7 @@ bool rule2(int n,int &m,int *X,int *TP,set<int> *C,map<int,int> &tTP,int &Upboun
 	memset(p2,0,sizeof(p2));
 	memset(h1,0,sizeof(h1));
 	memset(h2,0,sizeof(h2));
+	memset(un,0,sizeof(un));
 	for (int i=1;i<=m;i++){
 		if (C[i].size()==1){
 			x=*C[i].begin();
@@ -185,32 +186,64 @@ bool rule2(int n,int &m,int *X,int *TP,set<int> *C,map<int,int> &tTP,int &Upboun
 			    else p2[-x]++;
 		}
 	}
+	for (int i=1;i<=n;i++) un[i][0]=h1[i],un[i][1]=h2[i]; //存一下unit_clause的值
+	memset(q1,0,sizeof(q1));
+	memset(q2,0,sizeof(q2));
+	for (int i=1;i<=m;i++)
+		if (C[i].size()==2){
+			int x[2],t=0;
+			for (it=C[i].begin();it!=C[i].end();it++){
+				x[t++]=*it; 
+			}
+			if (x[0]>0 && un[x[0]][1]){
+				un[x[0]][1]--;
+				if (x[1]>0) q1[x[1]]++;
+				       else q2[-x[1]]++; 
+			}
+			if (x[0]<0 && un[-x[0]][0]){
+				un[-x[0]][0]--;
+				if (x[1]>0) q1[x[1]]++;
+				       else q2[-x[1]]++; 
+			}
+			swap(x[0],x[1]);
+			if (x[0]>0 && un[x[0]][1]){
+				un[x[0]][1]--;
+				if (x[1]>0) q1[x[1]]++;
+				       else q2[-x[1]]++; 
+			}
+			if (x[0]<0 && un[-x[0]][0]){
+				un[-x[0]][0]--;
+				if (x[1]>0) q1[x[1]]++;
+				       else q2[-x[1]]++; 
+			}
+		} 
+    
 	for (int z=1;z<=n;z++){
 		if (TP[z]!=-1) continue;
 		if (h1[z]>h2[z]) Upbound-=h2[z];
 		if (h2[z]>h1[z]) Upbound-=h1[z];
-		if (h1[z]>=p2[z]){
+		if (h1[z]+q1[z]>=p2[z]){
 			if (tTP.find(z)==tTP.end())
 				tTP[z]=TP[z]; //----纪录改变
 			TP[z]=0;
 			X[z]=1;
 			f=true;
 		}else
-		if (h2[z]>=p1[z]){
+		if (h2[z]+q2[z]>=p1[z]){
 			if (tTP.find(z)==tTP.end())
 				tTP[z]=TP[z]; //----纪录改变
 			TP[z]=0;
 			X[z]=0;
 			f=true;
 		}else
-        if (h1[z]+maxNum>=Upbound){
+        if (h1[z]+q1[z]+maxNum>=Upbound){
             if (tTP.find(z)==tTP.end())
                 tTP[z]=TP[z]; //----纪录改变
             TP[z]=0;
             X[z]=1;
             f=true;
         }else
-        if (h2[z]+maxNum>=Upbound){
+        if (h2[z]+q2[z]+maxNum>=Upbound){
             if (tTP.find(z)==tTP.end())
                 tTP[z]=TP[z]; //----纪录改变
             TP[z]=0;
@@ -440,9 +473,8 @@ bool rule7(int &n,int &m,int *TP,node *H,set<int> *C,int *X,vector<int> LC[][2],
 		}
 	}
 	return false;
-}
-bool rule8(int &m,int *TP,set<int> *C,int &Upbound,map<int,set<int> > &tC){
-	int p[NB_V][2];
+} 
+bool rule8(int &m,int *TP,set<int> *C,int &Upbound,map<int,set<int> > &tC){ 
 	set<int>::iterator it;
 	memset(p,0,sizeof(p));
 	for (int i=1;i<=m;i++){
