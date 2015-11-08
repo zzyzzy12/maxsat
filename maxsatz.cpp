@@ -397,10 +397,10 @@ int replace_clause(int newclause, int clause_to_replace, int *clauses,int tp) { 
   }
   if (flag==FALSE)  //正常来说是不可能出错的
   {
-    /*  printf("problem...replace_clause\n");
+      printf("problem...replace_clause\n");
       printf("出错的var %d\n",tp);
       printf("出错的clause %d\n",clause_to_replace);
-      clauses=c;
+    /*  clauses=c;
       for(clause=*clauses; clause!=NONE; clause=*(++clauses)) 
           if (clause_state[clause]==ACTIVE)
               printf("C%d ",clause);  
@@ -1283,7 +1283,7 @@ int unitclause_process() {  //处理unit_clause
 bool had[tab_variable_size][2]; //0负，1正
 //-------------------------------rule 6.1--------------------------------- 
 bool rule6_1(int var0){
-     return false; 
+     //return false; 
      int pnb=nb_pos_clause_of_length1[var0]+nb_pos_clause_of_length2[var0]+nb_pos_clause_of_length3[var0];
      int nnb=nb_neg_clause_of_length1[var0]+nb_neg_clause_of_length2[var0]+nb_neg_clause_of_length3[var0];
      memset(had,false,sizeof(had));
@@ -1301,7 +1301,7 @@ bool rule6_1(int var0){
               vars_signs=var_sign[clause];
               for (int var1=*(vars_signs);var1!=NONE;var1=*(vars_signs+=2)){
                   if (var_state[var1]==PASSIVE) continue;
-                  if (!had[var1][*(vars_signs+1)]) continue;
+                  if (!had[var1][*(vars_signs+1)]) continue; 
                   //---可以进行rule6.1的剪枝操作，把clause中的y删去
                   int *new_var_signs=NEW_CLAUSES[NEW_CLAUSES_fill_pointer++]; //新分配一个clause
                   int nb=0,*c;
@@ -1373,7 +1373,7 @@ bool rule6_1(int var0){
 bool c1c2[tab_variable_size][2];
 bool judgeClauseAndVar(){
    for (int clause=0; clause<NB_CLAUSE; clause++){
-      if (var_state[clause]==PASSIVE) continue;
+      if (clause_state[clause]==PASSIVE) continue;
       int *vars_signs=var_sign[clause];
       for (int lit=*vars_signs;lit!=NONE;lit=*(vars_signs+=2)){
            if (var_state[lit]==PASSIVE) continue;
@@ -1383,7 +1383,7 @@ bool judgeClauseAndVar(){
            for (c=*clauses;c!=NONE;c=*(++clauses))
                if (c==clause) break;
            if (c==NONE){
-             // outputClauseAndlit(clause,NEGATIVE,33);
+              printf("Clause: %d  var: %d\n",clause,lit);
               return false;     
            }                    
       }
