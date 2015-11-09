@@ -873,12 +873,12 @@ void outputClause(int var){
      puts("-----------------");
 }
 void rule6_1(int var0){
-     //return; 
+    // return; 
      int pnb=nb_var_clause[var0][1];
      int nnb=nb_var_clause[var0][0];
      memset(had,false,sizeof(had));
      if (pnb==1){ //(1,i)  
-          outputClause(var0);
+         // outputClause(var0);
           int D=findUnitClause(pos_in[var0]); 
           int *vars_signs0=var_sign[D];
           for (int var1=*(vars_signs0);var1!=NONE;var1=*(vars_signs0+=2)){
@@ -918,7 +918,7 @@ void rule6_1(int var0){
                   NB_CLAUSE++;       
               }              
           }
-     }/*
+     }
      memset(had,false,sizeof(had));
      if (nnb==1){ //(i,1) 
           int D=findUnitClause(neg_in[var0]); 
@@ -960,7 +960,7 @@ void rule6_1(int var0){
                   NB_CLAUSE++;       
               }              
           }
-     }*/
+     }
 }
 //-------------------------------rule 6.1--------------------------------- 
 int lookahead() {
@@ -1456,6 +1456,11 @@ void built_pos_in_neg_in(){
     pos_in[var][pos_nb[var]]=NONE;  //打上结束符
   }
 }
+
+int p1[tab_variable_size],p2[tab_variable_size],h1[tab_variable_size];
+int h2[tab_variable_size],q1[tab_variable_size],q2[tab_variable_size],un[tab_variable_size][2];
+
+
 int choose_and_instantiate_variable() {  //所有的var赋值操作都在其中
   int var, nb=0, chosen_var=NONE,cont=0, cont1; 
   int  i; 
@@ -1480,14 +1485,6 @@ int choose_and_instantiate_variable() {  //所有的var赋值操作都在其中
     lit_to_fix[clause]=NONE;  //将其都清空  
   for (var = 0; var < NB_VAR; var++) {
     if (var_state[var] == ACTIVE) { 
-
-      for (int var1=0;var1<NB_VAR;var1++){
-          if (var_state[var1]==PASSIVE) continue;
-          if (get_neg_clause_nb(var1)==1 || get_pos_clause_nb(var1)==1)
-              outputClause(var1);
-      }
-
-
       //if (!judgeClauseAndVar()) puts("!!!!!error!!!");
       reduce_if_negative[var]=0; //纪录将var取正与取负的影响
       reduce_if_positive[var]=0;
@@ -1540,15 +1537,62 @@ int choose_and_instantiate_variable() {  //所有的var赋值操作都在其中
 	   else 
 	        cont+=nb_neg_clause_of_length1[var]; 
       }
+      /*
+      int d2num=0;
+      for (int var1=0;var1<NB_VAR;var1++)
+        if (get_neg_clause_nb(var1)==1 && get_pos_clause_nb(var1)==1)
+          d2num++;
+      if (d2num>0){
+          printf("--------------branch %ld-------------\n",NB_BRANCHE);
+          d2num=0;
+          for (int var1=0;var1<NB_VAR;var1++)
+              if (get_neg_clause_nb(var1)==1 && get_pos_clause_nb(var1)==1){
+                  printf("X%d ",var1);
+                  d2num++;
+                  if (d2num%40==0) puts("");
+              }
+          puts("");
+          for (int var1=0;var1<NB_VAR;var1++){
+             if (var_state[var1]==PASSIVE) continue;
+             if (get_neg_clause_nb(var1)==1 || get_pos_clause_nb(var1)==1)
+                outputClause(var1);
+          }
+      }*/
     }
   }
-
+  
+/*
   update_nb_of_var_clause();
   for (int var=0;var<NB_VAR;var++){
       if (var_state[var]==PASSIVE) continue; 
       rule6_1(var);
-  } 
+  }
+*/ 
+  //--------------new rule 2---------------
+  memset(p1,0,sizeof(p1));
+  memset(p2,0,sizeof(p2));
+  memset(h1,0,sizeof(h1));
+  memset(h2,0,sizeof(h2));
+  memset(q1,0,sizeof(q1));
+  memset(q2,0,sizeof(q2));
+  for (int clause=0;clause<NB_CLAUSE;clause++){
+      if (clause_state[clause]==PASSIVE) continue;
+      int *vars_signs=var_sign[clause];
+      for (int var=*vars_signs;var!=NONE;var=*(vars_signs+=2)){
+          if (var_state[var]==PASSIVE) continue;
+          if (clause_length[clause]==1){
+              if (*(vars_signs+1)==POSITIVE) h1[var]++;
+                                        else h2[var]++;
+          }
+          if (*(vars_signs+1)==POSITIVE) p1[var]++;
+                                    else p2[var]++;
+      }
+  }
+  for (int var=0;var<NB_VAR;var++) un[var][0]=h1[i],un[var][1]=h2[i];
+  for (var = 0; var< NB_VAR; var++){
 
+  }
+  //--------------new rule 2---------------
 
   if (cont+NB_EMPTY>=UB)
     return NONE;
@@ -1568,6 +1612,12 @@ int choose_and_instantiate_variable() {  //所有的var赋值操作都在其中
 	     } 
     }
   }
+
+
+
+
+
+
   if (chosen_var == NONE) return FALSE;  //选出这个变量分支
   saved_clause_stack[chosen_var] = CLAUSE_STACK_fill_pointer; //纪录在选择该变量时的各个栈位置
   saved_reducedclause_stack[chosen_var] = REDUCEDCLAUSE_STACK_fill_pointer;
