@@ -1439,43 +1439,25 @@ bool judgeClauseAndVar(){
   return true;
 }  
 //------------rule3 replace--------------
-void create_new_binaryclause(int var1,int sign1,int var2,int sign2,int clause){
-  int *vars_signs=NEW_CLAUSES[NEW_CLAUSES_fill_pointer++]; //新分配一个clause 
-  if (var1<var2){
-     vars_signs[0]=var1, vars_signs[1]=sign1;
-     vars_signs[2]=var2, vars_signs[3]=sign2;
-  }else{
-     vars_signs[0]=var2, vars_signs[1]=sign2;
-     vars_signs[2]=var1, vars_signs[3]=sign1;
-  }
-  vars_signs[4]=NONE;
-  var_sign[NB_CLAUSE]=vars_signs;
-  clause_state[NB_CLAUSE]=ACTIVE;
-  clause_length[NB_CLAUSE]=2;
-  if (sign1==POSITIVE)
-     replace_clause(NB_CLAUSE, clause, pos_in[var1],var1);
-  else
-     replace_clause(NB_CLAUSE, clause, neg_in[var1],var1);
-  if (sign2==POSITIVE)
-     replace_clause(NB_CLAUSE, clause, pos_in[var2],var2);
-  else
-     replace_clause(NB_CLAUSE, clause, neg_in[var2],var2);
-  _push(clause,CLAUSE_STACK),clause_state[clause]=PASSIVE;
-  NB_CLAUSE++;
-}
 bool inc1[tab_variable_size][2];
 bool rule3_replace(int var0){  
-  //return false;
-  if (nb_pos_clause_of_length1[var0]+
-      nb_pos_clause_of_length2[var0]+ 
-      nb_pos_clause_of_length3[var0]!=1) return false;
-  if (nb_neg_clause_of_length1[var0]+
-      nb_neg_clause_of_length2[var0]+ 
-      nb_neg_clause_of_length3[var0]!=1) return false; 
-  int c1,c2,*clauses=pos_in[var0];
-  for (c1=*clauses;clause_state[c1]!=ACTIVE;c1=*(++clauses));
+  //return false;  
+  int c1=-1,c2=-1,*clauses=pos_in[var0];
+  for(int clause=*clauses; clause!=NONE; clause=*(++clauses)) 
+     if (clause_state[clause] == ACTIVE){
+          if (c1==-1) c1=clause;
+                 else return false;
+     }
   clauses=neg_in[var0];
-  for (c2=*clauses;clause_state[c2]!=ACTIVE;c2=*(++clauses)); 
+  if (c1==-1) return false;
+//  puts("!!!!");
+  for(int clause=*clauses; clause!=NONE; clause=*(++clauses)) 
+     if (clause_state[clause] == ACTIVE){
+          if (c2==-1) c2=clause;
+                else return false;
+     }    
+  if (c2==-1) return false;   
+ // puts("!!!");
   memset(inc1,false,sizeof(inc1)); 
   int *vars_signs=var_sign[c1],var;
   for (var=*vars_signs;var!=NONE;var=*(vars_signs+=2)){
@@ -1486,19 +1468,19 @@ bool rule3_replace(int var0){
   vars_signs=var_sign[c2];
   for (var=*vars_signs;var!=NONE;var=*(vars_signs+=2)){
       if (var_state[var]!=ACTIVE) continue; 
-      if (var==var0) continue;
+      if (var==var0) continue; //注意
       if (inc1[var][1-*(vars_signs+1)]) break;
-  }
-  if (var==NONE) return false; 
- // create_new_binaryclause(var0,POSITIVE,var,1-*(vars_signs+1),c1);
+  } 
+  if (var==NONE) return false;  
   create_binaryclause(var0,POSITIVE,var,1-*(vars_signs+1),c1,c1);
-  _push(c1,CLAUSE_STACK),clause_state[c1]=PASSIVE;
+  _push(c1,CLAUSE_STACK),clause_state[c1]=PASSIVE; 
 //  create_new_binaryclause(var0,NEGATIVE,var,  *(vars_signs+1),c2);
   create_binaryclause(var0,NEGATIVE,var,  *(vars_signs+1),c2,c2);
-  _push(c2,CLAUSE_STACK),clause_state[c2]=PASSIVE; 
- // if (!judgeClauseAndVar()) puts("!!!!!error!!!");
+  _push(c2,CLAUSE_STACK),clause_state[c2]=PASSIVE;  
+ // if (!judgeClauseAndVar()) puts("!!!!!error!!!");   
+  puts("!!!");
   return true;
-}
+}  
 //------------rule3 replace--------------
 
 //--------------new rule 2--------------- 
@@ -1589,16 +1571,22 @@ int new_rule2(){
 map<int,int> temp_clause;
 bool rule3(int var){
   return false;
-  if (nb_pos_clause_of_length1[var]+
-      nb_pos_clause_of_length2[var]+ 
-      nb_pos_clause_of_length3[var]!=1) return false;
-  if (nb_neg_clause_of_length1[var]+
-      nb_neg_clause_of_length2[var]+ 
-      nb_neg_clause_of_length3[var]!=1) return false; 
-  int c1,c2,*clauses=pos_in[var];
-  for (c1=*clauses;clause_state[c1]!=ACTIVE;c1=*(++clauses));
+  int c1=-1,c2=-1,*clauses=pos_in[var];
+  for(int clause=*clauses; clause!=NONE; clause=*(++clauses)) 
+     if (clause_state[clause] == ACTIVE){
+          if (c1==-1) c1=clause;
+                 else return false;
+     } 
+  if (c1==-1) return false;
   clauses=neg_in[var];
-  for (c2=*clauses;clause_state[c2]!=ACTIVE;c2=*(++clauses)); 
+  for(int clause=*clauses; clause!=NONE; clause=*(++clauses)) 
+     if (clause_state[clause] == ACTIVE){
+          if (c2==-1) c2=clause;
+                 else return false;
+     } 
+ // puts("!!!"); 
+  if (c2==-1) return false;    
+ // puts("!!!");
   assign_value(var,POSITIVE,NONE);  //如何处理比较好? 
 
   temp_clause.clear();
@@ -1659,12 +1647,14 @@ int choose_and_instantiate_variable() {  //所有的var赋值操作都在其中
   float poid, max_poid = -1.0; 
   my_type pos2, neg2, flag=0;
   NB_BRANCHE++;    //统计分支个数
-  
-  //if (!judgeClauseAndVar()) puts("!!!!!error!!!");
-  //built_pos_in_neg_in();
+   
+  for (int var=0;var<NB_VAR;var++)
+     if (var_state[var]==ACTIVE)
+       rule3_replace(var);   
 
   if (lookahead()==NONE)
     return NONE;
+
 
   if (UB-NB_EMPTY==1)
     if (unitclause_process() ==NONE) //处理了unitclause后可以被upper bound限制住 返回
@@ -1729,7 +1719,7 @@ int choose_and_instantiate_variable() {  //所有的var赋值操作都在其中
 	       }
 	         else 
 	           cont+=nb_neg_clause_of_length1[var]; 
-         rule3_replace(var);
+        // rule3_replace(var);
       }
       /*
       int d2num=0;
@@ -1754,14 +1744,7 @@ int choose_and_instantiate_variable() {  //所有的var赋值操作都在其中
       }*/
     }
   }
-  
-/*
-  update_nb_of_var_clause();
-  for (int var=0;var<NB_VAR;var++){
-      if (var_state[var]==PASSIVE) continue; 
-      rule6_1(var);
-  }
-*/ 
+   
   if (new_rule2()==NONE) return NONE;
 
   if (cont+NB_EMPTY>=UB)
