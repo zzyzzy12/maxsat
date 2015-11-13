@@ -434,11 +434,9 @@ void create_binaryclause(int var1, int sign1, int var2, int sign2,int clause1, i
   vars_signs[4]=NONE;  //结束符号
   var_sign[NB_CLAUSE]=vars_signs; //clause中元素的情况
   clause_state[NB_CLAUSE]=ACTIVE; //clause本身为激活状态
-  clause_length[NB_CLAUSE]=2;  //长度为2
-  //if (!judgeClauseAndVar()) puts("!!!!!error!!!");
+  clause_length[NB_CLAUSE]=2;  //长度为2 
   replace_clause(NB_CLAUSE, clause1, clauses1,0); //在clauses1中找到clause1，然后替换成NB_CLAUSE，让var1与clause1脱离关系，与NB_CLAUSE建立关系
   replace_clause(NB_CLAUSE, clause2, clauses2,0); //在clauses2中找到clause2，然后替换成NB_CLAUSE，让var2与clause2脱离关系，与NB_CLAUSE建立关系
-  //if (!judgeClauseAndVar()) puts("!!!!!error!!!");
   NB_CLAUSE++; //增加clause个数
 }
 
@@ -608,7 +606,6 @@ void create_ternary_clauses(int var1, int sign1, int var2, int sign2,
   var_sign[NB_CLAUSE]=vars_signs;
   clause_state[NB_CLAUSE]=ACTIVE;
   clause_length[NB_CLAUSE]=3;
- // if (!judgeClauseAndVar()) puts("!!!!!error!!!");
   replace_clause(NB_CLAUSE, clause1, clauses1,0);
   replace_clause(NB_CLAUSE, clause2, clauses2,0);
   replace_clause(NB_CLAUSE, clause3, clauses3,0);
@@ -908,13 +905,11 @@ void rule6_1(int var0){
                       nb++;
                       if (*(vars_signs1+1)==POSITIVE) c=pos_in[lit];
                                                  else c=neg_in[lit];
-                      //if (!judgeClauseAndVar()) puts("!!!!!error!!!");
                       replace_clause(NB_CLAUSE, clause, c ,lit);  
                   }
                   *(new_var_signs)=NONE;
                   clause_state[NB_CLAUSE]=ACTIVE; 
                   clause_length[NB_CLAUSE]=nb; 
-                 // _push(clause,CLAUSES_TO_REMOVE); 
                   _push(clause, CLAUSE_STACK); clause_state[clause]=PASSIVE; 
                   NB_CLAUSE++;       
               }              
@@ -950,7 +945,6 @@ void rule6_1(int var0){
                       nb++;
                       if (*(vars_signs1+1)==POSITIVE) c=pos_in[lit];
                                                  else c=neg_in[lit];
-                      //if (!judgeClauseAndVar()) puts("!!!!!error!!!");
                       replace_clause(NB_CLAUSE, clause, c ,lit);  
                   }
                   *(new_var_signs)=NONE;
@@ -965,7 +959,6 @@ void rule6_1(int var0){
 }
 //-------------------------------rule 6.1--------------------------------- 
 int lookahead() {
-  //if (!judgeClauseAndVar()) puts("!!!!!error!!!");
   int saved_clause_stack_fill_pointer, saved_reducedclause_stack_fill_pointer,
       saved_unitclause_stack_fill_pointer, saved_variable_stack_fill_pointer,
       my_saved_clause_stack_fill_pointer,
@@ -978,12 +971,10 @@ int lookahead() {
   saved_variable_stack_fill_pointer=VARIABLE_STACK_fill_pointer;
   my_saved_clause_stack_fill_pointer= CLAUSE_STACK_fill_pointer;
 
-  //if (!judgeClauseAndVar()) puts("!!!!!error!!!");
 
   while ((clause=my_unitclause_process(0))!=NO_CONFLICT) {
     conflict++;
     if (conflict+NB_EMPTY>=UB) break;
-    //if (!judgeClauseAndVar()) puts("!!!!!error!!!");
     if (linear_conflict(clause)==TRUE) {
       conflict--; NB_EMPTY++;
       reset_context(my_saved_clause_stack_fill_pointer, 
@@ -1038,7 +1029,6 @@ int lookahead() {
     clause=CLAUSES_TO_REMOVE[i];
     _push(clause, CLAUSE_STACK); clause_state[clause]=PASSIVE;  //把clause_to_remove中的元素移走
   }
- // if (!judgeClauseAndVar()) puts("error~~");
   CLAUSES_TO_REMOVE_fill_pointer=0;
   return conflict;
 }
@@ -1066,7 +1056,6 @@ int satisfy_unitclause(int unitclause) {
 }
   
 int my_unitclause_process(int starting_point) {  // ssign_and_unitclause_process 时用到
-  //if (!judgeClauseAndVar()) puts("error~~");
   int unitclause, var, *vars_signs, unitclause_position,clause,
     my_unitclause_position, my_unitclause;
 
@@ -1085,7 +1074,6 @@ int my_unitclause_process(int starting_point) {  // ssign_and_unitclause_process
 	  my_unitclause = MY_UNITCLAUSE_STACK[my_unitclause_position];
 	  if ((clause_state[my_unitclause] == ACTIVE)  
 	      && (clause_length[my_unitclause]>0)) {
-     // if (!judgeClauseAndVar()) puts("error~~");
 	    if ((clause=satisfy_unitclause(my_unitclause)) != NO_CONFLICT)
 	      return clause;
 	  }     
@@ -1118,7 +1106,6 @@ void create_unitclause(int lit, int subsumedclause, int *clauses) { //新加一�
   clause_state[NB_CLAUSE]=ACTIVE;
   clause_length[NB_CLAUSE]=1;
   _push(NB_CLAUSE, UNITCLAUSE_STACK);
-  //if (!judgeClauseAndVar()) puts("!!!!!error!!!");
   replace_clause(NB_CLAUSE,subsumedclause,clauses,0); 
   NB_CLAUSE++; //增加了clause
 }
@@ -1441,7 +1428,7 @@ bool judgeClauseAndVar(){
 //------------rule3 replace--------------
 bool inc1[tab_variable_size][2];
 bool rule3_replace(int var0){  
-  //return false;  
+  return false;  
   int c1=-1,c2=-1,*clauses=pos_in[var0];
   for(int clause=*clauses; clause!=NONE; clause=*(++clauses)) 
      if (clause_state[clause] == ACTIVE){
@@ -1477,7 +1464,6 @@ bool rule3_replace(int var0){
 //  create_new_binaryclause(var0,NEGATIVE,var,  *(vars_signs+1),c2);
   create_binaryclause(var0,NEGATIVE,var,  *(vars_signs+1),c2,c2);
   _push(c2,CLAUSE_STACK),clause_state[c2]=PASSIVE;  
- // if (!judgeClauseAndVar()) puts("!!!!!error!!!");   
   puts("!!!");
   return true;
 }  
@@ -1569,8 +1555,9 @@ int new_rule2(){
 
 //--------------rule 3-----------------
 map<int,int> temp_clause;
+bool First=true;
 bool rule3(int var){
-  return false;
+  //return false;
   int c1=-1,c2=-1,*clauses=pos_in[var];
   for(int clause=*clauses; clause!=NONE; clause=*(++clauses)) 
      if (clause_state[clause] == ACTIVE){
@@ -1586,9 +1573,24 @@ bool rule3(int var){
      } 
  // puts("!!!"); 
   if (c2==-1) return false;    
+  /*if (NB_BRANCHE<=39)
+    outputClause(48); */
  // puts("!!!");
-  assign_value(var,POSITIVE,NONE);  //如何处理比较好? 
+  //assign_value(var,POSITIVE,NONE);  //在这里调用assign_value会出错
+ /* if (NB_BRANCHE==43){
+    printf("\nvar %d\n",var);
+    outputClause(var);
+  }*/
 
+
+
+  var_state[var] = PASSIVE;
+  _push(var, VARIABLE_STACK);
+  var_current_value[var] = POSITIVE; //给一个赋值
+  var_rest_value[var] = NONE;
+
+  /*if (NB_BRANCHE<=39)
+    outputClause(48); */
   temp_clause.clear();
   int *c,*vars_signs;
   bool flag=true;
@@ -1603,7 +1605,7 @@ bool rule3(int var){
   for (int lit=*vars_signs;lit!=NONE;lit=*(vars_signs+=2)){
       if (var_state[lit]!=ACTIVE) continue;
       if (lit==var) continue;  
-      if (*(vars_signs+1)==POSITIVE){
+      if (*(vars_signs+1)==POSITIVE){ //如果为正
         if (temp_clause.find(-lit)!=temp_clause.end()) flag=false;
         temp_clause[lit]=c2;
       }
@@ -1613,28 +1615,70 @@ bool rule3(int var){
       }
   }
   if (!flag) return false;
+ /* if (First){
+    First=false;
+    printf("\n#########\n");
+    printf("NB_BRANCHE: %ld\n",NB_BRANCHE);
+    printf("\n#########\n");
+  }else
+    return false;*/
+ 
+  if (NB_BRANCHE>=44){
+       //printf("%ld\n",NB_BRANCHE);
+       //if (!judgeClauseAndVar()) puts("!!!!!error!!!");
+       return false;
+  }
   int *new_var_signs=NEW_CLAUSES[NEW_CLAUSES_fill_pointer++]; //新分配一个clause
   int nb=0;
   map<int,int>::iterator it3;
   var_sign[NB_CLAUSE]=new_var_signs; //注意 
+
+  if (NB_BRANCHE==43){
+    printf("\nvar %d\n",var);
+    outputClause(var);
+  }
+
+
+ // if (!judgeClauseAndVar()) puts("!!!!!error pre!!!");
   for (it3=temp_clause.begin();it3!=temp_clause.end();it3++){
       int lit=it3->first,c=it3->second;
       nb++;
       if (lit>0){
         *(new_var_signs++)=lit;
         *(new_var_signs++)=POSITIVE;
-        replace_clause(NB_CLAUSE,c,pos_in[lit],lit);
+        if (!replace_clause(NB_CLAUSE,c,pos_in[lit],lit)){
+            printf("%ld\n",NB_BRANCHE);
+            puts("------------------------");
+        }
       }else{
         *(new_var_signs++)=-lit;
-        *(new_var_signs++)=NEGATIVE;
-        replace_clause(NB_CLAUSE,c,neg_in[-lit],-lit);
+        *(new_var_signs++)=NEGATIVE; 
+        if (!replace_clause(NB_CLAUSE,c,neg_in[-lit],-lit)){
+             printf("%ld\n",NB_BRANCHE);
+             puts("------------------------");          
+        } 
       }
   }
   *(new_var_signs)=NONE;
   clause_state[NB_CLAUSE]=ACTIVE; 
   clause_length[NB_CLAUSE]=nb;   
+  //
+  
+  //
   _push(c1, CLAUSE_STACK); clause_state[c1]=PASSIVE; 
   _push(c2, CLAUSE_STACK); clause_state[c2]=PASSIVE; 
+  if (!judgeClauseAndVar()){
+       printf("%d\n",NB_CLAUSE);
+      // printf("var %d\n",var);
+       outputClause(57);
+       int *clauses=pos_in[57];
+       for (int c=*clauses;c!=NONE;c=*(++clauses))
+           if (clause_state[c]==ACTIVE)
+               printf("C%d ",c);
+
+       puts("\n!!!!!error!!!");
+  }
+  //puts("!!!!");
   NB_CLAUSE++;
   return true;
 }
@@ -1666,7 +1710,6 @@ int choose_and_instantiate_variable() {  //所有的var赋值操作都在其中
     lit_to_fix[clause]=NONE;  //将其都清空  
   for (var = 0; var < NB_VAR; var++) {
     if (var_state[var] == ACTIVE) { 
-      //if (!judgeClauseAndVar()) puts("!!!!!error!!!");
       reduce_if_negative[var]=0; //纪录将var取正与取负的影响
       reduce_if_positive[var]=0;
       if (get_neg_clause_nb(var) == 0) {
@@ -1784,8 +1827,7 @@ int choose_and_instantiate_variable() {  //所有的var赋值操作都在其中
 
 my_type var_best_value[tab_variable_size]; // Best assignment of variables  保存最优解
 
-int dpl() {
-  //if (!judgeClauseAndVar()) puts("ERROR");
+int dpl() { 
   int var, nb;
   do {
     if (VARIABLE_STACK_fill_pointer==NB_VAR) { //VARIABLE_STACK中元素个数等于样例的变量个数了
