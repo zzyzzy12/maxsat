@@ -203,7 +203,7 @@ void outputClauseAndlit(int lit,int sign,int clause){
   puts("");
   int *vars_signs=var_sign[clause];
   for (int var=*(vars_signs);var!=NONE;var=*(vars_signs+=2)){
-      if (var_state[var]==PASSIVE) continue;
+      if (var_state[var]!=ACTIVE) continue;
       if (*(vars_signs+1)==POSITIVE) printf("X%d ",var);
                                 else printf("-X%d ",var);
   }
@@ -1556,6 +1556,14 @@ int new_rule2(){
 //--------------rule 3-----------------
 map<int,int> temp_clause;
 bool First=true;
+void sort_clause(int *vars){
+  for (int i=0;vars[i]!=NONE;i+=2)
+    for (int j=i+2;vars[j]!=NONE;j+=2)
+      if (vars[i]>vars[j]){
+          swap(vars[i],vars[j]);
+          swap(vars[i+1],vars[j+1]);
+      }
+}
 bool rule3(int var){
   //return false;
   int c1=-1,c2=-1,*clauses=pos_in[var];
@@ -1628,7 +1636,7 @@ bool rule3(int var){
        //if (!judgeClauseAndVar()) puts("!!!!!error!!!");
        return false;
   }
-  int *new_var_signs=NEW_CLAUSES[NEW_CLAUSES_fill_pointer++]; //新分配一个clause
+  int *new_var_signs=NEW_CLAUSES[NEW_CLAUSES_fill_pointer++]; //新分配一个clause 
   int nb=0;
   map<int,int>::iterator it3;
   var_sign[NB_CLAUSE]=new_var_signs; //注意 
@@ -1640,9 +1648,13 @@ bool rule3(int var){
 
 
  // if (!judgeClauseAndVar()) puts("!!!!!error pre!!!");
+  puts("");
   for (it3=temp_clause.begin();it3!=temp_clause.end();it3++){
       int lit=it3->first,c=it3->second;
       nb++;
+      if (NB_CLAUSE==193){
+           printf("X%d ",lit);
+      } 
       if (lit>0){
         *(new_var_signs++)=lit;
         *(new_var_signs++)=POSITIVE;
@@ -1660,14 +1672,42 @@ bool rule3(int var){
       }
   }
   *(new_var_signs)=NONE;
+  sort_clause(var_sign[NB_CLAUSE]);
+  puts("");
+  /*
+  if (var_sign[193][10]!=NONE){
+       printf("Branch %ld   NB_CLAUSE %d\n",NB_BRANCHE,NB_CLAUSE);
+       printf("%d\n",var_sign[193][10]);
+       puts("error in clause 193");
+  }*/
+  /*
+  if (NB_BRANCHE==43 && NB_CLAUSE==194){
+       int *vars=var_sign[193];
+       for (int var=*vars;var!=NONE;var=*(++vars)){
+            // if (var==57 && *(vars+1)==NEGATIVE) puts("BravoBravoBravoBravoBravoBravo");
+              printf("%d ",var);
+            //  if (*(vars+1)==POSITIVE) printf("X%d ",var);
+              //                    else printf("~X%d ",var);
+       }     
+     } */
+  if (var_sign[193][7]==7){
+       puts("Big error");
+  }
+  puts(""); 
   clause_state[NB_CLAUSE]=ACTIVE; 
   clause_length[NB_CLAUSE]=nb;   
   //
-  
+  /*
+      if (NB_CLAUSE==193){
+       int *clauses=pos_in[57];
+       for (int c=*clauses;c!=NONE;c=*(++clauses))
+           if (clause_state[c]==ACTIVE)
+               printf("C%d ",c);
+      }*/
   //
   _push(c1, CLAUSE_STACK); clause_state[c1]=PASSIVE; 
-  _push(c2, CLAUSE_STACK); clause_state[c2]=PASSIVE; 
-  if (!judgeClauseAndVar()){
+  _push(c2, CLAUSE_STACK); clause_state[c2]=PASSIVE;  
+  if (!judgeClauseAndVar()){ 
        printf("%d\n",NB_CLAUSE);
       // printf("var %d\n",var);
        outputClause(57);
@@ -1675,7 +1715,28 @@ bool rule3(int var){
        for (int c=*clauses;c!=NONE;c=*(++clauses))
            if (clause_state[c]==ACTIVE)
                printf("C%d ",c);
+       puts("");
+       /*
+       if (NB_CLAUSE>=193){
+         int *vars=var_sign[193];
+          for (int var=*vars;var!=NONE;var=*(vars+=2)){  
+              printf("X%d %d, ",var,*(vars+1));
+             // if (*(vars+1)==POSITIVE) printf("X%d ",var);
+              //                    else printf("~X%d ",var);
+           }
+       }*/
+      if (var_sign[193][10]!=NONE) puts("error in clause 193");
+       /*
+       int *vars=var_sign[193];
+       for (int var=*vars;var!=NONE;var=*(vars+=2)){
+         if (var==57){
+              printf("%d ",*(vars+1));
+              puts("BravoBravoBravoBravoBravoBravo"); 
+            }
+       }*/
 
+
+       //printf("%d",clause_length[193]);
        puts("\n!!!!!error!!!");
   }
   //puts("!!!!");
@@ -1871,7 +1932,7 @@ void init() { //初始化数据,都清空
 }
  
 int main(int argc, char *argv[]) {
-  //freopen("output.txt","w",stdout);
+  freopen("output.txt","w",stdout);
   char saved_input_file[WORD_LENGTH];
   int i,  var; 
   long begintime, endtime, mess;
