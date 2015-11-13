@@ -176,7 +176,7 @@ int MY_UNITCLAUSE_STACK[tab_variable_size];
 int MY_UNITCLAUSE_STACK_fill_pointer=0;
 int CANDIDATE_LITERALS[2*tab_variable_size];
 int CANDIDATE_LITERALS_fill_pointer=0;
-int NEW_CLAUSES[tab_clause_size][7];
+int NEW_CLAUSES[tab_clause_size][100];
 int NEW_CLAUSES_fill_pointer=0;
 int lit_to_fix[tab_clause_size];
 int *SAVED_CLAUSE_POSITIONS[tab_clause_size];
@@ -1564,9 +1564,18 @@ void sort_clause(int *vars){
           swap(vars[i+1],vars[j+1]);
       }
 }
+void outputLit(int c){
+  int *vars_signs=var_sign[c];
+  for (int var=*vars_signs;var!=NONE;var=*(++vars_signs)){
+      printf("%d ",var);
+        //if (*(vars_signs+1)==POSITIVE) printf("X%d ",var);
+          //                      else  printf("~X%d ",var);
+  }
+  puts("");
+}
 bool rule3(int var){
   //return false;
-  int c1=-1,c2=-1,*clauses=pos_in[var];
+  int c1=-1,c2=-1,*clauses=pos_in[var]; 
   for(int clause=*clauses; clause!=NONE; clause=*(++clauses)) 
      if (clause_state[clause] == ACTIVE){
           if (c1==-1) c1=clause;
@@ -1589,9 +1598,7 @@ bool rule3(int var){
     printf("\nvar %d\n",var);
     outputClause(var);
   }*/
-
-
-
+ 
   var_state[var] = PASSIVE;
   _push(var, VARIABLE_STACK);
   var_current_value[var] = POSITIVE; //给一个赋值
@@ -1622,15 +1629,14 @@ bool rule3(int var){
         temp_clause[-lit]=c2; 
       }
   }
-  if (!flag) return false;
+  if (!flag) return false; 
  /* if (First){
     First=false;
     printf("\n#########\n");
     printf("NB_BRANCHE: %ld\n",NB_BRANCHE);
     printf("\n#########\n");
   }else
-    return false;*/
- 
+    return false;*/ 
   if (NB_BRANCHE>=44){
        //printf("%ld\n",NB_BRANCHE);
        //if (!judgeClauseAndVar()) puts("!!!!!error!!!");
@@ -1645,10 +1651,10 @@ bool rule3(int var){
     printf("\nvar %d\n",var);
     outputClause(var);
   }
-
-
- // if (!judgeClauseAndVar()) puts("!!!!!error pre!!!");
-  puts("");
+ 
+   if (NB_CLAUSE>193 && var_sign[193][7]==7){
+       puts("-------Big error-------");
+  }
   for (it3=temp_clause.begin();it3!=temp_clause.end();it3++){
       int lit=it3->first,c=it3->second;
       nb++;
@@ -1672,39 +1678,14 @@ bool rule3(int var){
       }
   }
   *(new_var_signs)=NONE;
-  sort_clause(var_sign[NB_CLAUSE]);
-  puts("");
-  /*
-  if (var_sign[193][10]!=NONE){
-       printf("Branch %ld   NB_CLAUSE %d\n",NB_BRANCHE,NB_CLAUSE);
-       printf("%d\n",var_sign[193][10]);
-       puts("error in clause 193");
-  }*/
-  /*
-  if (NB_BRANCHE==43 && NB_CLAUSE==194){
-       int *vars=var_sign[193];
-       for (int var=*vars;var!=NONE;var=*(++vars)){
-            // if (var==57 && *(vars+1)==NEGATIVE) puts("BravoBravoBravoBravoBravoBravo");
-              printf("%d ",var);
-            //  if (*(vars+1)==POSITIVE) printf("X%d ",var);
-              //                    else printf("~X%d ",var);
-       }     
-     } */
-  if (var_sign[193][7]==7){
-       puts("Big error");
-  }
-  puts(""); 
+  sort_clause(var_sign[NB_CLAUSE]); 
+    if (NB_CLAUSE>193 && var_sign[193][7]==7){ 
+       outputLit(193);
+       outputLit(194);
+       puts("-------Big error-------");
+   } 
   clause_state[NB_CLAUSE]=ACTIVE; 
-  clause_length[NB_CLAUSE]=nb;   
-  //
-  /*
-      if (NB_CLAUSE==193){
-       int *clauses=pos_in[57];
-       for (int c=*clauses;c!=NONE;c=*(++clauses))
-           if (clause_state[c]==ACTIVE)
-               printf("C%d ",c);
-      }*/
-  //
+  clause_length[NB_CLAUSE]=nb;    
   _push(c1, CLAUSE_STACK); clause_state[c1]=PASSIVE; 
   _push(c2, CLAUSE_STACK); clause_state[c2]=PASSIVE;  
   if (!judgeClauseAndVar()){ 
@@ -1715,31 +1696,9 @@ bool rule3(int var){
        for (int c=*clauses;c!=NONE;c=*(++clauses))
            if (clause_state[c]==ACTIVE)
                printf("C%d ",c);
-       puts("");
-       /*
-       if (NB_CLAUSE>=193){
-         int *vars=var_sign[193];
-          for (int var=*vars;var!=NONE;var=*(vars+=2)){  
-              printf("X%d %d, ",var,*(vars+1));
-             // if (*(vars+1)==POSITIVE) printf("X%d ",var);
-              //                    else printf("~X%d ",var);
-           }
-       }*/
-      if (var_sign[193][10]!=NONE) puts("error in clause 193");
-       /*
-       int *vars=var_sign[193];
-       for (int var=*vars;var!=NONE;var=*(vars+=2)){
-         if (var==57){
-              printf("%d ",*(vars+1));
-              puts("BravoBravoBravoBravoBravoBravo"); 
-            }
-       }*/
-
-
-       //printf("%d",clause_length[193]);
-       puts("\n!!!!!error!!!");
-  }
-  //puts("!!!!");
+       puts(""); 
+      if (var_sign[193][10]!=NONE) puts("error in clause 193"); 
+  } 
   NB_CLAUSE++;
   return true;
 }
@@ -1752,10 +1711,10 @@ int choose_and_instantiate_variable() {  //所有的var赋值操作都在其中
   float poid, max_poid = -1.0; 
   my_type pos2, neg2, flag=0;
   NB_BRANCHE++;    //统计分支个数
-   
-  for (int var=0;var<NB_VAR;var++)
+
+  /*for (int var=0;var<NB_VAR;var++)
      if (var_state[var]==ACTIVE)
-       rule3_replace(var);   
+       rule3_replace(var);   */
 
   if (lookahead()==NONE)
     return NONE;
