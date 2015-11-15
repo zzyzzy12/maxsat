@@ -360,7 +360,7 @@ bool rule6(int &n,int &m,set<int> *C,vector<int> LC[][2],map<int,set<int> > &tC,
 			if (!c1) continue;
 			if (tC.find(c1)==tC.end())
 				tC[c1]=C[c1]; //----纪录改变
-			if (LC[x][1].size()==2)
+			if (LC[x][1].size()==2) 
 				C[c1]=C[m--];
 			else{
 				C[c1].clear();
@@ -387,14 +387,14 @@ bool rule6(int &n,int &m,set<int> *C,vector<int> LC[][2],map<int,set<int> > &tC,
 				}
 				if (c1) break;
 			}
-			if (!c1) continue;
+			if (!c1) continue; 
 			if (tC.find(c1)==tC.end())
 				tC[c1]=C[c1]; //----纪录改变
 			if (LC[x][0].size()==2)
 				C[c1]=C[m--];
 			else{
-				C[c1].clear();
-				C[c1].insert(-x),C[c1].insert(-*it);
+				C[c1].clear(); 
+				C[c1].insert(x),C[c1].insert(-*it);
 			}
 			COUNT[6]++;
 			f=true;
@@ -604,6 +604,7 @@ void branch(int &n,int &m,int n0,int m0,int *X,int &maxNum,int *ans,set<int> *C,
 		start=clock();
 	//	puts("进入rule3");
 		if (rule3(n,m,X,TP,H,C,LC,tTP,tC)) { TIME[3]+=clock()-start; COUNT[3]++; continue; } //done
+		//memset(canBeUse,true,sizeof(canBeUse));//------
 		TIME[3]+=clock()-start;
 		if (D3){ //阀值
 			start=clock();
