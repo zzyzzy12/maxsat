@@ -356,7 +356,7 @@ void reset_context(int saved_clause_stack_fill_pointer,int saved_reducedclause_s
   UNITCLAUSE_STACK_fill_pointer=saved_unitclause_stack_fill_pointer;
 }
 
-int replace_clause(int newclause, int clause_to_replace, int *clauses,int tp) { //把clause_to_replace替换成newclause
+int replace_clause(int newclause, int clause_to_replace, int *clauses) { //把clause_to_replace替换成newclause
   int clause, flag=FALSE;
   int *c=clauses; //
   for(clause=*clauses; clause!=NONE; clause=*(++clauses)) {
@@ -370,22 +370,7 @@ int replace_clause(int newclause, int clause_to_replace, int *clauses,int tp) { 
   }
   if (flag==FALSE)  //正常来说是不可能出错的
   {
-      printf("problem...replace_clause\n");
-      printf("出错的var %d\n",tp);
-      printf("出错的clause %d\n",clause_to_replace); 
-    /*  clauses=c;
-      for(clause=*clauses; clause!=NONE; clause=*(++clauses)) 
-          if (clause_state[clause]==ACTIVE)
-              printf("C%d ",clause);  
-      puts("");
-      int *vars_signs=var_sign[clause_to_replace];
-      for (int var=*vars_signs;var!=NONE;var=*(vars_signs+=2)){
-          if (var_state[var]==PASSIVE) continue;
-          if (*(vars_signs+1)==POSITIVE) printf("X%d ",var);
-                                    else printf("-X%d ",var);
-      }
-      puts("");
-      puts("--------------------");    */
+      printf("problem...replace_clause\n");  
   }
   return flag;
 }
@@ -407,8 +392,8 @@ void create_binaryclause(int var1, int sign1, int var2, int sign2,int clause1, i
   var_sign[NB_CLAUSE]=vars_signs; //clause中元素的情况
   clause_state[NB_CLAUSE]=ACTIVE; //clause本身为激活状态
   clause_length[NB_CLAUSE]=2;  //长度为2 
-  replace_clause(NB_CLAUSE, clause1, clauses1,0); //在clauses1中找到clause1，然后替换成NB_CLAUSE，让var1与clause1脱离关系，与NB_CLAUSE建立关系
-  replace_clause(NB_CLAUSE, clause2, clauses2,0); //在clauses2中找到clause2，然后替换成NB_CLAUSE，让var2与clause2脱离关系，与NB_CLAUSE建立关系
+  replace_clause(NB_CLAUSE, clause1, clauses1); //在clauses1中找到clause1，然后替换成NB_CLAUSE，让var1与clause1脱离关系，与NB_CLAUSE建立关系
+  replace_clause(NB_CLAUSE, clause2, clauses2); //在clauses2中找到clause2，然后替换成NB_CLAUSE，让var2与clause2脱离关系，与NB_CLAUSE建立关系
   NB_CLAUSE++; //增加clause个数
 }
 
@@ -578,9 +563,9 @@ void create_ternary_clauses(int var1, int sign1, int var2, int sign2,
   var_sign[NB_CLAUSE]=vars_signs;
   clause_state[NB_CLAUSE]=ACTIVE;
   clause_length[NB_CLAUSE]=3;
-  replace_clause(NB_CLAUSE, clause1, clauses1,0);
-  replace_clause(NB_CLAUSE, clause2, clauses2,0);
-  replace_clause(NB_CLAUSE, clause3, clauses3,0);
+  replace_clause(NB_CLAUSE, clause1, clauses1);
+  replace_clause(NB_CLAUSE, clause2, clauses2);
+  replace_clause(NB_CLAUSE, clause3, clauses3);
   NB_CLAUSE++;
 }  
 
@@ -971,7 +956,7 @@ void create_unitclause(int lit, int subsumedclause, int *clauses) { //新加一�
   clause_state[NB_CLAUSE]=ACTIVE;
   clause_length[NB_CLAUSE]=1;
   _push(NB_CLAUSE, UNITCLAUSE_STACK);
-  replace_clause(NB_CLAUSE,subsumedclause,clauses,0); 
+  replace_clause(NB_CLAUSE,subsumedclause,clauses); 
   NB_CLAUSE++; //增加了clause
 }
 
@@ -1293,7 +1278,8 @@ bool judgeClauseAndVar(){
 //--------------rule 3-----------------
 map<int,int> temp_clause;
 bool valid[tab_variable_size];
-void sort_clause(int *vars){
+void sort_clause(int clause){
+  int *vars=var_sign[clause];
   for (int i=0;vars[i]!=NONE;i+=2)
     for (int j=i+2;vars[j]!=NONE;j+=2)
       if (vars[i]>vars[j]){
@@ -1319,17 +1305,17 @@ bool rule3(int var){
           if (c1==-1) c1=clause;
                  else return false;
      } 
-  if (c1==-1) return false;
+  if (c1==-1) return false; //包含var的是否有且仅有一个clause
   clauses=neg_in[var];
   for(int clause=*clauses; clause!=NONE; clause=*(++clauses)) 
      if (clause_state[clause] == ACTIVE){
           if (c2==-1) c2=clause;
                  else return false;
      }  
-  if (c2==-1) return false;     
+  if (c2==-1) return false; //包含~var的是否有且仅有一个clause    
   var_state[var] = PASSIVE;
   _push(var, VARIABLE_STACK);
-  var_current_value[var] = POSITIVE; //给一个赋值
+  var_current_value[var] = POSITIVE; //随便给一个赋值
   var_rest_value[var] = NONE;
  
   temp_clause.clear();
@@ -1368,18 +1354,18 @@ bool rule3(int var){
         *(new_var_signs++)=lit;
         valid[lit]=true;
         *(new_var_signs++)=POSITIVE;
-        replace_clause(NB_CLAUSE,c,pos_in[lit],lit);
+        replace_clause(NB_CLAUSE,c,pos_in[lit]);
       }else{
         *(new_var_signs++)=-lit;
         valid[-lit]=true;
         *(new_var_signs++)=NEGATIVE; 
-        replace_clause(NB_CLAUSE,c,neg_in[-lit],-lit);
+        replace_clause(NB_CLAUSE,c,neg_in[-lit]);
       }
   }
   *(new_var_signs)=NONE;
-  sort_clause(var_sign[NB_CLAUSE]);  
   clause_state[NB_CLAUSE]=ACTIVE; 
-  clause_length[NB_CLAUSE]=nb;    
+  clause_length[NB_CLAUSE]=nb;  
+  sort_clause(NB_CLAUSE);    
   _push(c1, CLAUSE_STACK); clause_state[c1]=PASSIVE; 
   _push(c2, CLAUSE_STACK); clause_state[c2]=PASSIVE;   
   NB_CLAUSE++;
@@ -1390,7 +1376,6 @@ bool rule3(int var){
 //--------------rule 3-----------------
 //-------------------------------rule 6.1--------------------------------- 
 int nb_var_clause[2]; //0负，1正 
-int had[tab_variable_size][2]; //0负，1正
 void update_nb_of_var_clause(int var){
     nb_var_clause[0]=nb_var_clause[1]=0; 
     int *clauses=pos_in[var];
@@ -1408,91 +1393,64 @@ int findUnitClause(int *clauses){
 }
 //----valid的变量才进入操作----
 int rule6num=0;
+int had[tab_variable_size][2]; //0负，1正
+int new_var[tab_variable_size][2]; //纪录新加的clause中包含哪些lit
+void run_rule_6_1(int var0,int *a,int *b){
+     memset(had,false,sizeof(had));
+     int D=findUnitClause(a);  
+     int *vars_signs0=var_sign[D];
+     for (int var1=*(vars_signs0);var1!=NONE;var1=*(vars_signs0+=2)){
+          if (var_state[var1]!=ACTIVE) continue;
+          if (var1==var0) continue;
+          had[var1][*(vars_signs0+1)]=true; 
+     }
+     int *clauses=b;
+     for (int clause=*clauses;clause!=NONE;clause=*(++clauses)){  //扫描i个clause
+        if (clause_state[clause]!=ACTIVE) continue;
+        int num=0;
+        bool flag=false;
+        vars_signs0=var_sign[clause];
+        for (int var1=*(vars_signs0);var1!=NONE;var1=*(vars_signs0+=2)){ 
+            if (var_state[var1]!=ACTIVE) continue; 
+            if (had[var1][*(vars_signs0+1)]){
+                flag=true;
+                continue;
+            } 
+            new_var[num][0]=var1;
+            new_var[num][1]=*(vars_signs0+1);
+            num++;
+        }
+        if (!flag) continue;
+        //---可以进行rule6.1的剪枝操作，把clause中相同的部分删去  
+        int *new_var_signs=NEW_CLAUSES[NEW_CLAUSES_fill_pointer++]; //新分配一个clause
+        int nb=0,*c;
+        var_sign[NB_CLAUSE]=new_var_signs; //注意
+        for (int index=0;index<num;index++){ 
+            int lit=new_var[index][0],sign=new_var[index][1];
+            *(new_var_signs++)=lit;
+            *(new_var_signs++)=sign;
+            nb++;
+            if (sign==POSITIVE) c=pos_in[lit];
+                           else c=neg_in[lit];
+            replace_clause(NB_CLAUSE, clause, c);  
+        }
+        *(new_var_signs)=NONE;
+        clause_state[NB_CLAUSE]=ACTIVE; 
+        clause_length[NB_CLAUSE]=nb; 
+        sort_clause(NB_CLAUSE);
+        _push(clause, CLAUSE_STACK); clause_state[clause]=PASSIVE; 
+        NB_CLAUSE++;    
+        rule6num++;      
+    }
+}
 void rule6_1(int var0){
     //return; 
-    // if (!valid[var0]) return;  
-     update_nb_of_var_clause(var0); 
-     memset(had,false,sizeof(had));
-     if (nb_var_clause[1]==1){ //(1,i)  
-         // outputClause(var0);
-          int D=findUnitClause(pos_in[var0]);  
-          int *vars_signs0=var_sign[D];
-          for (int var1=*(vars_signs0);var1!=NONE;var1=*(vars_signs0+=2)){
-              if (var_state[var1]!=ACTIVE) continue;
-              if (var1==var0) continue;
-              had[var1][*(vars_signs0+1)]=true; 
-          }
-          int *clauses=neg_in[var0];
-          for (int clause=*clauses;clause!=NONE;clause=*(++clauses)){  //扫描i个clause
-              if (clause_state[clause]!=ACTIVE) continue;
-              vars_signs0=var_sign[clause];
-              for (int var1=*(vars_signs0);var1!=NONE;var1=*(vars_signs0+=2)){ 
-                  if (var_state[var1]!=ACTIVE) continue; 
-                  if (!had[var1][*(vars_signs0+1)]) continue;  
-                  //---可以进行rule6.1的剪枝操作，把clause中的y删去  
-                  int *new_var_signs=NEW_CLAUSES[NEW_CLAUSES_fill_pointer++]; //新分配一个clause
-                  int nb=0,*c,*vars_signs1=var_sign[clause];
-                  var_sign[NB_CLAUSE]=new_var_signs; //注意
-                  for (int lit=*vars_signs1;lit!=NONE;lit=*(vars_signs1+=2)){
-                      if (var_state[lit]==PASSIVE) continue;
-                      if (lit==var1) continue;
-                      *(new_var_signs++)=lit;
-                      *(new_var_signs++)=*(vars_signs1+1);
-                      nb++;
-                      if (*(vars_signs1+1)==POSITIVE) c=pos_in[lit];
-                                                 else c=neg_in[lit];
-                      replace_clause(NB_CLAUSE, clause, c ,lit);  
-                  }
-                  *(new_var_signs)=NONE;
-                  clause_state[NB_CLAUSE]=ACTIVE; 
-                  clause_length[NB_CLAUSE]=nb; 
-                  _push(clause, CLAUSE_STACK); clause_state[clause]=PASSIVE; 
-                  NB_CLAUSE++;    
-                  rule6num++;   
-                  break;
-              }              
-          }
-     }
-     memset(had,false,sizeof(had));
-     if (nb_var_clause[0]==1){ //(i,1) 
-          int D=findUnitClause(neg_in[var0]); 
-          int *vars_signs0=var_sign[D];
-          for (int var1=*(vars_signs0);var1!=NONE;var1=*(vars_signs0+=2)){
-              if (var_state[var1]==PASSIVE) continue;
-              if (var1==var0) continue;
-              had[var1][*(vars_signs0+1)]=true; 
-          }
-          int *clauses=pos_in[var0];
-          for (int clause=*clauses;clause!=NONE;clause=*(++clauses)){  //扫描i个clause
-              if (clause_state[clause]==PASSIVE) continue;
-              vars_signs0=var_sign[clause];
-              for (int var1=*(vars_signs0);var1!=NONE;var1=*(vars_signs0+=2)){ 
-                  if (var_state[var1]==PASSIVE) continue; 
-                  if (!had[var1][*(vars_signs0+1)]) continue;  
-                  //---可以进行rule6.1的剪枝操作，把clause中的y删去  
-                  int *new_var_signs=NEW_CLAUSES[NEW_CLAUSES_fill_pointer++]; //新分配一个clause
-                  int nb=0,*c,*vars_signs1=var_sign[clause];
-                  var_sign[NB_CLAUSE]=new_var_signs; //注意
-                  for (int lit=*vars_signs1;lit!=NONE;lit=*(vars_signs1+=2)){
-                      if (var_state[lit]==PASSIVE) continue;
-                      if (lit==var1) continue;
-                      *(new_var_signs++)=lit;
-                      *(new_var_signs++)=*(vars_signs1+1);
-                      nb++;
-                      if (*(vars_signs1+1)==POSITIVE) c=pos_in[lit];
-                                                 else c=neg_in[lit];
-                      replace_clause(NB_CLAUSE, clause, c ,lit);  
-                  }
-                  *(new_var_signs)=NONE;
-                  clause_state[NB_CLAUSE]=ACTIVE; 
-                  clause_length[NB_CLAUSE]=nb; 
-                  _push(clause, CLAUSE_STACK); clause_state[clause]=PASSIVE; 
-                  NB_CLAUSE++;  
-                  rule6num++;  
-                  break;   
-              }              
-          }
-     }
+    // if (!valid[var0]) return;   
+     update_nb_of_var_clause(var0);  
+     if (nb_var_clause[1]==1) //(1,i)  
+        run_rule_6_1(var0,pos_in[var0],neg_in[var0]); 
+     if (nb_var_clause[0]==1) //(i,1) 
+        run_rule_6_1(var0,neg_in[var0],pos_in[var0]);  
 }
 //-------------------------------rule 6.1--------------------------------- 
 //-------------------------------rule 6.2--------------------------------- 
@@ -1829,8 +1787,7 @@ int main(int argc, char *argv[]) {
   printf("maxsatz14bis+fl %s %5.3f %ld %ld %d %d %d %d\n", 
 	 saved_input_file, ((double)(endtime-begintime)/CLK_TCK), 
 	 NB_BRANCHE, NB_BACK,
-	 UB, NB_VAR, INIT_NB_CLAUSE, NB_CLAUSE-INIT_NB_CLAUSE);
- // printf("\nnewRule2: %d\n",num);
+	 UB, NB_VAR, INIT_NB_CLAUSE, NB_CLAUSE-INIT_NB_CLAUSE); 
   printf("----RULE3: %d----\n",rule3num);
   printf("----RULE6: %d----\n",rule6num);
   fclose(fp_time);
