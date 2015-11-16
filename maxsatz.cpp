@@ -1310,8 +1310,9 @@ void outputLit(int c){
   }
   puts("");
 }
+int rule3num=0;
 bool rule3(int var){
- // return false;
+  //return false;
   int c1=-1,c2=-1,*clauses=pos_in[var]; 
   for(int clause=*clauses; clause!=NONE; clause=*(++clauses)) 
      if (clause_state[clause] == ACTIVE){
@@ -1382,6 +1383,7 @@ bool rule3(int var){
   _push(c1, CLAUSE_STACK); clause_state[c1]=PASSIVE; 
   _push(c2, CLAUSE_STACK); clause_state[c2]=PASSIVE;   
   NB_CLAUSE++;
+  rule3num++;
   return true;
 }
 
@@ -1390,12 +1392,13 @@ bool rule3(int var){
 int nb_var_clause[2]; //0负，1正 
 int had[tab_variable_size][2]; //0负，1正
 void update_nb_of_var_clause(int var){
-    nb_var_clause[0]=nb_var_clause[1]=0;
+    nb_var_clause[0]=nb_var_clause[1]=0; 
     int *clauses=pos_in[var];
-    for (int clause=*clauses;clause!=NONE;clause=*(clauses+=2))
+    for (int clause=*clauses;clause!=NONE;clause=*(++clauses))  //修正bug
         if (clause_state[clause]==ACTIVE) nb_var_clause[1]++;
+    
     clauses=neg_in[var];
-     for (int clause=*clauses;clause!=NONE;clause=*(clauses+=2))
+     for (int clause=*clauses;clause!=NONE;clause=*(++clauses))
         if (clause_state[clause]==ACTIVE) nb_var_clause[0]++;   
 }
 int findUnitClause(int *clauses){ 
@@ -1404,14 +1407,15 @@ int findUnitClause(int *clauses){
      return NONE;
 }
 //----valid的变量才进入操作----
+int rule6num=0;
 void rule6_1(int var0){
-    // return; 
+    //return; 
     // if (!valid[var0]) return;  
-     update_nb_of_var_clause(var0);
+     update_nb_of_var_clause(var0); 
      memset(had,false,sizeof(had));
      if (nb_var_clause[1]==1){ //(1,i)  
          // outputClause(var0);
-          int D=findUnitClause(pos_in[var0]); 
+          int D=findUnitClause(pos_in[var0]);  
           int *vars_signs0=var_sign[D];
           for (int var1=*(vars_signs0);var1!=NONE;var1=*(vars_signs0+=2)){
               if (var_state[var1]!=ACTIVE) continue;
@@ -1443,7 +1447,8 @@ void rule6_1(int var0){
                   clause_state[NB_CLAUSE]=ACTIVE; 
                   clause_length[NB_CLAUSE]=nb; 
                   _push(clause, CLAUSE_STACK); clause_state[clause]=PASSIVE; 
-                  NB_CLAUSE++;       
+                  NB_CLAUSE++;    
+                  rule6num++;   
                   break;
               }              
           }
@@ -1482,7 +1487,8 @@ void rule6_1(int var0){
                   clause_state[NB_CLAUSE]=ACTIVE; 
                   clause_length[NB_CLAUSE]=nb; 
                   _push(clause, CLAUSE_STACK); clause_state[clause]=PASSIVE; 
-                  NB_CLAUSE++;    
+                  NB_CLAUSE++;  
+                  rule6num++;  
                   break;   
               }              
           }
@@ -1495,13 +1501,13 @@ void rule6_2(int var0){
   update_nb_of_var_clause(var0);
   memset(had,false,sizeof(had));
   if (nb_var_clause[1]==1){  // x为(1,i)
-      int D=findUnitClause(pos_in[var0]); 
+      int D=findUnitClause(pos_in[var0]);  
       int *vars_signs0=var_sign[D];
       for (int var1=*(vars_signs0);var1!=NONE;var1=*(vars_signs0+=2)){
-          if (var_state[var1]!=ACTIVE) continue;
+          if (var_state[var1]==PASSIVE) continue;
           if (var1==var0) continue;
           had[var1][*(vars_signs0+1)]=true; 
-      }      
+      }  
       int *clauses=neg_in[var0]; //i个clause一个个看
       for (int clause=*clauses;clause!=NONE;clause=*(++clauses)){  //扫描i个clause
           if (clause_state[clause]!=ACTIVE) continue;
@@ -1510,6 +1516,7 @@ void rule6_2(int var0){
               if (var_state[var1]!=ACTIVE) continue;
               int sign=*(vars_signs0+1);
               if (!had[var1][1-sign]) continue; 
+              
               if (nb_var_clause[0]==2){
                   _push(clause,CLAUSE_STACK), clause_state[clause]=PASSIVE;
                   nb_var_clause[0]=1;
@@ -1518,10 +1525,12 @@ void rule6_2(int var0){
                   create_binaryclause(var0,NEGATIVE,var1,sign,clause,clause); 
                   _push(clause,CLAUSE_STACK), clause_state[clause]=PASSIVE;
               }
+              rule6num++;
               break;
           }
       }
   }
+  
   memset(had,false,sizeof(had));
   if (nb_var_clause[0]==1){ // x为(i,1)
       int D=findUnitClause(neg_in[var0]); 
@@ -1547,6 +1556,7 @@ void rule6_2(int var0){
                   create_binaryclause(var0,POSITIVE,var1,sign,clause,clause); 
                   _push(clause,CLAUSE_STACK), clause_state[clause]=PASSIVE;
               }
+              rule6num++;
               break;
           }
       }      
@@ -1821,7 +1831,8 @@ int main(int argc, char *argv[]) {
 	 NB_BRANCHE, NB_BACK,
 	 UB, NB_VAR, INIT_NB_CLAUSE, NB_CLAUSE-INIT_NB_CLAUSE);
  // printf("\nnewRule2: %d\n",num);
-  //printf("----RULE2: %d----\n",Num_Rule2);
+  printf("----RULE3: %d----\n",rule3num);
+  printf("----RULE6: %d----\n",rule6num);
   fclose(fp_time);
   return TRUE;
 }
