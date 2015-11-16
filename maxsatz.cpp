@@ -17,34 +17,6 @@ if x, y and ¬x or ¬y are clauses then remove these three clauses, increment
 NB_EMPTY by 1 and add clause x or y.
 
 */
-
-/* based on maxsatz10.c, generalize the rule of maxsatz10.c for all
-linear implications to a contradiction
-*/
-
-/* based on maxsatz11.c
- */
-
-/* based on maxsatz14.c. When UB-#NB_EMPTY=1, perform unit propagation
- */
-
-/* based on maxsatz15.c. Copy active unitclauses in a special stack before
- look-ahead for computing LB
-*/
-
-/* based on maxsatz16.c. Two-level breadth-first search to propagate unit clauses
-in lookahead for computing LB: pick an actual unit clause c, propagate all newly
-generated unit clauses by c, then pick the next actual unit clause, do the same
-thing.
-An actual unit clause is an existing clause before look-ahead starts
-*/
-
-/* based on maxsatz17, remove rules 4, 5, 6 but keep rule 3
- */
-
-/* Based on maxsatz17, 
- */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -1416,7 +1388,7 @@ bool rule3(int var){
 //--------------rule 3-----------------
 //-------------------------------rule 6.1--------------------------------- 
 int nb_var_clause[2]; //0负，1正 
-bool had[tab_variable_size][2]; //0负，1正
+int had[tab_variable_size][2]; //0负，1正
 void update_nb_of_var_clause(int var){
     nb_var_clause[0]=nb_var_clause[1]=0;
     int *clauses=pos_in[var];
@@ -1518,7 +1490,8 @@ void rule6_1(int var0){
 }
 //-------------------------------rule 6.1--------------------------------- 
 //-------------------------------rule 6.2--------------------------------- 
-void rule6_2(int var0){ 
+void rule6_2(int var0){  
+  //return;
   update_nb_of_var_clause(var0);
   memset(had,false,sizeof(had));
   if (nb_var_clause[1]==1){  // x为(1,i)
@@ -1580,6 +1553,58 @@ void rule6_2(int var0){
   } 
 }
 //-------------------------------rule 6.2--------------------------------- 
+//-------------------------------rule 7-----------------------------------
+//要加入x'如何操作
+void rule7(int var0){
+    update_nb_of_var_clause(var0); 
+    memset(had,0,sizeof(had));
+    if (nb_var_clause[1]==1){  // x为(1,i)
+       int D=findUnitClause(pos_in[var0]),num=0;
+       int *clauses=neg_in[var0];
+       for (int clause=*clauses;clause!=NONE;clause=*(++clauses)){
+            if (clause_state[clause]!=ACTIVE) continue;
+            num++;
+            int *vars_signs=var_sign[clause];
+            for (int var1=*vars_signs;var1!=NONE;var1=*(vars_signs+=2)){
+                 if (var_state[var1]!=ACTIVE) continue;
+                 had[var1][*(vars_signs+1)]++;
+            }
+       }    
+       int var1=-1;
+       for (var1=0; var1<NB_VAR; var1++){
+            if (had[var1][0]==num){
+
+            }else
+            if (had[var1][1]==num){
+
+            }
+       }
+  } 
+  memset(had,0,sizeof(had));
+  if (nb_var_clause[0]==1){  // x为(i,1)
+       int D=findUnitClause(neg_in[var0]),num=0;
+       int *clauses=pos_in[var0];
+       for (int clause=*clauses;clause!=NONE;clause=*(++clauses)){
+            if (clause_state[clause]!=ACTIVE) continue;
+            num++;
+            int *vars_signs=var_sign[clause];
+            for (int var1=*vars_signs;var1!=NONE;var1=*(vars_signs+=2)){
+                 if (var_state[var1]!=ACTIVE) continue;
+                 had[var1][*(vars_signs+1)]++;
+            }
+       }    
+       int var1=-1;
+       for (var1=0; var1<NB_VAR; var1++){
+            if (had[var1][0]==num){
+
+            }else
+            if (had[var1][1]==num){
+              
+            }
+       }
+  }
+}
+//-------------------------------rule 7-----------------------------------
 int choose_and_instantiate_variable() {  //所有的var赋值操作都在其中
   int var, nb=0, chosen_var=NONE,cont=0, cont1;  
   int a,b,c,clause;
