@@ -91,13 +91,14 @@ int clean_structure() {  //整理clause
     vars_signs=var_sign[clause];
     for(var=*vars_signs; var!=NONE; var=*(vars_signs+=2)) {
       if (*(vars_signs+1)==POSITIVE) 
-	pos_in[var][pos_nb[var]++]=clause;
-      else  neg_in[var][neg_nb[var]++]=clause;
+	         pos_in[var][pos_nb[var]++]=clause;
+      else  
+           neg_in[var][neg_nb[var]++]=clause;
     }
   }
   for (var=0; var<NB_VAR; var++) { 
-    neg_in[var][neg_nb[var]]=NONE;
-    pos_in[var][pos_nb[var]]=NONE;
+    neg_in[var][neg_nb[var]]=NONE;  //打上结束符
+    pos_in[var][pos_nb[var]]=NONE;  //打上结束符
   }
   return TRUE;
 }
@@ -183,15 +184,15 @@ void build_structure() {
     *vars_signs = NONE;  
   }
   for (i=0; i<NB_VAR; i++) { 
-    neg_in[i] = (int *)malloc((neg_nb[i]+1) * sizeof(int));
-    pos_in[i] = (int *)malloc((pos_nb[i]+1) * sizeof(int));
+   // neg_in[i] = (int *)malloc((neg_nb[i]+1) * sizeof(int)); //容易出错
+    neg_in[i] = (int *)malloc((NB_CLAUSE*2) * sizeof(int)); //为了做rule4要修改
+   // pos_in[i] = (int *)malloc((pos_nb[i]+1) * sizeof(int)); //容易出错
+    pos_in[i] = (int *)malloc((NB_CLAUSE*2) * sizeof(int)); //为了做rule4要修改
     neg_in[i][neg_nb[i]]=NONE; pos_in[i][pos_nb[i]]=NONE;
     neg_nb[i] = 0; pos_nb[i] = 0;
     var_state[i] = ACTIVE;
   }   
   for (i=0; i<NB_CLAUSE; i++) {
-    // if (i==774)
-    //  printf("kjhsdf");
     lits1 = sat[i];
     for(lit=*lits1; lit!=NONE; lit=*(++lits1)) {
       if (positive(lit)) 
@@ -206,12 +207,9 @@ void build_structure() {
 void eliminate_redundance() {
   int *lits, i, lit, *clauses, res, clause;
 
-  for (i=0; i<NB_CLAUSE; i++) {
-    if (clause_state[i]==ACTIVE) {
-      if (clause_length[i]==1)
-	_push(i, UNITCLAUSE_STACK);
-    }
-  }
+  for (i=0; i<NB_CLAUSE; i++)
+    if (clause_state[i]==ACTIVE && clause_length[i]==1)
+	     _push(i, UNITCLAUSE_STACK);  
 }
 
 my_type build_simple_sat_instance(char *input_file) {
