@@ -359,16 +359,18 @@ void reset_context(int saved_clause_stack_fill_pointer,int saved_reducedclause_s
 
 int replace_clause(int newclause, int clause_to_replace, int *clauses) { //把clause_to_replace替换成newclause
   int clause, flag=FALSE;
-  int *c=clauses; //
+  int *c=clauses; //  
+ // puts("ENTHER"); 
+  //if (clauses==NULL) puts("~~~~");
   for(clause=*clauses; clause!=NONE; clause=*(++clauses)) {
-    if (clause==clause_to_replace) {
+    if (clause==clause_to_replace) { 
       *clauses=newclause;
       SAVED_CLAUSE_POSITIONS[SAVED_CLAUSES_fill_pointer]=clauses; //纪录一下被替换的是哪个位置
       _push(clause_to_replace, SAVED_CLAUSES); //存一下这个被替换的clause_to_replace
       flag=TRUE; //正常来说是一定可以找到的
       break;
     }
-  } 
+  }  
   if (flag==FALSE)  //正常来说是不可能出错的
   {
       *(clauses)=newclause,*(clauses+1)=NONE;
@@ -376,7 +378,8 @@ int replace_clause(int newclause, int clause_to_replace, int *clauses) { //把cl
       _push(NONE, SAVED_CLAUSES);
       flag=TRUE; 
       //printf("problem...replace_clause\n");  
-  }
+  } 
+ // puts("OUT");
   return flag;
 }
 
@@ -1097,7 +1100,7 @@ int get_neg_clause_nb(int var) {
   CANDIDATE_LITERALS_fill_pointer=0;
   nb_neg_clause_of_length1[var] = neg_clause1_nb;
   nb_neg_clause_of_length2[var] = neg_clause2_nb;
-  nb_neg_clause_of_length3[var] = neg_clause3_nb;  //纪录一下三者个数
+  nb_neg_clause_of_length3[var] = neg_clause3_nb;  //纪录一下三者个数 
   return neg_clause1_nb+neg_clause2_nb + neg_clause3_nb; //返回三者之和
 }
 
@@ -1197,7 +1200,7 @@ int get_pos_clause_nb(int var) {
   INVOLVED_LIT_STACK_fill_pointer=0;
   nb_pos_clause_of_length1[var] = pos_clause1_nb;
   nb_pos_clause_of_length2[var] = pos_clause2_nb;
-  nb_pos_clause_of_length3[var] = pos_clause3_nb;
+  nb_pos_clause_of_length3[var] = pos_clause3_nb; 
   return pos_clause1_nb+pos_clause2_nb + pos_clause3_nb;
 }
 
@@ -1313,14 +1316,15 @@ void outputLit(int c){
 }
 int rule3num=0;
 bool rule3(int var){
-  //return false;
+  //return false;  
   int c1=-1,c2=-1,*clauses=pos_in[var]; 
   for(int clause=*clauses; clause!=NONE; clause=*(++clauses)) 
      if (clause_state[clause] == ACTIVE){
           if (c1==-1) c1=clause;
                  else return false;
-     } 
+     }  
   if (c1==-1) return false; //包含var的是否有且仅有一个clause
+  //puts("ERROR");
   clauses=neg_in[var];
   for(int clause=*clauses; clause!=NONE; clause=*(++clauses)) 
      if (clause_state[clause] == ACTIVE){
@@ -1328,6 +1332,7 @@ bool rule3(int var){
                  else return false;
      }  
   if (c2==-1) return false; //包含~var的是否有且仅有一个clause     
+  //puts("ERROR");
   //往下走都是return true
   int *c,*vars_signs;
   rule3num++; 
@@ -1625,25 +1630,34 @@ void rule7(int var0){
 }
 //-------------------------------rule 7-----------------------------------
 //-------------------------------rule 4-----------------------------------
+int length_of_clause(int c){
+  int *vars_signs=var_sign[c],nb=0;
+  for (int var=0;var!=NONE;var=*(vars_signs+=2))
+      if (var_state[var]==ACTIVE) nb++;
+  return nb;
+}
 bool run_rule4(int var0,int *a,int *b){
-  int D=findASingleton(b);  //找到singleton 
+  int D=findASingleton(b);  //找到singleton  
+  if (length_of_clause(D)>2) return false;  
   int *clauses0=a,c0=-1,c1=-1;  //c0是xy的
   for (int clause=*clauses0;clause!=NONE;clause=*(++clauses0)){
       if (clause_state[clause]!=ACTIVE) continue;
       if (c0==-1) c0=clause;
              else c1=clause; 
   }
-  if (clause_length[c1]==2) swap(c0,c1);
-  if (clause_length[c0]!=2 || clause_length[D]<2) return false;   
-  printf("(x,y): "),outputLit(c0);
-  printf("(xC1): "),outputLit(c1);
-  printf("(~xD): "),outputLit(D);
+  if (length_of_clause(c1)==2) swap(c0,c1);
+  if (length_of_clause(c0)!=2 || length_of_clause(D)<2) return false;    
+ // printf("~~~~~%d~~~~~\n",clause_length[D]);
+ // printf("(x,y): "),outputLit(c0);
+ // printf("(xC1): "),outputLit(c1);
+ // printf("(~xD): "),outputLit(D);
   int var1,sign,*vars_signs=var_sign[c0];
   for (var1=*vars_signs;var1!=NONE;var1=*(vars_signs+=2)) //找到y
       if (var_state[var1]==ACTIVE && var1!=var0){
           sign=*(vars_signs+1);
           break;
       } 
+  //return false;
   _push(var0, VARIABLE_STACK); 
   var_state[var0] = DONE;   //需要通过递推确定值
   var_rest_value[var0] = POSITIVE; //随意赋值
@@ -1651,7 +1665,7 @@ bool run_rule4(int var0,int *a,int *b){
   _push(c0,CLAUSE_STACK), clause_state[c0]=PASSIVE;
   _push(c1,CLAUSE_STACK), clause_state[c1]=PASSIVE;
   _push(D,CLAUSE_STACK),  clause_state[D]=PASSIVE;   //删去c0,c1,D
-
+ // printf("%d\n",NB_CLAUSE);
   temp_clause.clear();
   if (sign==POSITIVE) temp_clause[var1]=c0;      //先将y放入
                  else temp_clause[var1+NB_VAR]=c0;
@@ -1675,7 +1689,7 @@ bool run_rule4(int var0,int *a,int *b){
       }else{
         lit-=NB_VAR; 
         *(new_var_signs++)=lit; 
-        *(new_var_signs++)=NEGATIVE; 
+        *(new_var_signs++)=NEGATIVE;  
         replace_clause(NB_CLAUSE,c,neg_in[lit]);
       }
   }
@@ -1684,65 +1698,72 @@ bool run_rule4(int var0,int *a,int *b){
   clause_length[NB_CLAUSE]=nb;   
   lit_to_fix[NB_CLAUSE]=NONE; //注意此处需要清空
   sort_clause(NB_CLAUSE);    
-  puts("to");
-  printf("(yD): "),outputLit(NB_CLAUSE); 
+  //puts("to");
+ // printf("(yD): "),outputLit(NB_CLAUSE); 
   NB_CLAUSE++;   
-
   temp_clause.clear();
   if (sign==NEGATIVE) temp_clause[var1]=NONE;  //将~y放入
                  else temp_clause[var1+NB_VAR]=NONE; 
   vars_signs=var_sign[c1];
   for (int var=*vars_signs;var!=NONE;var=*(vars_signs+=2)){
       if (var_state[var]!=ACTIVE) continue;
+      //printf("1 %d %d\n",var,c1);
       if (*(vars_signs+1)==POSITIVE) temp_clause[var]=c1;
                                 else temp_clause[var+NB_VAR]=c1;
-  }
+  } 
   vars_signs=var_sign[D];
+ // printf("%d %d\n",D,clause_length[D]);
   for (int var=*vars_signs;var!=NONE;var=*(vars_signs+=2)){
-      if (var_state[var]!=ACTIVE) continue;
+      if (var_state[var]!=ACTIVE) continue; 
+      //printf("2 %d %d\n",var,D);
       if (*(vars_signs+1)==POSITIVE) temp_clause[var]=D;
                                 else temp_clause[var+NB_VAR]=D;
-  }
+  } 
   new_var_signs=NEW_CLAUSES[NEW_CLAUSES_fill_pointer++]; //新分配一个clause 
   nb=0; 
-  var_sign[NB_CLAUSE]=new_var_signs; //注意  
+  var_sign[NB_CLAUSE]=new_var_signs; //注意    
   for (it3=temp_clause.begin();it3!=temp_clause.end();it3++){
       int lit=it3->first,c=it3->second;
       nb++; 
-      if (lit<NB_VAR){  //为正
-          *(new_var_signs++)=lit; 
-          *(new_var_signs++)=POSITIVE;
-          replace_clause(NB_CLAUSE,c,pos_in[lit]);
-      }else{
+      if (lit<NB_VAR){  //为正 
+          *(new_var_signs++)=lit;  
+          *(new_var_signs++)=POSITIVE;    
+         /* if (pos_in[lit]==NULL){
+            puts("what happend!!!");
+            printf("Lit is %d   NB_VAR is %d  c is %d\n",lit,NB_VAR,c);
+          }*/
+          replace_clause(NB_CLAUSE,c,pos_in[lit]);   
+      }else{ 
           lit-=NB_VAR; 
           *(new_var_signs++)=lit; 
           *(new_var_signs++)=NEGATIVE; 
           replace_clause(NB_CLAUSE,c,neg_in[lit]);
       }
-  }
+  }  
   *(new_var_signs)=NONE;
   clause_state[NB_CLAUSE]=ACTIVE; 
   clause_length[NB_CLAUSE]=nb;   
   lit_to_fix[NB_CLAUSE]=NONE; //注意此处需要清空
   sort_clause(NB_CLAUSE);    
-  printf("(~yC1D): "),outputLit(NB_CLAUSE); 
-  puts("-----------------------------------");
-  NB_CLAUSE++;  
+  //printf("(~yC1D): "),outputLit(NB_CLAUSE); 
+ // puts("-----------------------------------");
+  NB_CLAUSE++;   
   return true;
 }
 bool rule4(int var0){
- // return false;
-  update_nb_of_var_clause(var0);
+  //return false;
+  update_nb_of_var_clause(var0);    
   if (nb_var_clause[1]==2 && nb_var_clause[0]==1) //x为(2,1)
     if (run_rule4(var0,pos_in[var0],neg_in[var0])) {
-     // puts("!!!!!");
+     // puts("!!!!!");  
       return true;
-    }
+    }  
   if (nb_var_clause[0]==2 && nb_var_clause[1]==1) //x为(1,2)
-    if (run_rule4(var0,neg_in[var0],pos_in[var0])) {
-    //  puts("!!!");
+    if (run_rule4(var0,neg_in[var0],pos_in[var0])) { 
+     // puts("????");
       return true;
     }
+  //puts("####");
   return false;
 }
 //-------------------------------rule 4-----------------------------------
@@ -1794,8 +1815,10 @@ int choose_and_instantiate_variable() {  //所有的var赋值操作都在其中
    
   for (var = 0; var < NB_VAR; var++) {
     if (var_state[var] == ACTIVE) { 
+
       reduce_if_negative[var]=0; //纪录将var取正与取负的影响
       reduce_if_positive[var]=0;
+
       if (get_neg_clause_nb(var) == 0) {
          NB_MONO++;
          var_current_value[var] = TRUE;
