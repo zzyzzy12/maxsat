@@ -53,8 +53,8 @@ typedef unsigned char my_unsigned_type;
 /* the tables of variables and clauses are statically allocated. Modify the 
    parameters tab_variable_size and tab_clause_size before compilation if 
    necessary */
-#define tab_variable_size  1000   //原始的是20000
-#define tab_clause_size 3000   //原始的是40000
+#define tab_variable_size  2000   //原始的是20000
+#define tab_clause_size 4000   //原始的是40000
 #define tab_unitclause_size \
  ((tab_clause_size/4<2000) ? 2000 : tab_clause_size/4)
 #define my_tab_variable_size \
@@ -1314,6 +1314,12 @@ void outputLit(int c){
   puts("");
   //puts("\n--------------------------");
 }
+int length_of_clause(int c){
+  int *vars_signs=var_sign[c],nb=0;
+  for (int var=0;var!=NONE;var=*(vars_signs+=2))
+      if (var_state[var]==ACTIVE) nb++;
+  return nb;
+}
 int rule3num=0;
 bool rule3(int var){
   //return false;  
@@ -1334,8 +1340,7 @@ bool rule3(int var){
   if (c2==-1) return false; //包含~var的是否有且仅有一个clause     
   //puts("ERROR");
   //往下走都是return true
-  int *c,*vars_signs;
-  rule3num++; 
+  int *c,*vars_signs; 
   vars_signs=var_sign[c2];
   //-----------------构造递推关系
   recur[var].clear(); 
@@ -1521,7 +1526,7 @@ bool run_rule_6_2(int var0,int *a,int *b,int sign0){
               flag=true;
               break;
           }else
-          if (clause_length[clause]>2){  //只保留x y
+          if (length_of_clause(clause)>2){  //只保留x y
               /*
               printf("can use rule6.2\nx is ");
               if (sign0==POSITIVE) printf("X%d, ",var0);
@@ -1630,12 +1635,6 @@ void rule7(int var0){
 }
 //-------------------------------rule 7-----------------------------------
 //-------------------------------rule 4-----------------------------------
-int length_of_clause(int c){
-  int *vars_signs=var_sign[c],nb=0;
-  for (int var=0;var!=NONE;var=*(vars_signs+=2))
-      if (var_state[var]==ACTIVE) nb++;
-  return nb;
-}
 bool run_rule4(int var0,int *a,int *b){
   int D=findASingleton(b);  //找到singleton  
   if (length_of_clause(D)>2) return false;  
@@ -1646,11 +1645,7 @@ bool run_rule4(int var0,int *a,int *b){
              else c1=clause; 
   }
   if (length_of_clause(c1)==2) swap(c0,c1);
-  if (length_of_clause(c0)!=2 || length_of_clause(D)<2) return false;    
- // printf("~~~~~%d~~~~~\n",clause_length[D]);
- // printf("(x,y): "),outputLit(c0);
- // printf("(xC1): "),outputLit(c1);
- // printf("(~xD): "),outputLit(D);
+  if (length_of_clause(c0)!=2 || length_of_clause(D)<2) return false;     
   int var1,sign,*vars_signs=var_sign[c0];
   for (var1=*vars_signs;var1!=NONE;var1=*(vars_signs+=2)) //找到y
       if (var_state[var1]==ACTIVE && var1!=var0){
@@ -1750,20 +1745,18 @@ bool run_rule4(int var0,int *a,int *b){
   NB_CLAUSE++;   
   return true;
 }
+int rule4num=0;
 bool rule4(int var0){
-  //return false;
+  return false;
   update_nb_of_var_clause(var0);    
   if (nb_var_clause[1]==2 && nb_var_clause[0]==1) //x为(2,1)
-    if (run_rule4(var0,pos_in[var0],neg_in[var0])) {
-     // puts("!!!!!");  
+    if (run_rule4(var0,pos_in[var0],neg_in[var0])) { 
       return true;
     }  
   if (nb_var_clause[0]==2 && nb_var_clause[1]==1) //x为(1,2)
-    if (run_rule4(var0,neg_in[var0],pos_in[var0])) { 
-     // puts("????");
+    if (run_rule4(var0,neg_in[var0],pos_in[var0])) {  
       return true;
-    }
-  //puts("####");
+    } 
   return false;
 }
 //-------------------------------rule 4-----------------------------------
@@ -1868,9 +1861,9 @@ int choose_and_instantiate_variable() {  //所有的var赋值操作都在其中
              return NONE;
       }
       else if (rule3(var)){
-
+         rule3num++;
       }else if (rule4(var)){
-
+         rule4num++;
       }
       else{
          if (nb_neg_clause_of_length1[var]>nb_pos_clause_of_length1[var]) { //记下较少的unit个数
@@ -1882,11 +1875,12 @@ int choose_and_instantiate_variable() {  //所有的var赋值操作都在其中
     }
   } 
   bool rule6flag=false;
-  /*for (int var=0;var<NB_VAR;var++)
+  /*
+  for (int var=0;var<NB_VAR;var++)
     if (var_state[var]==ACTIVE){
-       //rule6_1(var); 
+       rule6_1(var); 
        if (rule6_2(var)) rule6flag=true;
-   } */
+  }*/ 
   if (rule6flag) goto A;
   if (cont+NB_EMPTY>=UB)
     return NONE;
@@ -2042,6 +2036,7 @@ int main(int argc, char *argv[]) {
    UB, NB_VAR, INIT_NB_CLAUSE, NB_CLAUSE-INIT_NB_CLAUSE);  
   printf("----RULE2: %d----\n",rule2num);
   printf("----RULE3: %d----\n",rule3num);
+  printf("----RULE4: %d----\n",rule4num);
   printf("----RULE6: %d----\n",rule6num);
   printf("verify_solution: %d\n",verify_solution(var_best_value));
   fclose(fp_time);
