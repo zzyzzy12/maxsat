@@ -84,10 +84,12 @@ typedef unsigned char my_unsigned_type;
 #define PASSIVE 0
 #define ACTIVE 1 
 #define DONE -1
-
+//-------------DEBUG--------------
 #define DEBUG_OPEN_RULE3 true
 #define DEBUG_OPEN_RULE4 true
-#define DEBUG_OPEN_RULE6 true
+#define DEBUG_OPEN_RULE6 false
+#define MAX_N_SAT 2
+//--------------------------------
 
 int *neg_in[tab_variable_size];
 int *pos_in[tab_variable_size];
@@ -1488,7 +1490,7 @@ void rule6_1(int var0){
 int unitnum[tab_variable_size][2]; 
 bool run_rule_6_2(int var0,int *a,int *b,int sign0){
   int D=findASingleton(a);  
-  bool flag=false;
+  bool flagRule6=false,flagRule6_1;
   if (D==-1) return false;
   int *vars_signs0=var_sign[D];
   memset(had,false,sizeof(had));
@@ -1501,6 +1503,7 @@ bool run_rule_6_2(int var0,int *a,int *b,int sign0){
   for (int clause=*clauses;clause!=NONE;clause=*(++clauses)){  //扫描i个clause
       if (clause_state[clause]!=ACTIVE) continue;
       vars_signs0=var_sign[clause];
+      flagRule6_1=false;
       for (int var1=*vars_signs0;var1!=NONE;var1=*(vars_signs0+=2)){
           if (var_state[var1]!=ACTIVE) continue;
           int sign=*(vars_signs0+1);
@@ -1525,7 +1528,7 @@ bool run_rule_6_2(int var0,int *a,int *b,int sign0){
               puts("----------------------------------");
               */
               rule6num++;
-              flag=true;
+              flagRule6=true;
               break;
           }else
           if (length_of_clause(clause)>2){  //原rule5的规则,若clause长度为2则只保留x y
@@ -1541,26 +1544,26 @@ bool run_rule_6_2(int var0,int *a,int *b,int sign0){
               outputClause(var0);  
               */  
               
-              if (unitnum[var1][1-sign]){  //剩下只有x,y的two-clause
+              if (unitnum[var1][1-sign]){  //剩下只有x,y的two-clause,所以可以尝试进入
                   unitnum[var1][1-sign]--;
                   assign_value(var0,1-sign0,NONE);   
                   return true;
               }
               
-              create_binaryclause(var0,1-sign0,var1,sign,clause,clause); 
-              _push(clause,CLAUSE_STACK), clause_state[clause]=PASSIVE; //删除clause
+              create_binaryclause(var0,1-sign0,var1,sign,clause,clause); //只保留xy
+              _push(clause,CLAUSE_STACK), clause_state[clause]=PASSIVE; //删除原clause
               /*
               printf("##after this process\n");
               outputClause(var0);
               puts("----------------------------------");
               */
               rule6num++;
-              flag=true;
+              flagRule6=true;
               break;
           }
       }
   }
-  return flag;
+  return flagRule6;
 }
 bool rule6_2(int var0){  
  // return false;
@@ -1630,7 +1633,7 @@ void rule7(int var0){
 //-------------------------------rule 4-----------------------------------
 bool run_rule4(int var0,int *a,int *b){
   int D=findASingleton(b);  //找到singleton  
-  if (length_of_clause(D)>2) return false;  
+  if (length_of_clause(D)>MAX_N_SAT) return false;  
   int *clauses0=a,c0=-1,c1=-1;  //c0是xy的
   for (int clause=*clauses0;clause!=NONE;clause=*(++clauses0)){
       if (clause_state[clause]!=ACTIVE) continue;
@@ -1644,8 +1647,8 @@ bool run_rule4(int var0,int *a,int *b){
       if (var_state[var1]==ACTIVE && var1!=var0){
           sign=*(vars_signs+1);
           break;
-      } 
-  //return false;
+      }  
+
   _push(var0, VARIABLE_STACK); 
   var_state[var0] = DONE;   //需要通过递推确定值
   var_rest_value[var0] = POSITIVE; //随意赋值
