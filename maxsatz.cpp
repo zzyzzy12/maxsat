@@ -1607,6 +1607,32 @@ void rule7(int var0){
 }
 //-------------------------------rule 7-----------------------------------
 //-------------------------------rule 4-----------------------------------
+void create_new_clause(){
+  int *new_var_signs=NEW_CLAUSES[NEW_CLAUSES_fill_pointer++]; //新分配一个clause 
+  int nb=0;
+  map<int,int>::iterator it3;
+  var_sign[NB_CLAUSE]=new_var_signs; //注意  
+  for (it3=temp_clause.begin();it3!=temp_clause.end();it3++){
+      int lit=it3->first,c=it3->second;
+      nb++; 
+      if (lit<NB_VAR){  //为正
+        *(new_var_signs++)=lit; 
+        *(new_var_signs++)=POSITIVE;
+        replace_clause(NB_CLAUSE,c,pos_in[lit]);
+      }else{
+        lit-=NB_VAR; 
+        *(new_var_signs++)=lit; 
+        *(new_var_signs++)=NEGATIVE;  
+        replace_clause(NB_CLAUSE,c,neg_in[lit]);
+      }
+  }
+  *(new_var_signs)=NONE;
+  clause_state[NB_CLAUSE]=ACTIVE; 
+  clause_length[NB_CLAUSE]=nb;   
+  lit_to_fix[NB_CLAUSE]=NONE; //注意此处需要清空
+  sort_clause(NB_CLAUSE);    
+  NB_CLAUSE++; 
+}
 bool run_rule4(int var0,int *a,int *b){
   int D=findASingleton(b);  //找到singleton  
   if (length_of_clause(D)>MAX_N_SAT) return false;  
@@ -1642,32 +1668,8 @@ bool run_rule4(int var0,int *a,int *b){
      if (*(vars_signs+1)==POSITIVE) temp_clause[var]=D;
                                else temp_clause[var+NB_VAR]=D;
   } 
-  int *new_var_signs=NEW_CLAUSES[NEW_CLAUSES_fill_pointer++]; //新分配一个clause 
-  int nb=0;
-  map<int,int>::iterator it3;
-  var_sign[NB_CLAUSE]=new_var_signs; //注意  
-  for (it3=temp_clause.begin();it3!=temp_clause.end();it3++){
-      int lit=it3->first,c=it3->second;
-      nb++; 
-      if (lit<NB_VAR){  //为正
-        *(new_var_signs++)=lit; 
-        *(new_var_signs++)=POSITIVE;
-        replace_clause(NB_CLAUSE,c,pos_in[lit]);
-      }else{
-        lit-=NB_VAR; 
-        *(new_var_signs++)=lit; 
-        *(new_var_signs++)=NEGATIVE;  
-        replace_clause(NB_CLAUSE,c,neg_in[lit]);
-      }
-  }
-  *(new_var_signs)=NONE;
-  clause_state[NB_CLAUSE]=ACTIVE; 
-  clause_length[NB_CLAUSE]=nb;   
-  lit_to_fix[NB_CLAUSE]=NONE; //注意此处需要清空
-  sort_clause(NB_CLAUSE);    
+  create_new_clause();  
 
-
-  NB_CLAUSE++;   
   temp_clause.clear();
   if (sign==NEGATIVE) temp_clause[var1]=NONE;  //将~y放入
                  else temp_clause[var1+NB_VAR]=NONE; 
@@ -1683,30 +1685,83 @@ bool run_rule4(int var0,int *a,int *b){
       if (var_state[var]!=ACTIVE) continue; 
       if (*(vars_signs+1)==POSITIVE) temp_clause[var]=D;
                                 else temp_clause[var+NB_VAR]=D;
-  } 
-  new_var_signs=NEW_CLAUSES[NEW_CLAUSES_fill_pointer++]; //新分配一个clause 
-  nb=0; 
-  var_sign[NB_CLAUSE]=new_var_signs; //注意    
-  for (it3=temp_clause.begin();it3!=temp_clause.end();it3++){
-      int lit=it3->first,c=it3->second;
-      nb++; 
-      if (lit<NB_VAR){  //为正 
-          *(new_var_signs++)=lit;  
-          *(new_var_signs++)=POSITIVE;    
-          replace_clause(NB_CLAUSE,c,pos_in[lit]);   
-      }else{ 
-          lit-=NB_VAR; 
-          *(new_var_signs++)=lit; 
-          *(new_var_signs++)=NEGATIVE; 
-          replace_clause(NB_CLAUSE,c,neg_in[lit]);
-      }
   }  
-  *(new_var_signs)=NONE;
-  clause_state[NB_CLAUSE]=ACTIVE; 
-  clause_length[NB_CLAUSE]=nb;   
-  lit_to_fix[NB_CLAUSE]=NONE; //注意此处需要清空
-  sort_clause(NB_CLAUSE);    
-  NB_CLAUSE++;   
+
+  create_new_clause();
+  return true;
+}
+bool run_rule4_2(int var0,int *a,int *b){
+  int Cy=-1,Cz=-1,C1=-1,D=findASingleton(b);
+  int *clauses=a;
+  for (int clause=*clauses;clause!=NONE;clause=*(++clauses)){
+      if (clause_state[clause]!=ACTIVE) continue;
+      if (Cy==-1) Cy=clause; else
+      if (Cz==-1) Cz=clause; else
+                  C1=clause;
+  }
+  if (length_of_clause(Cy)!=2) swap(Cy,C1);
+  if (length_of_clause(Cz)!=2) swap(Cz,C1);
+  if (length_of_clause(D)<2 || length_of_clause(Cy)!=2 || length_of_clause(Cz)!=2) return false;
+  int y,z,signy,signz,*vars_signs;
+  vars_signs=var_sign[Cy];
+  for (y=*vars_signs;y!=var0 && var_state[y]!=ACTIVE;y=*(vars_signs+=2));
+  signy=*(vars_signs+1);
+  vars_signs=var_sign[Cz];
+  for (z=*vars_signs;y!=var0 && var_state[z]!=ACTIVE;z=*(vars_signs+=2));
+  signz=*(vars_signs+1);
+
+  _push(var0, VARIABLE_STACK); 
+  var_state[var0] = DONE;   //需要通过递推确定值
+  var_rest_value[var0] = POSITIVE; //随意赋值
+  var_rest_value[var0] = NONE;
+  _push(Cy,CLAUSE_STACK), clause_state[Cy]=PASSIVE;
+  _push(Cz,CLAUSE_STACK), clause_state[Cz]=PASSIVE;
+  _push(C1,CLAUSE_STACK), clause_state[C1]=PASSIVE;
+  _push(D,CLAUSE_STACK),  clause_state[D]=PASSIVE;   //删去Cz,Cy,C1,D
+
+  temp_clause.clear();
+  if (signy==POSITIVE) temp_clause[y]=Cy;      //先将y放入
+                  else temp_clause[y+NB_VAR]=Cy;
+  vars_signs=var_sign[D];
+  for (int var=*vars_signs;var!=NONE;var=*(vars_signs+=2)){
+     if (var_state[var]!=ACTIVE) continue;
+     if (*(vars_signs+1)==POSITIVE) temp_clause[var]=D;
+                               else temp_clause[var+NB_VAR]=D;//将D中的元素放入
+  } 
+  create_new_clause();    //新建yD
+
+  temp_clause.clear();
+  if (signy==NEGATIVE) temp_clause[y]=NONE;  //将~y放入
+                  else temp_clause[y+NB_VAR]=NONE;  
+  if (signz==POSITIVE) temp_clause[z]=Cz;      //将z放入
+                  else temp_clause[z+NB_VAR]=Cz;                
+  vars_signs=var_sign[D];
+  for (int var=*vars_signs;var!=NONE;var=*(vars_signs+=2)){
+     if (var_state[var]!=ACTIVE) continue;
+     if (*(vars_signs+1)==POSITIVE) temp_clause[var]=D;
+                               else temp_clause[var+NB_VAR]=D; //将D中的元素放入
+  }   
+  create_new_clause(); //新建~y,z,D
+
+  temp_clause.clear();
+  if (signy==NEGATIVE) temp_clause[y]=NONE;  //将~y放入
+                  else temp_clause[y+NB_VAR]=NONE;  
+  if (signz==NEGATIVE) temp_clause[z]=NONE;  //将~z放入
+                  else temp_clause[z+NB_VAR]=NONE;  
+  vars_signs=var_sign[C1];
+  for (int var=*vars_signs;var!=NONE;var=*(vars_signs+=2)){
+     if (var_state[var]!=ACTIVE) continue;
+     if (*(vars_signs+1)==POSITIVE) temp_clause[var]=C1; 
+                               else temp_clause[var+NB_VAR]=C1; //将C1中的元素放入
+  } 
+  vars_signs=var_sign[D];
+  for (int var=*vars_signs;var!=NONE;var=*(vars_signs+=2)){
+     if (var_state[var]!=ACTIVE) continue;
+     if (*(vars_signs+1)==POSITIVE) temp_clause[var]=D;
+                               else temp_clause[var+NB_VAR]=D; //将D中的元素放入
+  }    
+  create_new_clause(); //新建~y,~z,C1,D
+
   return true;
 }
 int rule4num=0;
@@ -1720,37 +1775,18 @@ bool rule4(int var0){
   if (nb_var_clause[0]==2 && nb_var_clause[1]==1) //x为(1,2)
     if (run_rule4(var0,neg_in[var0],pos_in[var0])) {  
       return true;
+    }   
+  if (nb_var_clause[1]==3 && nb_var_clause[0]==1) //x为(3,1)
+    if (run_rule4_2(var0,pos_in[var0],neg_in[var0])){  
+      return true;
+    }
+  if (nb_var_clause[0]==3 && nb_var_clause[1]==1) //x为(1,3)
+    if (run_rule4_2(var0,neg_in[var0],pos_in[var0])){  
+      return true;
     } 
   return false;
 }
-//-------------------------------rule 4-----------------------------------
-//----------------------------rule of (2,1)-------------------------------
-void run_rule_of_2_1(int x,int *a,int *b,int ci){  //a中找D,ci中找y
-  int *vars_signs=var_sign[ci];
-  for (int var=*vars_signs;var!=NONE;var=*(vars_signs+=2)){
-
-  }
-}
-bool rule_of_2_1(int var0){
-  update_nb_of_var_clause(var0);
-  if (nb_var_clause[1]==2 && nb_var_clause[0]==1){  //x为(2,1)
-      int *clauses=pos_in[var0];
-      for (int clause=*(clauses);clause!=NONE;clause=*(++clauses)){
-          if (clause_state[clause]!=ACTIVE || clause_length[clause]!=2) continue;
-          run_rule_of_2_1(var0,neg_in[var0],pos_in[var0],clause);
-          return true;
-      }
-  }
-  if (nb_var_clause[1]==1 && nb_var_clause[0]==2){ //x为(1,2)
-      int *clauses=neg_in[var0];
-      for (int clause=*(clauses);clause!=NONE;clause=*(++clauses)){
-          if (clause_state[clause]!=ACTIVE || clause_length[clause]!=2) continue;
-          run_rule_of_2_1(var0,pos_in[var0],neg_in[var0],clause);
-          return true;
-      }
-  }
-  return false;
-}
+//-------------------------------rule 4----------------------------------- 
 int rule2num=0; 
 int choose_and_instantiate_variable() {  //所有的var赋值操作都在其中
   int var, nb=0, chosen_var=NONE,cont=0, cont1;  
