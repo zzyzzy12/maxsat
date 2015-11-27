@@ -85,9 +85,9 @@ typedef unsigned char my_unsigned_type;
 #define ACTIVE 1 
 #define DONE -1
 //-------------DEBUG--------------
-#define DEBUG_OPEN_RULE3 true
-#define DEBUG_OPEN_RULE4 true
-#define DEBUG_OPEN_RULE6 true
+#define DEBUG_OPEN_RULE3 false
+#define DEBUG_OPEN_RULE4 false
+#define DEBUG_OPEN_RULE6 false
 #define MAX_N_SAT 4
 //--------------------------------
 
@@ -1652,7 +1652,7 @@ bool run_rule4(int var0,int *a,int *b){
       }  
 
   _push(var0, VARIABLE_STACK); 
-  var_state[var0] = DONE;   //需要通过递推确定值
+  var_state[var0] = DONE;   //需要通过递推确定值 
   var_rest_value[var0] = POSITIVE; //随意赋值
   var_rest_value[var0] = NONE;
   _push(c0,CLAUSE_STACK), clause_state[c0]=PASSIVE;
@@ -1712,6 +1712,13 @@ bool run_rule4_2(int var0,int *a,int *b){
 
   _push(var0, VARIABLE_STACK); 
   var_state[var0] = DONE;   //需要通过递推确定值
+  //-----------------构造递推关系
+  recur[var0].clear();  //x= ~y ~z
+  if (signy==POSITIVE) recur[var0].insert(y+NB_VAR);
+                  else recur[var0].insert(y);
+  if (signz==POSITIVE) recur[var0].insert(z+NB_VAR);
+                  else recur[var0].insert(z);
+  //-----------------构造递推关系
   var_rest_value[var0] = POSITIVE; //随意赋值
   var_rest_value[var0] = NONE;
   _push(Cy,CLAUSE_STACK), clause_state[Cy]=PASSIVE;
