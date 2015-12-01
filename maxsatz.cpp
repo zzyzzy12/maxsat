@@ -85,9 +85,9 @@ typedef unsigned char my_unsigned_type;
 #define ACTIVE 1 
 #define DONE -1
 //-------------DEBUG--------------
-#define DEBUG_OPEN_RULE3 false
+#define DEBUG_OPEN_RULE3 true
 #define DEBUG_OPEN_RULE4 false
-#define DEBUG_OPEN_RULE6 false
+#define DEBUG_OPEN_RULE6 true
 #define MAX_N_SAT 4
 //--------------------------------
 
@@ -1430,6 +1430,15 @@ int rule6num=0;
 int had[tab_variable_size][2]; //0负，1正
 int new_var[tab_variable_size][2]; //纪录新加的clause中包含哪些lit
 int unitnum[tab_variable_size][2]; 
+void rule6_2_clean_clause(int clause){
+  int *vars_signs=var_sign[clause],var,sign;
+  for (var=*vars_signs;var!=NONE;var=*(vars_signs+=2)){
+      if (var_state[var]!=ACTIVE) continue;
+      sign=*(vars_signs+1);
+      if (sign==POSITIVE) nb_pos_clause_of_length3[var]--;
+                     else nb_neg_clause_of_length3[var]--; 
+  }
+}
 bool run_rule_6(int var0,int *a,int *b,int sign0){
   int D=findASingleton(a),num;  
   bool flagRule6=false,flagRule6_1;
@@ -1495,6 +1504,11 @@ bool run_rule_6(int var0,int *a,int *b,int sign0){
               }
               
               create_binaryclause(var0,1-sign0,var1,sign,clause,clause); //只保留xy
+            /*  rule6_2_clean_clause(clause);
+              if (sign0==POSITIVE) nb_neg_clause_of_length2[var0]++; 
+                             else  nb_pos_clause_of_length2[var0]++; 
+              if (sign==POSITIVE)  nb_pos_clause_of_length2[var1]++; 
+                             else  nb_neg_clause_of_length2[var1]++;    */    
               _push(clause,CLAUSE_STACK), clause_state[clause]=PASSIVE; //删除原clause
               /*
               printf("##after this process\n");
