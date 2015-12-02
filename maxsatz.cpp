@@ -1494,14 +1494,14 @@ bool run_rule_6_1(int var0,int *a,int *b,int sign0){
   return flagRule6;
 }
 int store_rule_6_2[tab_clause_size][3];
-bool run_rule_6_2(int var0,int *a,int *b,int sign0){
+bool run_rule_6_2(int var0,int *a,int *b,int sign0){ 
+  //return false;
   int D=findASingleton(a),num,iNum,*clauses;  
   bool flagRule6=false;
   if (D==-1) return false;
   clauses=b,iNum=0;  //iNum纪录其(i,1)  (1,i)中i的大小
   for (int clause=*clauses;clause!=NONE;clause=*(++clauses))
       if (clause_state[clause]==ACTIVE) iNum++; 
-  num=0; //可以做rule6_2规则的个数
   int *vars_signs0=var_sign[D];
   memset(had,false,sizeof(had));
   for (int var1=*(vars_signs0);var1!=NONE;var1=*(vars_signs0+=2)){
@@ -1510,6 +1510,7 @@ bool run_rule_6_2(int var0,int *a,int *b,int sign0){
       had[var1][*(vars_signs0+1)]=true; 
   }  
   clauses=b; //i个clause一个个看
+  num=0; //可以做rule6_2规则的个数,先清零
   for (int clause=*clauses;clause!=NONE;clause=*(++clauses)){  //扫描i个clause
       if (clause_state[clause]!=ACTIVE) continue;
       vars_signs0=var_sign[clause];  
@@ -1518,36 +1519,39 @@ bool run_rule_6_2(int var0,int *a,int *b,int sign0){
           int sign=*(vars_signs0+1);
           if (had[var1][1-sign]){ //进入rule6.2
             //-----新添加的-------
-            flagRule6=true;
-            if (num>0 && store_rule_6_2[num][0]!=clause){
-                num++;
-                store_rule_6_2[num][0]=clause;
-                store_rule_6_2[num][1]=var1,store_rule_6_2[num][2]=sign;
-                if (num==iNum-1){
-                   for (int i=1;i<iNum;i++){ //把这i-1个clause删去...留下最后一个来做rule3
-                      clause=store_rule_6_2[i][0];
-                      _push(clause,CLAUSE_STACK), clause_state[clause]=PASSIVE;
-                   }
-                   rule3(var0);
-                   return true;
+            num++;
+            store_rule_6_2[num][0]=clause;
+            store_rule_6_2[num][1]=var1,store_rule_6_2[num][2]=sign;
+            if (num==iNum-1){
+                for (int index=1;index<=num;index++){ //把这i-1个clause删去...留下最后一个来做rule3
+                  clause=store_rule_6_2[index][0];
+                  _push(clause,CLAUSE_STACK), clause_state[clause]=PASSIVE;
                 }
-            }
+                rule3(var0);
+                rule6num++;
+                return true;
+            } 
+            break;
             //------------------
         } 
       }
   } 
-  return false;
+  //return false;
+ // puts("~~~~");
   for (int index=1;index<=num;index++){  //那就拿出来一个个处理
     int clause=store_rule_6_2[index][0],var1=store_rule_6_2[index][1],sign=store_rule_6_2[index][2];
+    rule6num++; 
     if (nb_var_clause[1-sign0]==2){  //原rule5  若i为2  直接删去该clause 
         _push(clause,CLAUSE_STACK), clause_state[clause]=PASSIVE;
         nb_var_clause[1-sign0]=1; 
+        flagRule6=true; 
         rule6num++;  
     }else
     if (length_of_clause(clause)>2){  //原rule5的规则,若clause长度为2则只保留x y 
+      flagRule6=true; 
       if (unitnum[var1][1-sign]){  //剩下只有x,y的two-clause,所以可以尝试进入
         unitnum[var1][1-sign]--;
-        assign_value(var0,1-sign0,NONE);   
+        assign_value(var0,1-sign0,NONE);   //直接对x赋值
         return true;
       }
       create_binaryclause(var0,1-sign0,var1,sign,clause,clause); //只保留xy
@@ -1556,8 +1560,7 @@ bool run_rule_6_2(int var0,int *a,int *b,int sign0){
                      else  nb_pos_clause_of_length2[var0]++; 
       if (sign==POSITIVE)  nb_pos_clause_of_length2[var1]++; 
                      else  nb_neg_clause_of_length2[var1]++;       
-      _push(clause,CLAUSE_STACK), clause_state[clause]=PASSIVE; //删除原clause 
-      rule6num++;  
+      _push(clause,CLAUSE_STACK), clause_state[clause]=PASSIVE; //删除原clause  
     }
   }
   return flagRule6;
