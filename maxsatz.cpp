@@ -155,7 +155,7 @@ int MY_UNITCLAUSE_STACK[tab_variable_size];
 int MY_UNITCLAUSE_STACK_fill_pointer=0;
 int CANDIDATE_LITERALS[2*tab_variable_size];
 int CANDIDATE_LITERALS_fill_pointer=0;
-int NEW_CLAUSES[tab_clause_size][20];  //大小注意
+int NEW_CLAUSES[tab_clause_size][30];  //大小注意
 int NEW_CLAUSES_fill_pointer=0;
 int lit_to_fix[tab_clause_size];
 int *SAVED_CLAUSE_POSITIONS[tab_clause_size];
@@ -1326,6 +1326,32 @@ int length_of_clause(int c){
       if (var_state[var]==ACTIVE) nb++;
   return nb;
 }
+void create_new_clause(){
+  int *new_var_signs=NEW_CLAUSES[NEW_CLAUSES_fill_pointer++]; //新分配一个clause 
+  int nb=0;
+  map<int,int>::iterator it3;
+  var_sign[NB_CLAUSE]=new_var_signs; //注意  
+  for (it3=temp_clause.begin();it3!=temp_clause.end();it3++){
+      int lit=it3->first,c=it3->second;
+      nb++; 
+      if (lit<NB_VAR){  //为正
+        *(new_var_signs++)=lit; 
+        *(new_var_signs++)=POSITIVE;
+        replace_clause(NB_CLAUSE,c,pos_in[lit]);
+      }else{
+        lit-=NB_VAR; 
+        *(new_var_signs++)=lit; 
+        *(new_var_signs++)=NEGATIVE;  
+        replace_clause(NB_CLAUSE,c,neg_in[lit]);
+      }
+  }
+  *(new_var_signs)=NONE;
+  clause_state[NB_CLAUSE]=ACTIVE; 
+  clause_length[NB_CLAUSE]=nb;   
+  lit_to_fix[NB_CLAUSE]=NONE; //注意此处需要清空
+  sort_clause(NB_CLAUSE);    
+  NB_CLAUSE++; 
+}
 int rule3num=0;
 bool rule3(int var){
   if (!DEBUG_OPEN_RULE3) return false;  
@@ -1346,20 +1372,21 @@ bool rule3(int var){
   if (c2==-1) return false; //包含~var的是否有且仅有一个clause      
   //往下走都是return true
   int *c,*vars_signs; 
-  vars_signs=var_sign[c2];
+  _push(var, VARIABLE_STACK); 
+  var_state[var] = DONE;   //需要通过递推确定值
+  var_current_value[var] = POSITIVE; //随便赋一个值
+  var_rest_value[var] = NONE;
   //-----------------构造递推关系
   recur[var].clear(); 
+  vars_signs=var_sign[c2];
   for (int lit=*vars_signs;lit!=NONE;lit=*(vars_signs+=2)){
       if (var_state[lit]!=ACTIVE) continue;
       if (lit==var) continue;
       if (*(vars_signs+1)==POSITIVE) recur[var].insert(lit);
                                 else recur[var].insert(lit+NB_VAR);
   } 
-  //-----------------构造递推关系
-  _push(var, VARIABLE_STACK); 
-  var_state[var] = DONE;   //需要通过递推确定值
-  var_rest_value[var] = POSITIVE; //随意赋值
-  var_rest_value[var] = NONE;
+  //x=C2
+  //-----------------构造递推关系 
   _push(c1, CLAUSE_STACK); clause_state[c1]=PASSIVE;  //删去c1
   _push(c2, CLAUSE_STACK); clause_state[c2]=PASSIVE;  //删去c2
   temp_clause.clear();
@@ -1375,32 +1402,7 @@ bool rule3(int var){
       if (*(vars_signs+1)==POSITIVE) temp_clause[lit]=c2;
                                 else temp_clause[lit+NB_VAR]=c2; 
   } 
-
-  int *new_var_signs=NEW_CLAUSES[NEW_CLAUSES_fill_pointer++]; //新分配一个clause 
-  int nb=0;
-  map<int,int>::iterator it3;
-  var_sign[NB_CLAUSE]=new_var_signs; //注意  
-
-  for (it3=temp_clause.begin();it3!=temp_clause.end();it3++){
-      int lit=it3->first,c=it3->second;
-      nb++; 
-      if (lit<NB_VAR){  //为正
-        *(new_var_signs++)=lit; 
-        *(new_var_signs++)=POSITIVE;
-        replace_clause(NB_CLAUSE,c,pos_in[lit]);
-      }else{
-        lit-=NB_VAR; 
-        *(new_var_signs++)=lit; 
-        *(new_var_signs++)=NEGATIVE; 
-        replace_clause(NB_CLAUSE,c,neg_in[lit]);
-      }
-  }
-  *(new_var_signs)=NONE;
-  clause_state[NB_CLAUSE]=ACTIVE; 
-  clause_length[NB_CLAUSE]=nb;   
-  lit_to_fix[NB_CLAUSE]=NONE; //注意此处需要清空
-  sort_clause(NB_CLAUSE);     
-  NB_CLAUSE++; 
+  create_new_clause();
   return true; 
 }
 //--------------rule 3-----------------
@@ -1535,9 +1537,7 @@ bool run_rule_6_2(int var0,int *a,int *b,int sign0){
             //------------------
         } 
       }
-  } 
-  //return false;
- // puts("~~~~");
+  }  
   for (int index=1;index<=num;index++){  //那就拿出来一个个处理
     int clause=store_rule_6_2[index][0],var1=store_rule_6_2[index][1],sign=store_rule_6_2[index][2];
     rule6num++; 
@@ -1631,32 +1631,6 @@ void rule7(int var0){
 }
 //-------------------------------rule 7-----------------------------------
 //-------------------------------rule 4-----------------------------------
-void create_new_clause(){
-  int *new_var_signs=NEW_CLAUSES[NEW_CLAUSES_fill_pointer++]; //新分配一个clause 
-  int nb=0;
-  map<int,int>::iterator it3;
-  var_sign[NB_CLAUSE]=new_var_signs; //注意  
-  for (it3=temp_clause.begin();it3!=temp_clause.end();it3++){
-      int lit=it3->first,c=it3->second;
-      nb++; 
-      if (lit<NB_VAR){  //为正
-        *(new_var_signs++)=lit; 
-        *(new_var_signs++)=POSITIVE;
-        replace_clause(NB_CLAUSE,c,pos_in[lit]);
-      }else{
-        lit-=NB_VAR; 
-        *(new_var_signs++)=lit; 
-        *(new_var_signs++)=NEGATIVE;  
-        replace_clause(NB_CLAUSE,c,neg_in[lit]);
-      }
-  }
-  *(new_var_signs)=NONE;
-  clause_state[NB_CLAUSE]=ACTIVE; 
-  clause_length[NB_CLAUSE]=nb;   
-  lit_to_fix[NB_CLAUSE]=NONE; //注意此处需要清空
-  sort_clause(NB_CLAUSE);    
-  NB_CLAUSE++; 
-}
 bool run_rule4(int var0,int *a,int *b){
   int D=findASingleton(b);  //找到singleton  
   if (length_of_clause(D)>MAX_N_SAT) return false;  
