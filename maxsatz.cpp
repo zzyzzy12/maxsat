@@ -87,7 +87,8 @@ typedef unsigned char my_unsigned_type;
 //-------------DEBUG--------------
 #define DEBUG_OPEN_RULE3 true
 #define DEBUG_OPEN_RULE4 false
-#define DEBUG_OPEN_RULE6 false
+#define DEBUG_OPEN_RULE6 true
+#define DEBUG_OPEN_RULE6_1 false
 #define MAX_N_SAT 4
 //--------------------------------
 
@@ -365,9 +366,7 @@ void reset_context(int saved_clause_stack_fill_pointer,int saved_reducedclause_s
 
 int replace_clause(int newclause, int clause_to_replace, int *clauses) { //把clause_to_replace替换成newclause
   int clause, flag=FALSE;
-  int *c=clauses; //  
- // puts("ENTHER"); 
-  //if (clauses==NULL) puts("~~~~");
+  int *c=clauses; //   
   for(clause=*clauses; clause!=NONE; clause=*(++clauses)) {
     if (clause==clause_to_replace) { 
       *clauses=newclause;
@@ -1352,6 +1351,7 @@ void create_new_clause(){
   NB_CLAUSE++; 
 }
 int rule3num=0;
+bool valid_in_rule6[tab_variable_size];
 bool rule3(int var){
   if (!DEBUG_OPEN_RULE3) return false;  
   int c1=-1,c2=-1,*clauses=pos_in[var]; 
@@ -1429,7 +1429,7 @@ int findASingleton(int *clauses){
 int rule6num=0;
 int had[tab_variable_size][2]; //0负，1正
 int new_var[tab_variable_size][2]; //纪录新加的clause中包含哪些lit
-int unitnum[tab_variable_size][2]; 
+//int unitnum[tab_variable_size][2]; 
 void rule6_2_clean_clause(int clause){
   int *vars_signs=var_sign[clause],var,sign;
   for (var=*vars_signs;var!=NONE;var=*(vars_signs+=2)){
@@ -1547,11 +1547,11 @@ bool run_rule_6_2(int var0,int *a,int *b,int sign0){
     }else
     if (length_of_clause(clause)>2){  //原rule5的规则,若clause长度为2则只保留x y 
       flagRule6=true; 
-      if (unitnum[var1][1-sign]){  //剩下只有x,y的two-clause,所以可以尝试进入
+     /* if (unitnum[var1][1-sign]){  //剩下只有x,y的two-clause,所以可以尝试进入
         unitnum[var1][1-sign]--;
         assign_value(var0,1-sign0,NONE);   //直接对x赋值
         return true;
-      }
+      }*/
       create_binaryclause(var0,1-sign0,var1,sign,clause,clause); //只保留xy
       rule6_2_clean_clause(clause);
       if (sign0==POSITIVE) nb_neg_clause_of_length2[var0]++; 
@@ -1565,7 +1565,7 @@ bool run_rule_6_2(int var0,int *a,int *b,int sign0){
 }
 bool rule6(int var0){    
   update_nb_of_var_clause(var0);  
-  memset(unitnum,0,sizeof(unitnum)); //纪录每个变量的unit-clause个数
+  /*memset(unitnum,0,sizeof(unitnum)); //纪录每个变量的unit-clause个数
   for (int index=0;index<UNITCLAUSE_STACK_fill_pointer;index++){
      int clause=UNITCLAUSE_STACK[index];
      if (clause_state[clause]==ACTIVE){
@@ -1574,9 +1574,11 @@ bool rule6(int var0){
             if (var_state[var]==ACTIVE)
                unitnum[var][*(vars_signs+1)]++; 
      }
-   }  
-  if (run_rule_6_1(var0,pos_in[var0],neg_in[var0],POSITIVE)) return true;  // x (1,i)
-  if (run_rule_6_1(var0,neg_in[var0],pos_in[var0],NEGATIVE)) return true;  // x (i,1)
+   }  */
+  if (DEBUG_OPEN_RULE6_1){
+    if (run_rule_6_1(var0,pos_in[var0],neg_in[var0],POSITIVE)) return true;  // x (1,i)
+    if (run_rule_6_1(var0,neg_in[var0],pos_in[var0],NEGATIVE)) return true;  // x (i,1)
+  }
   if (run_rule_6_2(var0,pos_in[var0],neg_in[var0],POSITIVE)) return true;  // x (1,i)
   if (run_rule_6_2(var0,neg_in[var0],pos_in[var0],NEGATIVE)) return true;  // x (i,1)
   return false;
@@ -1586,13 +1588,10 @@ int rule2num=0;
 int choose_and_instantiate_variable() {  //所有的var赋值操作都在其中
   int var, nb=0, chosen_var=NONE,cont=0, cont1;  
   int a,b,c,clause;
-  float poid, max_poid = -1.0; 
-  bool run_rule2=true;
+  float poid, max_poid = -1.0;  
   my_type pos2, neg2, flag=0;
   NB_BRANCHE++;    //统计分支个数 
-  A: ;
-  if (run_rule2==true){
-    run_rule2=false;
+  A: ; 
   if (lookahead()==NONE)
     return NONE;
 
@@ -1615,8 +1614,7 @@ int choose_and_instantiate_variable() {  //所有的var赋值操作都在其中
          var_rest_value[var] = NONE;
          var_state[var] = PASSIVE;
          _push(var, VARIABLE_STACK);
-         remove_clauses(var);
-         run_rule2=true;
+         remove_clauses(var); 
          rule2num++;
       }
       else if (get_pos_clause_nb(var) == 0) {
@@ -1625,23 +1623,20 @@ int choose_and_instantiate_variable() {  //所有的var赋值操作都在其中
          var_rest_value[var] = NONE;
          var_state[var] = PASSIVE;
          _push(var, VARIABLE_STACK);  //压进VARIABLE_STACK纪录
-         remove_clauses(var);
-         run_rule2=true;
+         remove_clauses(var); 
          rule2num++;
       } 
       else if (nb_neg_clause_of_length1[var]+NB_EMPTY>=UB) {
          flag++;
          rule2num++;
          if (assign_value(var, FALSE, NONE)==NONE)  //被upperbound限制住了
-            return NONE; 
-         run_rule2=true;
+            return NONE;  
       }
       else if (nb_pos_clause_of_length1[var]+NB_EMPTY>=UB) {
          rule2num++;
          flag++;
          if (assign_value(var, TRUE, NONE)==NONE) //被upperbound限制住了
-             return NONE;
-         run_rule2=true;
+             return NONE; 
       }
       else if (nb_neg_clause_of_length1[var]>=
          nb_pos_clause_of_length1[var]+
@@ -1650,8 +1645,7 @@ int choose_and_instantiate_variable() {  //所有的var赋值操作都在其中
          flag++;
          rule2num++;
          if (assign_value(var, FALSE, NONE)==NONE) //被upperbound限制住了
-             return NONE;
-         run_rule2=true;
+             return NONE; 
       }
       else if (nb_pos_clause_of_length1[var]>=
          nb_neg_clause_of_length1[var]+
@@ -1660,12 +1654,10 @@ int choose_and_instantiate_variable() {  //所有的var赋值操作都在其中
          flag++;
          rule2num++;
          if (assign_value(var, TRUE, NONE)==NONE) //被upperbound限制住了
-             return NONE;
-         run_rule2=true;
+             return NONE; 
       }
       else if (rule3(var)){
-         rule3num++;
-         run_rule2=true;
+         rule3num++; 
       } 
       else{
          if (nb_neg_clause_of_length1[var]>nb_pos_clause_of_length1[var]) { //记下较少的unit个数
@@ -1675,8 +1667,7 @@ int choose_and_instantiate_variable() {  //所有的var赋值操作都在其中
              cont+=nb_neg_clause_of_length1[var];  
       } 
     }
-  } 
-  }
+  }  
   if (DEBUG_OPEN_RULE6){
     bool rule6flag=false;
     for (int var=0;var<NB_VAR;var++)
