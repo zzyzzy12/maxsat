@@ -80,9 +80,10 @@ typedef unsigned char my_unsigned_type;
 #define PASSIVE 0
 #define ACTIVE 1
 //-------------DEBUG--------------
-#define DEBUG_OPEN_RULE3 true
-#define DEBUG_OPEN_RULE6 true
+#define DEBUG_OPEN_RULE3 false
+#define DEBUG_OPEN_RULE6 false
 #define DEBUG_OPEN_RULE6_1 false
+#define DEBUG_RECUR true
 #define MAX_N_SAT 4
 int needRecur[tab_variable_size];  //用于标记是否需要递推确定值 
 //--------------------------------
@@ -1348,13 +1349,15 @@ bool rule3(int var,int c1,int c2,int tp){
   var_current_value[var] = NEGATIVE; // 随意赋值
   var_rest_value[var] = NONE;
   //-----------------构造递推关系
-  recur_num[var]=0;
-  if (tp==1) vars_signs=var_sign[c2];
-        else vars_signs=var_sign[c1];
-  for (int lit=*vars_signs;lit!=NONE;lit=*(vars_signs+=2)){
-      if (var_state[lit]!=ACTIVE) continue;
-      if (*(vars_signs+1)==POSITIVE) recur[var][recur_num[var]++]=lit;        //为正
-                                else recur[var][recur_num[var]++]=lit+NB_VAR;  //为负
+  if (DEBUG_RECUR){ 
+      recur_num[var]=0;
+      if (tp==1) vars_signs=var_sign[c2];
+            else vars_signs=var_sign[c1];
+      for (int lit=*vars_signs;lit!=NONE;lit=*(vars_signs+=2)){
+        if (var_state[lit]!=ACTIVE) continue;
+        if (*(vars_signs+1)==POSITIVE) recur[var][recur_num[var]++]=lit;        //为正
+                                  else recur[var][recur_num[var]++]=lit+NB_VAR;  //为负
+      }
   }
   //x=C2
   //-----------------构造递推关系 
@@ -1697,11 +1700,16 @@ int get_current_value(int var){
   if (needRecur[var]==1) return var_current_value[var]=NEGATIVE;
                    else  return var_current_value[var]=POSITIVE;
 }
+void get_current_value1(int var){
+
+}
 void update_current_value(){
   for (int var=0;var<NB_VAR;var++)
      if (needRecur[var]>0) var_current_value[var]=DONE;
-  for (int var=0;var<NB_VAR;var++)
-    get_current_value(var);
+  for (int var=0;var<NB_VAR;var++){
+     if (DEBUG_RECUR) get_current_value(var);
+                 else get_current_value1(var);
+  }
 } 
 int dpl() {
   int var, nb;
@@ -1715,8 +1723,9 @@ int dpl() {
        nb=verify_solution(var_current_value); //验证解  
        if (nb!=NB_EMPTY) printf("problem nb...");
        printf("o %d\n", UB); //输出upper bound
-       for (var = 0; var < NB_VAR; var++)
+       for (var = 0; var < NB_VAR; var++){
            var_best_value[var] = var_current_value[var]; //把解纪录下来
+       }
        while (backtracking()==NONE); //把backtracking做到不能做
        if (VARIABLE_STACK_fill_pointer==0) break; //可以都处理完 break
       }
@@ -1783,7 +1792,7 @@ int main(int argc, char *argv[]) {
   //-----输出-----
   endtime = clock();
 
-  printf("\ns OPTIMUM FOUND\nc Optimal Solution (minimum number of unsatisfied clauses) = %d\n", UB);
+  printf("s OPTIMUM FOUND\nc Optimal Solution (minimum number of unsatisfied clauses) = %d\n", UB);
   printf("v");
   for (i = 0; i < NB_VAR; i++) {
     if (var_best_value[i] == FALSE) //解纪录在var_best_value中
