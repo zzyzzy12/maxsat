@@ -43,8 +43,8 @@ typedef unsigned char my_unsigned_type;
 /* the tables of variables and clauses are statically allocated. Modify the
    parameters tab_variable_size and tab_clause_size before compilation if
    necessary */
-#define tab_variable_size  2000   //原始的是20000
-#define tab_clause_size 4000   //原始的是40000
+#define tab_variable_size  20000   //原始的是20000
+#define tab_clause_size 40000   //原始的是40000
 #define tab_unitclause_size \
  ((tab_clause_size/4<2000) ? 2000 : tab_clause_size/4)
 #define my_tab_variable_size \
@@ -76,9 +76,10 @@ typedef unsigned char my_unsigned_type;
 #define PASSIVE 0
 #define ACTIVE 1
 //-------------DEBUG--------------
+#define MAX_LIT_NUM 30
 #define DEBUG_OPEN_RULE3 true
 #define DEBUG_OPEN_RULE6 true
-#define DEBUG_OPEN_RULE6_1 false
+#define DEBUG_OPEN_RULE6_1 true
 #define DEBUG_RECUR true
 #define MAX_N_SAT 4
 int needRecur[tab_variable_size];  //用于标记是否需要递推确定值 
@@ -146,12 +147,12 @@ int reason[tab_variable_size];
 int REASON_STACK[tab_variable_size];
 int REASON_STACK_fill_pointer=0;
 int recur_num[tab_variable_size]; // 递推的长度
-int recur[tab_variable_size][30]; // 新加的...为了做递推
+int recur[tab_variable_size][MAX_LIT_NUM]; // 新加的...为了做递推
 int MY_UNITCLAUSE_STACK[tab_variable_size];
 int MY_UNITCLAUSE_STACK_fill_pointer=0;
 int CANDIDATE_LITERALS[2*tab_variable_size];
 int CANDIDATE_LITERALS_fill_pointer=0;
-int NEW_CLAUSES[tab_clause_size][30];  //大小注意
+int NEW_CLAUSES[tab_clause_size][MAX_LIT_NUM];  //大小注意
 int NEW_CLAUSES_fill_pointer=0;
 int lit_to_fix[tab_clause_size];
 int *SAVED_CLAUSE_POSITIONS[tab_clause_size];
@@ -1389,7 +1390,7 @@ bool rule3(int var,int c1,int c2,int tp){
 //--------------rule 3-----------------
 //-------------------------------rule 6---------------------------------
 //----valid的变量才进入操作----
-int rule6num=0;
+int rule6_1num=0,rule6_2num=0;
 int had[tab_variable_size][2]; //0负，1正
 int new_var[tab_variable_size][2]; //纪录新加的clause中包含哪些lit
 bool run_rule_6_1(int var0,int D,int *b,int sign0){
@@ -1438,7 +1439,7 @@ bool run_rule_6_1(int var0,int D,int *b,int sign0){
       lit_to_fix[NB_CLAUSE]=NONE; 
       _push(clause, CLAUSE_STACK); clause_state[clause]=PASSIVE;
       NB_CLAUSE++;
-      rule6num++;
+      rule6_1num++;
       flagRule6=true;
   }
   return flagRule6;
@@ -1481,7 +1482,7 @@ bool run_rule_6_2(int var0,int D,int *b,int sign0){
     }
     if (sign0==POSITIVE) rule3(var0,D,D1,2);
                     else rule3(var0,D1,D,1);
-    rule6num++;
+    rule6_2num++;
     return true;
   } 
   /*
@@ -1517,7 +1518,7 @@ bool run_rule_6_2(int var0,int D,int *b,int sign0){
       create_binaryclause(var0,1-sign0,var1,sign,clause,clause); //只保留xy
       _push(clause,CLAUSE_STACK), clause_state[clause]=PASSIVE; //删除原clause
       flagRule6=true;
-      rule6num++;
+      rule6_2num++;
     }
   }
   return flagRule6;
@@ -1551,7 +1552,7 @@ int choose_and_instantiate_variable() {  //所有的var赋值操作都在其中
 
   for (clause=0; clause<NB_CLAUSE; clause++)
     lit_to_fix[clause]=NONE;  //将其都清空
-
+ 
   if (DEBUG_OPEN_RULE6) 
     memset(valid_in_rule6,false,sizeof(valid_in_rule6));
 
@@ -1621,16 +1622,7 @@ int choose_and_instantiate_variable() {  //所有的var赋值操作都在其中
              cont+=nb_neg_clause_of_length1[var];
       }
     }
-  }
-  /*
-  if (DEBUG_OPEN_RULE6){
-    bool rule6flag=false;
-    for (int var=0;var<NB_VAR;var++)
-      if (var_state[var]==ACTIVE){
-         if (rule6(var)) rule6flag=true;
-      }
-    if (rule6flag) goto A;
-  } */
+  } 
   if (cont+NB_EMPTY>=UB)
     return NONE;
   for (var = 0; var < NB_VAR; var++) {
@@ -1668,6 +1660,12 @@ int choose_and_instantiate_variable() {  //所有的var赋值操作都在其中
 }
 
 my_type var_best_value[tab_variable_size]; // Best assignment of variables  保存最优解
+void outputNum(){
+  printf("----RULE2: %d----\n",rule2num);
+  printf("----RULE3: %d----\n",rule3num);
+  printf("----RULE6_1: %d----\n",rule6_1num); 
+  printf("----RULE6_2: %d----\n",rule6_2num); 
+}
 int get_current_value(int var){
   if (var_current_value[var]!=DONE) return var_current_value[var]; 
   for (int index=0;index<recur_num[var];index++){
@@ -1709,7 +1707,8 @@ int dpl() {
        if (nb!=NB_EMPTY) printf("problem nb...");
        printf("o %d\n", UB); //输出upper bound
        for (var = 0; var < NB_VAR; var++){
-           var_best_value[var] = var_current_value[var]; //把解纪录下来
+           var_best_value[var] = var_current_value[var]; //把解纪录下来 
+           outputNum();
        }
        while (backtracking()==NONE); //把backtracking做到不能做
        if (VARIABLE_STACK_fill_pointer==0) break; //可以都处理完 break
@@ -1792,12 +1791,10 @@ int main(int argc, char *argv[]) {
 	  NB_BRANCHE, NB_BACK,
 	  UB, NB_VAR, INIT_NB_CLAUSE, NB_CLAUSE-INIT_NB_CLAUSE);
   printf("maxsatz14bis+fl %s %5.3f %ld %ld %d %d %d %d\n",
-	 saved_input_file, ((double)(endtime-begintime)/CLOCKS_PER_SEC),
-	 NB_BRANCHE, NB_BACK,
-	 UB, NB_VAR, INIT_NB_CLAUSE, NB_CLAUSE-INIT_NB_CLAUSE);
-  printf("----RULE2: %d----\n",rule2num);
-  printf("----RULE3: %d----\n",rule3num);
-  printf("----RULE6: %d----\n",rule6num); 
+	saved_input_file, ((double)(endtime-begintime)/CLOCKS_PER_SEC),
+	NB_BRANCHE, NB_BACK,
+	UB, NB_VAR, INIT_NB_CLAUSE, NB_CLAUSE-INIT_NB_CLAUSE);
+  outputNum();
   printf("verify_solution: %d\n",verify_solution(var_best_value));
   fclose(fp_time); 
   return TRUE;
