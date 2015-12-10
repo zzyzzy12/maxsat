@@ -1524,14 +1524,28 @@ bool run_rule_6_2(int var0,int D,int *b,int sign0){
   return flagRule6;
 }
 bool rule6(int var0){
+  int flag=true;
   if (!DEBUG_OPEN_RULE6) return false;
   if (!valid_in_rule6[var0]) return false;
   if (DEBUG_OPEN_RULE6_1){
-    if (pos_num==1 && run_rule_6_1(var0,pos_clause[0],neg_clause,POSITIVE)) return true;  // x (1,i)
-    if (neg_num==1 && run_rule_6_1(var0,neg_clause[0],pos_clause,NEGATIVE)) return true;  // x (i,1)
+    if (pos_num==1){
+         if (run_rule_6_1(var0,pos_clause[0],neg_clause,POSITIVE)) return true;  // x (1,i)
+         flag=false;
+    }
+    if (neg_num==1){
+         if (run_rule_6_1(var0,neg_clause[0],pos_clause,NEGATIVE)) return true;  // x (i,1)
+         flag=false;
+    }
   } 
-  if (pos_num==1 && run_rule_6_2(var0,pos_clause[0],neg_clause,POSITIVE)) return true;  // x (1,i)
-  if (neg_num==1 && run_rule_6_2(var0,neg_clause[0],pos_clause,NEGATIVE)) return true;  // x (i,1)
+  if (pos_num==1){
+    if (run_rule_6_2(var0,pos_clause[0],neg_clause,POSITIVE)) return true;  // x (1,i)
+    flag=false;
+  }
+  if (neg_num==1){
+    if (run_rule_6_2(var0,neg_clause[0],pos_clause,NEGATIVE)) return true;  // x (i,1)
+    flag=false;
+  }
+  valid_in_rule6[var0]=flag;
   return false;
 }
 //-------------------------------rule 6---------------------------------
@@ -1552,9 +1566,6 @@ int choose_and_instantiate_variable() {  //所有的var赋值操作都在其中
 
   for (clause=0; clause<NB_CLAUSE; clause++)
     lit_to_fix[clause]=NONE;  //将其都清空
- 
-  if (DEBUG_OPEN_RULE6) 
-    memset(valid_in_rule6,false,sizeof(valid_in_rule6));
 
   for (var = 0; var < NB_VAR; var++) {
     if (var_state[var] == ACTIVE) {
@@ -1697,6 +1708,7 @@ void update_current_value(){
 int dpl() {
   int var, nb;
   clock_t nowtime;
+  memset(valid_in_rule6,true,sizeof(valid_in_rule6));
   do {
     nowtime=clock();
     if (((double)(nowtime-begintime)/CLOCKS_PER_SEC)>3600) return -1;  //超时限制 
