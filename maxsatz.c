@@ -1532,6 +1532,30 @@ bool rule6(int var0){
   return false;
 }
 //-------------------------------rule 6---------------------------------
+//-------------------------------rule 9---------------------------------
+int rule9(int var0,int *C){
+  int D=-1,*clauses=C; 
+  for (int clause=*clauses;clause!=NONE;clause=*(++clauses)){
+     if (clause_state[clause]!=ACTIVE) continue;
+     if (D==-1) D=clause;
+           else return TRUE; 
+  }
+  if (D==-1) return TRUE;
+  printf("X%d\n",var0);
+  outputClause(var0);
+  int *vars_signs=var_sign[D];
+  for (int var=*vars_signs;var!=NONE;var=*(vars_signs+=2)){
+      if (var_state[var]!=ACTIVE || var==var0) continue; 
+      if (*(vars_signs+1)==POSITIVE){
+        if (assign_value(var,NEGATIVE,NONE)==NONE) return NONE; 
+      }
+        else{
+        if (assign_value(var,POSITIVE,NONE)==NONE) return NONE;
+      }
+  }
+  return TRUE;
+}
+//-------------------------------rule 9---------------------------------
 int rule2num=0; 
 int choose_and_instantiate_variable() {  //所有的var赋值操作都在其中
   int var, nb=0, chosen_var=NONE,cont=0, cont1;
@@ -1781,20 +1805,20 @@ int main(int argc, char *argv[]) {
   }
   printf(" 0\n");
   printf("NB_MONO= %ld, NB_UNIT= %ld, NB_BRANCHE= %ld, NB_BACK= %ld \n",
-	 NB_MONO, NB_UNIT, NB_BRANCHE, NB_BACK);
+   NB_MONO, NB_UNIT, NB_BRANCHE, NB_BACK);
 
   printf ("Program terminated in %5.3f seconds.\n",
-	  ((double)(endtime-begintime)/CLOCKS_PER_SEC));
+    ((double)(endtime-begintime)/CLOCKS_PER_SEC));
 
   fp_time = fopen("timetable", "a");
   fprintf(fp_time, "maxsatz14bis+fl %s %5.3f %ld %ld %d %d %d %d\n",
-	  saved_input_file, ((double)(endtime-begintime)/CLOCKS_PER_SEC),
-	  NB_BRANCHE, NB_BACK,
-	  UB, NB_VAR, INIT_NB_CLAUSE, NB_CLAUSE-INIT_NB_CLAUSE);
+    saved_input_file, ((double)(endtime-begintime)/CLOCKS_PER_SEC),
+    NB_BRANCHE, NB_BACK,
+    UB, NB_VAR, INIT_NB_CLAUSE, NB_CLAUSE-INIT_NB_CLAUSE);
   printf("maxsatz14bis+fl %s %5.3f %ld %ld %d %d %d %d\n",
-	saved_input_file, ((double)(endtime-begintime)/CLOCKS_PER_SEC),
-	NB_BRANCHE, NB_BACK,
-	UB, NB_VAR, INIT_NB_CLAUSE, NB_CLAUSE-INIT_NB_CLAUSE);
+  saved_input_file, ((double)(endtime-begintime)/CLOCKS_PER_SEC),
+  NB_BRANCHE, NB_BACK,
+  UB, NB_VAR, INIT_NB_CLAUSE, NB_CLAUSE-INIT_NB_CLAUSE);
   outputNum();
   printf("verify_solution: %d\n",verify_solution(var_best_value));
   fclose(fp_time); 
