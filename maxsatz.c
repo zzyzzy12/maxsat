@@ -1393,6 +1393,7 @@ bool rule3(int var,int c1,int c2,int tp){
 int rule6_1num=0,rule6_2num=0;
 int had[tab_variable_size][2]; //0负，1正 
 bool run_rule_6_1(int var0,int D,int *b,int sign0){ 
+  if (!valid_in_rule6[D]) return false;
   bool flagRule6=false,flagRule6_1; 
   int *vars_signs0=var_sign[D];
   memset(had,false,sizeof(had));
@@ -1429,6 +1430,7 @@ bool run_rule_6_1(int var0,int D,int *b,int sign0){
 }
 int store_rule_6_2[tab_clause_size][3];
 bool run_rule_6_2(int var0,int D,int *b,int sign0){ 
+  if (!valid_in_rule6[D]) return false; 
   int D1=-1,num,iNum;
   bool flagRule6=false; 
   int *vars_signs0=var_sign[D];
@@ -1467,34 +1469,7 @@ bool run_rule_6_2(int var0,int D,int *b,int sign0){
                     else rule3(var0,D1,D,1);
     rule6_2num++;
     return true;
-  } 
-  /*
-  if (num==iNum){ 
-    for (int index=1;index<=num;index++){ //把这i-1个clause删去...留下最后一个来做rule3
-      int clause=store_rule_6_2[index][0]; 
-      _push(clause,CLAUSE_STACK), clause_state[clause]=PASSIVE;
-    }
-    _push(D,CLAUSE_STACK), clause_state[D]=PASSIVE;
-    _push(var0, VARIABLE_STACK);
-    var_state[var0] = PASSIVE;
-    if (sign0==POSITIVE) needRecur[var0]=2; //标记,需要递推
-                    else needRecur[var0]=1; //标记,需要递推
-    var_current_value[var0] = NEGATIVE; // 随意赋值
-    var_rest_value[var0] = NONE;
-    recur_num[var0]=0;
-    int *vars_signs=var_sign[D]; 
-    for (int lit=*vars_signs;lit!=NONE;lit=*(vars_signs+=2)){
-        if (var_state[lit]!=ACTIVE) continue;
-        if (*(vars_signs+1)==POSITIVE) recur[var0][recur_num[var0]++]=lit;        //为正
-                                  else recur[var0][recur_num[var0]++]=lit+NB_VAR; //为负
-    }
-    rule6num++;
-    return true;    
-  } */
- /* if (num!=0){
-      printf("X%d\n",var0);
-      outputClause(var0);
-  }*/
+  }  
   for (int index=1;index<=num;index++){  //那就拿出来一个个处理
     int clause=store_rule_6_2[index][0],var1=store_rule_6_2[index][1],sign=store_rule_6_2[index][2]; 
       if (clause_length[clause]>2){
@@ -1509,7 +1484,7 @@ bool run_rule_6_2(int var0,int D,int *b,int sign0){
 bool rule6(int var0){
   int flag=true;
   if (!DEBUG_OPEN_RULE6) return false;
-  if (!valid_in_rule6[var0]) return false;
+ // if (!valid_in_rule6[var0]) return false;
   if (DEBUG_OPEN_RULE6_1){
     if (pos_num==1){
          if (run_rule_6_1(var0,pos_clause[0],neg_clause,POSITIVE)) return true;  // x (1,i)
@@ -1528,7 +1503,7 @@ bool rule6(int var0){
     if (run_rule_6_2(var0,neg_clause[0],pos_clause,NEGATIVE)) return true;  // x (i,1)
     flag=false;
   }
-  valid_in_rule6[var0]=flag;
+  //valid_in_rule6[var0]=flag;
   return false;
 }
 //-------------------------------rule 6---------------------------------
@@ -1713,10 +1688,24 @@ void update_current_value(){
                  else get_current_value1(var);
   }
 } 
+bool has_lit[tab_variable_size];
 int dpl() {
   int var, nb;
   clock_t nowtime;
-  memset(valid_in_rule6,true,sizeof(valid_in_rule6));
+  memset(valid_in_rule6,false,sizeof(valid_in_rule6));
+  for (int clause=0;clause<NB_CLAUSE;clause++){
+    int *vars_signs=var_sign[clause];
+    memset(has_lit,false,sizeof(has_lit));
+    for (int var=*vars_signs;var!=NONE;var=*(vars_signs+=2))
+      has_lit[var]=true;
+    for (int c=0;c<NB_CLAUSE;c++){
+      if (c==clause) continue;
+      int *vars_signs=var_sign[c],num=0;
+      for (int var=*vars_signs;var!=NONE;var=*(vars_signs+=2))
+         if (has_lit[var]) num++;
+      if (num>=2) valid_in_rule6[clause]=true;
+    }
+  }
   do {
     nowtime=clock();
     if (((double)(nowtime-begintime)/CLOCKS_PER_SEC)>10000) return -1;  //超时限制 
