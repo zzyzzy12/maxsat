@@ -21,7 +21,7 @@ NB_EMPTY by 1 and add clause x or y.
 #include <stdlib.h>
 #include <time.h>
 #include <iostream>
-#include <queue>
+#include <set>
 #include <sys/times.h>
 #include <sys/types.h>
 #include <limits.h>
@@ -1395,9 +1395,7 @@ bool rule3(int var,int c1,int c2,int tp){
 int rule6_1num=0,rule6_2num=0;
 int had_var[tab_variable_size][2]; //0负，1正 
 bool had_clause[tab_clause_size]; 
-//int conflict_lit[tab_variable_size];
 bool run_rule_6_1(int var0,int D,int *b,int sign0){ 
-//  if (!valid_in_rule6[D]) return false;
   bool flagRule6=false,flagRule6_1; 
   int *vars_signs0=var_sign[D];
   memset(had_var,false,sizeof(had_var));
@@ -1433,8 +1431,9 @@ bool run_rule_6_1(int var0,int D,int *b,int sign0){
   return flagRule6;
 }
 int store_rule_6_2[30][3]; 
+set<int> Mset[tab_variable_size];
 bool run_rule_6_2(int var0,int D,int *b,int sign0){ 
- // if (!valid_in_rule6[D]) return false; 
+  if (Mset[var0].size()==0) return false;
   int num,iNum,y,sign;
   bool flagRule6=false; 
   int *vars_signs0=var_sign[D]; 
@@ -1448,6 +1447,7 @@ bool run_rule_6_2(int var0,int D,int *b,int sign0){
   num=0;
   for (int var=*vars_signs0;var!=NONE;var=*(vars_signs0+=2)){
       if (var==var0 || var_state[var]!=ACTIVE) continue;
+      if (Mset[var0].find(var)==Mset[var0].end()) continue;
       int sign=1-*(vars_signs0+1);
       if (sign==POSITIVE) clauses=pos_in[var];
                      else clauses=neg_in[var];
@@ -1461,6 +1461,7 @@ bool run_rule_6_2(int var0,int D,int *b,int sign0){
           }
   } 
   if (num==iNum-1){
+   // puts("!!!!");
     for (int index=1;index<=num;index++){ //把这i-1个clause删去...留下最后一个来做rule3
       int clause=store_rule_6_2[index][0]; 
       _push(clause,CLAUSE_STACK), clause_state[clause]=PASSIVE;
@@ -1473,22 +1474,26 @@ bool run_rule_6_2(int var0,int D,int *b,int sign0){
     rule6_2num++;
     return true;
   }  
+  
   for (int index=1;index<=num;index++){  //那就拿出来一个个处理
     int clause=store_rule_6_2[index][0],var1=store_rule_6_2[index][1],sign=store_rule_6_2[index][2]; 
       if (clause_length[clause]>2){
       create_binaryclause(var0,1-sign0,var1,sign,clause,clause); //只保留xy
+      if (sign0==POSITIVE) nb_neg_clause_of_length2[var0]++;
+                      else nb_pos_clause_of_length2[var0]++;
+      if (sign==POSITIVE) nb_pos_clause_of_length2[var1]++;
+                      else nb_neg_clause_of_length2[var1]++;
       _push(clause,CLAUSE_STACK), clause_state[clause]=PASSIVE; //删除原clause
       flagRule6=true;
       rule6_2num++;
     }
   }
   return flagRule6;
+ // return false;
 }
 bool rule6(int var0){
   int flag=true;
   if (!DEBUG_OPEN_RULE6) return false;
- // if (var0!=42 && var0!=36 && var0!=67) return false;
- // if (!valid_in_rule6[var0]) return false;
   if (DEBUG_OPEN_RULE6_1){
     if (pos_num==1){
          if (run_rule_6_1(var0,pos_clause[0],neg_clause,POSITIVE)) return true;  // x (1,i)
@@ -1698,14 +1703,31 @@ void update_current_value(){
      if (DEBUG_RECUR) get_current_value(var);
                  else get_current_value1(var);
   }
-}  
+}   
 bool has_lit[tab_variable_size];
 int dpl() {
   int var, nb;
   clock_t nowtime; 
+  for (int var0=0;var0<NB_VAR;var0++){
+     int *clauses=pos_in[var0];
+     Mset[var0].clear();
+     memset(has_lit,0,sizeof(has_lit));
+     for (int clause=*clauses;clause!=NONE;clause=*(++clauses)){
+       int *vars_signs=var_sign[clause];
+       for (int var=*vars_signs;var!=NONE;var=*(vars_signs+=2))
+          if (var!=var0) has_lit[var]=true;
+     }
+     clauses=neg_in[var0];
+     for (int clause=*clauses;clause!=NONE;clause=*(++clauses)){
+       int *vars_signs=var_sign[clause];
+       for (int var=*vars_signs;var!=NONE;var=*(vars_signs+=2))
+          if (has_lit[var]) Mset[var0].insert(var),has_lit[var]=false; //conflict_lit[var0]++,has_lit[var]=false;
+     }     
+     //printf("X%d: %lu\n",var0,Mset[var0].size());
+   }
   do {
     nowtime=clock();
-    if (((double)(nowtime-begintime)/CLOCKS_PER_SEC)>10000) return -1;  //超时限制 
+    if (((double)(nowtime-begintime)/CLOCKS_PER_SEC)>3600) return -1;  //超时限制 
     if (VARIABLE_STACK_fill_pointer==NB_VAR) { //VARIABLE_STACK中元素个数等于样例的变量个数了
        UB=NB_EMPTY;
        update_current_value();
