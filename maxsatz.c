@@ -77,7 +77,7 @@ typedef unsigned char my_unsigned_type;
 #define ACTIVE 1
 //-------------DEBUG--------------
 #define MAX_LIT_NUM 30
-#define DEBUG_OPEN_RULE3 true
+#define DEBUG_OPEN_RULE3 false
 #define DEBUG_OPEN_RULE6 true
 #define DEBUG_OPEN_RULE6_1 true
 #define DEBUG_RECUR true
@@ -1392,6 +1392,7 @@ bool rule3(int var,int c1,int c2,int tp){
 //----valid的变量才进入操作----
 int rule6_1num=0,rule6_2num=0;
 int had[tab_variable_size][2]; //0负，1正 
+int conflict_lit[tab_variable_size];
 bool run_rule_6_1(int var0,int D,int *b,int sign0){ 
   if (!valid_in_rule6[D]) return false;
   bool flagRule6=false,flagRule6_1; 
@@ -1420,7 +1421,7 @@ bool run_rule_6_1(int var0,int D,int *b,int sign0){
         temp_num++;  
       }
       if (!flagRule6_1) continue;  //能否执行rule6.1
-      //-----------run_rule_6_1------------- 
+      //-----------run_rule_6_1-------------  
       _push(clause, CLAUSE_STACK); clause_state[clause]=PASSIVE; 
       create_new_clause();
       rule6_1num++;
@@ -1606,6 +1607,7 @@ int choose_and_instantiate_variable() {  //所有的var赋值操作都在其中
       else if (pos_num==1 && neg_num==1){  
          rule3(var,pos_clause[0],neg_clause[0],1); 
       }else if (rule6(var)){
+         printf("---X%d: %d---\n",var,conflict_lit[var]);
       }
       else{
          if (nb_neg_clause_of_length1[var]>nb_pos_clause_of_length1[var]) { //记下较少的unit个数
@@ -1687,25 +1689,31 @@ void update_current_value(){
      if (DEBUG_RECUR) get_current_value(var);
                  else get_current_value1(var);
   }
-} 
+}  
 bool has_lit[tab_variable_size];
 int dpl() {
   int var, nb;
-  clock_t nowtime;
-  memset(valid_in_rule6,false,sizeof(valid_in_rule6));
-  for (int clause=0;clause<NB_CLAUSE;clause++){
-    int *vars_signs=var_sign[clause];
-    memset(has_lit,false,sizeof(has_lit));
-    for (int var=*vars_signs;var!=NONE;var=*(vars_signs+=2))
-      has_lit[var]=true;
-    for (int c=0;c<NB_CLAUSE;c++){
-      if (c==clause) continue;
-      int *vars_signs=var_sign[c],num=0;
+  clock_t nowtime; 
+  memset(conflict_lit,0,sizeof(conflict_lit));
+  puts("#####################################################");
+  for (int var0=0;var0<NB_VAR;var0++){
+    int *clauses=pos_in[var0];
+    memset(has_lit,0,sizeof(has_lit));
+    for (int clause=*clauses;clause!=NONE;clause=*(++clauses)){
+      int *vars_signs=var_sign[clause];
       for (int var=*vars_signs;var!=NONE;var=*(vars_signs+=2))
-         if (has_lit[var]) num++;
-      if (num>=2) valid_in_rule6[clause]=true;
+         if (var!=var0) has_lit[var]=true;
     }
+    clauses=neg_in[var0];
+    for (int clause=*clauses;clause!=NONE;clause=*(++clauses)){
+      int *vars_signs=var_sign[clause];
+      for (int var=*vars_signs;var!=NONE;var=*(vars_signs+=2))
+         if (has_lit[var]) conflict_lit[var0]++,has_lit[var]=false;
+    }    
+    printf("%d ",conflict_lit[var0]);
   }
+  puts("\n#####################################################");
+  memset(valid_in_rule6,true,sizeof(valid_in_rule6));
   do {
     nowtime=clock();
     if (((double)(nowtime-begintime)/CLOCKS_PER_SEC)>10000) return -1;  //超时限制 
@@ -1750,7 +1758,7 @@ void init() { //初始化数据,都清空
   }
 }
 int main(int argc, char *argv[]) {
- // freopen("output.txt","w",stdout);
+  freopen("output.txt","w",stdout);
   char saved_input_file[WORD_LENGTH];
   int i,  var;
   clock_t endtime;
