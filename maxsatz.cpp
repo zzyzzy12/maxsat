@@ -1322,7 +1322,7 @@ void create_new_clause(){
   NB_CLAUSE++;
 }
 int rule3num=0;
-bool valid_in_rule6[tab_variable_size]; 
+//bool valid_in_rule6[tab_variable_size]; 
 bool inClause[tab_variable_size*2];
 bool rule3(int var,int c1,int c2,int tp){
   if (!DEBUG_OPEN_RULE3) return false; 
@@ -1393,18 +1393,18 @@ bool rule3(int var,int c1,int c2,int tp){
 //-------------------------------rule 6---------------------------------
 //----valid的变量才进入操作----
 int rule6_1num=0,rule6_2num=0;
-int had[tab_variable_size][2]; //0负，1正 
-vector<int> conflict_var[tab_variable_size];
+int had_var[tab_variable_size][2]; //0负，1正 
+bool had_clause[tab_clause_size]; 
 //int conflict_lit[tab_variable_size];
 bool run_rule_6_1(int var0,int D,int *b,int sign0){ 
 //  if (!valid_in_rule6[D]) return false;
   bool flagRule6=false,flagRule6_1; 
   int *vars_signs0=var_sign[D];
-  memset(had,false,sizeof(had));
+  memset(had_var,false,sizeof(had_var));
   for (int var1=*(vars_signs0);var1!=NONE;var1=*(vars_signs0+=2)){
       if (var_state[var1]!=ACTIVE) continue;
       if (var1==var0) continue;
-      had[var1][*(vars_signs0+1)]=true;
+      had_var[var1][*(vars_signs0+1)]=true;
   }
   int *clauses=b; //i个clause一个个看
   for (int clause=*clauses;clause!=NONE;clause=*(++clauses)){  //扫描i个clause
@@ -1414,7 +1414,7 @@ bool run_rule_6_1(int var0,int D,int *b,int sign0){
       for (int var1=*vars_signs0;var1!=NONE;var1=*(vars_signs0+=2)){
         if (var_state[var1]!=ACTIVE) continue;
         int sign=*(vars_signs0+1);
-        if (had[var1][sign]){
+        if (had_var[var1][sign]){
             flagRule6_1=true; //可以做rule6.1
             continue;
         }
@@ -1432,54 +1432,42 @@ bool run_rule_6_1(int var0,int D,int *b,int sign0){
   }
   return flagRule6;
 }
-int store_rule_6_2[30][3];
-bool conflict[tab_variable_size];
+int store_rule_6_2[30][3]; 
 bool run_rule_6_2(int var0,int D,int *b,int sign0){ 
  // if (!valid_in_rule6[D]) return false; 
-  int D1=-1,num,iNum;
+  int num,iNum,y,sign;
   bool flagRule6=false; 
-  int *vars_signs0=var_sign[D];
-  memset(conflict,false,sizeof(conflict));
-  for (int index=0;index<conflict_var[var0].size();index++)
-      conflict[conflict_var[var0][index]]=true;
-  memset(had,false,sizeof(had));
-  num=0;
-  for (int var1=*(vars_signs0);var1!=NONE;var1=*(vars_signs0+=2)){
-      if (var_state[var1]!=ACTIVE || !conflict[var1]) continue;
-      if (var1==var0) continue;
-      num++;
-      had[var1][*(vars_signs0+1)]=true;
-  }
-  if (!num) return false;
- // puts("***************************************");
- // printf("X%d\n",var0);
-//  outputClause(var0);
+  int *vars_signs0=var_sign[D]; 
+  memset(had_clause,false,sizeof(had_clause));  
   int *clauses=b; //i个clause一个个看
-  num=iNum=0; //可以做rule6_2规则的个数,先清零
+  iNum=0; //可以做rule6_2规则的个数,先清零
   for (int clause=*clauses;clause!=NONE;clause=*(++clauses)){  //扫描i个clause 
-      int var1;
       iNum++;
-      vars_signs0=var_sign[clause];
-      for (var1=*vars_signs0;var1!=NONE;var1=*(vars_signs0+=2)){
-          if (var_state[var1]!=ACTIVE) continue;  
-          int sign=*(vars_signs0+1);
-          if (had[var1][1-sign]){ //进入rule6.2 
-            num++;
-            store_rule_6_2[num][0]=clause;
-            store_rule_6_2[num][1]=var1; 
-            store_rule_6_2[num][2]=sign;
-         //   printf("(%d,%d,%d) ",clause,var1,sign);
-            break; 
+      had_clause[clause]=true;
+  }
+  num=0;
+  for (int var=*vars_signs0;var!=NONE;var=*(vars_signs0+=2)){
+      if (var==var0 || var_state[var]!=ACTIVE) continue;
+      int sign=1-*(vars_signs0+1);
+      if (sign==POSITIVE) clauses=pos_in[var];
+                     else clauses=neg_in[var];
+      for (int clause=*clauses;clause!=NONE;clause=*(++clauses))
+          if (had_clause[clause]){
+              num++;
+              store_rule_6_2[num][0]=clause;
+              store_rule_6_2[num][1]=var; 
+              store_rule_6_2[num][2]=sign;             
+              had_clause[clause]=false;
           }
-      }
-      if (var1==NONE) D1=clause; //小心处理
   } 
- // puts("\n***************************************");
   if (num==iNum-1){
     for (int index=1;index<=num;index++){ //把这i-1个clause删去...留下最后一个来做rule3
       int clause=store_rule_6_2[index][0]; 
       _push(clause,CLAUSE_STACK), clause_state[clause]=PASSIVE;
     }
+    int D1;
+    clauses=b;
+    for (D1=*clauses;!had_clause[D1];D1=*(++clauses)); 
     if (sign0==POSITIVE) rule3(var0,D,D1,2);
                     else rule3(var0,D1,D,1);
     rule6_2num++;
@@ -1512,11 +1500,17 @@ bool rule6(int var0){
     }
   } 
   if (pos_num==1){
-    if (run_rule_6_2(var0,pos_clause[0],neg_clause,POSITIVE)) return true;  // x (1,i)
+    if (run_rule_6_2(var0,pos_clause[0],neg_clause,POSITIVE)) {
+       // puts("!!!!");
+        return true;  // x (1,i)
+    }
     flag=false;
   }
   if (neg_num==1){
-    if (run_rule_6_2(var0,neg_clause[0],pos_clause,NEGATIVE)) return true;  // x (i,1)
+    if (run_rule_6_2(var0,neg_clause[0],pos_clause,NEGATIVE)) {
+       // puts("!!!!");
+        return true;  // x (i,1)
+    }
     flag=false;
   }
   //valid_in_rule6[var0]=flag;
@@ -1709,27 +1703,6 @@ bool has_lit[tab_variable_size];
 int dpl() {
   int var, nb;
   clock_t nowtime; 
- // memset(conflict_lit,0,sizeof(conflict_lit));
- // puts("#####################################################");
-  for (int var0=0;var0<NB_VAR;var0++){
-    int *clauses=pos_in[var0];
-    conflict_var[var0].clear();
-    memset(has_lit,0,sizeof(has_lit));
-    for (int clause=*clauses;clause!=NONE;clause=*(++clauses)){
-      int *vars_signs=var_sign[clause];
-      for (int var=*vars_signs;var!=NONE;var=*(vars_signs+=2))
-         if (var!=var0) has_lit[var]=true;
-    }
-    clauses=neg_in[var0];
-    for (int clause=*clauses;clause!=NONE;clause=*(++clauses)){
-      int *vars_signs=var_sign[clause];
-      for (int var=*vars_signs;var!=NONE;var=*(vars_signs+=2))
-         if (has_lit[var]) conflict_var[var0].push_back(var),has_lit[var]=false; //conflict_lit[var0]++,has_lit[var]=false;
-    }    
-   // printf("%d ",conflict_lit[var0]);
-  }
- // puts("\n#####################################################");
- // memset(valid_in_rule6,true,sizeof(valid_in_rule6));
   do {
     nowtime=clock();
     if (((double)(nowtime-begintime)/CLOCKS_PER_SEC)>10000) return -1;  //超时限制 
