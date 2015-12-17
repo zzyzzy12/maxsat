@@ -21,7 +21,7 @@ NB_EMPTY by 1 and add clause x or y.
 #include <stdlib.h>
 #include <time.h>
 #include <iostream>
-#include <set>
+#include <map>
 #include <sys/times.h>
 #include <sys/types.h>
 #include <limits.h>
@@ -79,7 +79,7 @@ typedef unsigned char my_unsigned_type;
 #define ACTIVE 1
 //-------------DEBUG--------------
 #define MAX_LIT_NUM 30
-#define DEBUG_OPEN_RULE3 true
+#define DEBUG_OPEN_RULE3 false
 #define DEBUG_OPEN_RULE6 true
 #define DEBUG_OPEN_RULE6_1 false
 #define DEBUG_RECUR true
@@ -167,6 +167,7 @@ int fixing_clause[2*tab_variable_size];
 int saved_nb_clause[tab_variable_size];
 int saved_saved_clauses[tab_variable_size];
 int saved_new_clauses[tab_variable_size];
+void outputClause(int var);
 clock_t begintime;
 
 #include "input.c"
@@ -278,7 +279,57 @@ void print_values(int nb_var) { //输出解
   fprintf(fp_out, "\n");
   fclose(fp_out);
 }
-
+//-------------------------------rule 9---------------------------------
+int rule9num=0;
+int rule9(int var0,int *C){ 
+  int D=-1,*clauses=C; 
+  for (int clause=*clauses;clause!=NONE;clause=*(++clauses)){
+     if (clause_state[clause]!=ACTIVE) continue;
+     if (D==-1) D=clause;
+           else return TRUE; 
+  }
+  if (D==-1) return TRUE; 
+  printf("D's ID is %d\n",D);
+  outputLit(D);
+  printf("var0's ID is %d\n",var0);
+ // puts("YEAH");
+  if (UB!=1) return false;
+  int *vars_signs=var_sign[D];
+  for (int var=*vars_signs;var!=NONE;var=*(vars_signs+=2)){
+      if (var_state[var]!=ACTIVE || var==var0) continue; 
+        if (*(vars_signs+1)==POSITIVE){
+            printf("X%d: ->  NEGATIVE\n",var);
+        }else{
+            printf("~X%d: -> POSITIVE\n",var);
+        }
+        outputClause(var);
+      if (*(vars_signs+1)==POSITIVE){
+        clauses=pos_in[var];
+        for (int clause=*clauses;clause!=NONE;clause=*(++clauses)){
+          if (clause_state[clause]==ACTIVE)// && clause_length[clause]==1){
+             printf("%d\n",clause_length[clause]);
+            //rule9num++;
+            //return NONE;
+          //}
+        }
+        //if (assign_value(var,NEGATIVE,NONE)==NONE) return NONE; 
+      }//else{
+        {
+        clauses=neg_in[var];
+        for (int clause=*clauses;clause!=NONE;clause=*(++clauses)){
+          if (clause_state[clause]==ACTIVE)// && clause_length[clause]==1){
+            printf("%d\n",clause_length[clause]);
+           // rule9num++;
+           // return NONE;
+          //}
+        }
+        //if (assign_value(var,POSITIVE,NONE)==NONE) return NONE;
+      }
+  }
+ // rule9num++;
+  return TRUE;
+}
+//-------------------------------rule 9---------------------------------
 int backtracking() {  //进行回朔
   int var, index,clause, *position, saved;
 
@@ -312,10 +363,16 @@ int backtracking() {  //进行回朔
       SAVED_CLAUSES_fill_pointer=saved;  //更新SAVED_CLAUSES_fill_pointer
 
       if (NB_EMPTY<UB) { 
-          var_current_value[var] = var_rest_value[var];
-          var_rest_value[var] = NONE;
-          _push(var, VARIABLE_STACK);  // 把var压回去
-          if (reduce_clauses(var)==NONE)  //将包涵var为0的clause中的var删去，在这个过程中可能产生不能满足的clause 会调整UB
+        /*
+         if (var_current_value[var]==NEGATIVE){
+             if (rule9(var,pos_in[var])==NONE) return NONE;
+        }else{
+             if (rule9(var,neg_in[var])==NONE) return NONE;
+        } */
+         var_current_value[var] = var_rest_value[var];
+         var_rest_value[var] = NONE;
+         _push(var, VARIABLE_STACK);  // 把var压回去
+         if (reduce_clauses(var)==NONE)  //将包涵var为0的clause中的var删去，在这个过程中可能产生不能满足的clause 会调整UB
                    return NONE;
          remove_clauses(var);  //把包涵var为1的clause删去
          return TRUE;
@@ -1392,6 +1449,10 @@ bool rule3(int var,int c1,int c2,int tp){
 //--------------rule 3-----------------
 //-------------------------------rule 6---------------------------------
 //----valid的变量才进入操作----
+struct node{
+  int v[2],s[2];
+};
+map<int,node> edge[tab_clause_size];
 int rule6_1num=0,rule6_2num=0;
 int had_var[tab_variable_size][2]; //0负，1正 
 bool had_clause[tab_clause_size]; 
@@ -1430,10 +1491,8 @@ bool run_rule_6_1(int var0,int D,int *b,int sign0){
   }
   return flagRule6;
 }
-int store_rule_6_2[30][3]; 
-set<int> Mset[tab_variable_size];
-bool run_rule_6_2(int var0,int D,int *b,int sign0){ 
-  if (Mset[var0].size()==0) return false;
+int store_rule_6_2[30][3];  
+bool run_rule_6_2(int var0,int D,int *b,int sign0){  
   int num,iNum,y,sign;
   bool flagRule6=false; 
   int *vars_signs0=var_sign[D]; 
@@ -1445,9 +1504,21 @@ bool run_rule_6_2(int var0,int D,int *b,int sign0){
       had_clause[clause]=true;
   }
   num=0;
+  map<int,node>::iterator it;
+  for (it=edge[D].begin();it!=edge[D].end();it++){
+     int clause=it->first,var,sign; 
+     if (!had_clause[clause]) continue;
+     node E=it->second;
+     if (E.v[0]==var0) var=E.v[1],sign=E.s[1];
+                  else var=E.v[0],sign=E.s[0];
+     num++;
+     store_rule_6_2[num][0]=clause;
+     store_rule_6_2[num][1]=var; 
+     store_rule_6_2[num][2]=sign;      
+  }
+  /*
   for (int var=*vars_signs0;var!=NONE;var=*(vars_signs0+=2)){
-      if (var==var0 || var_state[var]!=ACTIVE) continue;
-      if (Mset[var0].find(var)==Mset[var0].end()) continue;
+      if (var==var0 || var_state[var]!=ACTIVE) continue; 
       int sign=1-*(vars_signs0+1);
       if (sign==POSITIVE) clauses=pos_in[var];
                      else clauses=neg_in[var];
@@ -1459,9 +1530,8 @@ bool run_rule_6_2(int var0,int D,int *b,int sign0){
               store_rule_6_2[num][2]=sign;             
               had_clause[clause]=false;
           }
-  } 
-  if (num==iNum-1){
-   // puts("!!!!");
+  } */
+  if (num==iNum-1){ 
     for (int index=1;index<=num;index++){ //把这i-1个clause删去...留下最后一个来做rule3
       int clause=store_rule_6_2[index][0]; 
       _push(clause,CLAUSE_STACK), clause_state[clause]=PASSIVE;
@@ -1522,30 +1592,6 @@ bool rule6(int var0){
   return false;
 }
 //-------------------------------rule 6---------------------------------
-//-------------------------------rule 9---------------------------------
-int rule9(int var0,int *C){
-  int D=-1,*clauses=C; 
-  for (int clause=*clauses;clause!=NONE;clause=*(++clauses)){
-     if (clause_state[clause]!=ACTIVE) continue;
-     if (D==-1) D=clause;
-           else return TRUE; 
-  }
-  if (D==-1) return TRUE;
-  printf("X%d\n",var0);
-  outputClause(var0);
-  int *vars_signs=var_sign[D];
-  for (int var=*vars_signs;var!=NONE;var=*(vars_signs+=2)){
-      if (var_state[var]!=ACTIVE || var==var0) continue; 
-      if (*(vars_signs+1)==POSITIVE){
-        if (assign_value(var,NEGATIVE,NONE)==NONE) return NONE; 
-      }
-        else{
-        if (assign_value(var,POSITIVE,NONE)==NONE) return NONE;
-      }
-  }
-  return TRUE;
-}
-//-------------------------------rule 9---------------------------------
 int rule2num=0; 
 int choose_and_instantiate_variable() {  //所有的var赋值操作都在其中
   int var, nb=0, chosen_var=NONE,cont=0, cont1;
@@ -1675,6 +1721,7 @@ void outputNum(){
   printf("----RULE3: %d----\n",rule3num);
   printf("----RULE6_1: %d----\n",rule6_1num); 
   printf("----RULE6_2: %d----\n",rule6_2num); 
+  printf("----RULE9: %d----\n",rule9num); 
 }
 int get_current_value(int var){
   if (var_current_value[var]!=DONE) return var_current_value[var]; 
@@ -1704,27 +1751,35 @@ void update_current_value(){
                  else get_current_value1(var);
   }
 }   
-bool has_lit[tab_variable_size];
+bool has_lit[tab_variable_size][2];
 int dpl() {
   int var, nb;
-  clock_t nowtime; 
-  for (int var0=0;var0<NB_VAR;var0++){
-     int *clauses=pos_in[var0];
-     Mset[var0].clear();
-     memset(has_lit,0,sizeof(has_lit));
-     for (int clause=*clauses;clause!=NONE;clause=*(++clauses)){
-       int *vars_signs=var_sign[clause];
-       for (int var=*vars_signs;var!=NONE;var=*(vars_signs+=2))
-          if (var!=var0) has_lit[var]=true;
-     }
-     clauses=neg_in[var0];
-     for (int clause=*clauses;clause!=NONE;clause=*(++clauses)){
-       int *vars_signs=var_sign[clause];
-       for (int var=*vars_signs;var!=NONE;var=*(vars_signs+=2))
-          if (has_lit[var]) Mset[var0].insert(var),has_lit[var]=false; //conflict_lit[var0]++,has_lit[var]=false;
-     }     
-     //printf("X%d: %lu\n",var0,Mset[var0].size());
-   }
+  clock_t nowtime;  
+  for (int c1=0;c1<NB_CLAUSE;c1++){ 
+    memset(has_lit,false,sizeof(has_lit)); 
+    edge[c1].clear();
+    int *vars_signs=var_sign[c1];
+    for (int var=*vars_signs;var!=NONE;var=*(vars_signs+=2)){
+       int sign=1-*(vars_signs+1);
+       has_lit[var][sign]=true;
+    }
+    for (int c2=0;c2<NB_CLAUSE;c2++){
+      if (c1==c2) continue;
+      int num=0; 
+      node E;
+      vars_signs=var_sign[c2];
+      for (int var=*vars_signs;var!=NONE;var=*(vars_signs+=2)){
+        int sign=*(vars_signs+1); 
+        if (!has_lit[var][sign]) continue; 
+        E.v[num]=var,E.s[num]=sign;
+        num++;
+        if (num==2){ 
+          edge[c1][c2]=E; 
+          break;
+        }
+      }
+    }
+  }
   do {
     nowtime=clock();
     if (((double)(nowtime-begintime)/CLOCKS_PER_SEC)>3600) return -1;  //超时限制 
@@ -1769,7 +1824,7 @@ void init() { //初始化数据,都清空
   }
 }
 int main(int argc, char *argv[]) {
- // freopen("output.txt","w",stdout);
+  //freopen("output.txt","w",stdout);
   char saved_input_file[WORD_LENGTH];
   int i,  var;
   clock_t endtime;
