@@ -34,7 +34,7 @@ typedef unsigned char my_unsigned_type;
 #define WORD_LENGTH 100
 #define TRUE 1
 #define FALSE 0
-#define NONE -1
+#define NONE -100
 
 #define WEIGHT 4
 #define WEIGHT1 25
@@ -79,8 +79,8 @@ typedef unsigned char my_unsigned_type;
 #define ACTIVE 1
 //-------------DEBUG--------------
 #define MAX_LIT_NUM 30
-#define DEBUG_OPEN_RULE3 false
-#define DEBUG_OPEN_RULE6 true
+#define DEBUG_OPEN_RULE3 true
+#define DEBUG_OPEN_RULE6 false
 #define DEBUG_OPEN_RULE6_1 false
 #define DEBUG_RECUR true
 #define MAX_N_SAT 4
@@ -142,6 +142,7 @@ int REAL_NB_CLAUSE;
 
 long NB_UNIT=1, NB_MONO=0, NB_BRANCHE=0, NB_BACK = 0;
 int NB_EMPTY=0, UB;
+clock_t rule6time1=0,rule6time2=0;
 
 #define NO_CONFLICT -3
 #define NO_REASON -3
@@ -1339,6 +1340,8 @@ bool judgeClauseAndVar(){
 //--------------rule 3----------------- 
 int temp_clause[tab_variable_size*2][2];
 int temp_num; 
+bool valid_in_rule6[tab_variable_size]; 
+bool valid_in_clause[tab_clause_size];
 void outputLit(int c){
   int *vars_signs=var_sign[c];
   for (int var=*vars_signs;var!=NONE;var=*(vars_signs+=2)){
@@ -1376,10 +1379,10 @@ void create_new_clause(){
   clause_length[NB_CLAUSE]=nb;
   lit_to_fix[NB_CLAUSE]=NONE; //注意此处需要清空 
   if (nb==1) _push(NB_CLAUSE, UNITCLAUSE_STACK);  
+  valid_in_clause[NB_CLAUSE]=true;
   NB_CLAUSE++;
 }
 int rule3num=0;
-//bool valid_in_rule6[tab_variable_size]; 
 bool inClause[tab_variable_size*2];
 bool rule3(int var,int c1,int c2,int tp){
   if (!DEBUG_OPEN_RULE3) return false; 
@@ -1412,7 +1415,7 @@ bool rule3(int var,int c1,int c2,int tp){
   vars_signs=var_sign[c1];
   for (int lit=*vars_signs;lit!=NONE;lit=*(vars_signs+=2)){
       if (var_state[lit]!=ACTIVE) continue;
-      //valid_in_rule6[lit]=true; // for-rule-6 
+      valid_in_rule6[lit]=true; // for-rule-6 
       if (*(vars_signs+1)==POSITIVE){
         temp_clause[temp_num][0]=lit;
         temp_clause[temp_num][1]=c1; //0~NB_VAR-1 为正
@@ -1428,7 +1431,7 @@ bool rule3(int var,int c1,int c2,int tp){
   vars_signs=var_sign[c2];
   for (int lit=*vars_signs;lit!=NONE;lit=*(vars_signs+=2)){
       if (var_state[lit]!=ACTIVE) continue; 
-     // valid_in_rule6[lit]=true; // for-rule-6
+      valid_in_rule6[lit]=true; // for-rule-6
       if (*(vars_signs+1)==POSITIVE){
         if (inClause[lit]) continue; 
         temp_clause[temp_num][0]=lit;
@@ -1443,7 +1446,7 @@ bool rule3(int var,int c1,int c2,int tp){
         if (inClause[lit]) return true;
       }
   } 
-  create_new_clause(); 
+  create_new_clause();
   return true;
 }
 //--------------rule 3-----------------
@@ -1493,6 +1496,7 @@ bool run_rule_6_1(int var0,int D,int *b,int sign0){
 }
 int store_rule_6_2[30][3];  
 bool run_rule_6_2(int var0,int D,int *b,int sign0){  
+  clock_t begintime=clock();
   int num,iNum,y,sign;
   bool flagRule6=false; 
   int *vars_signs0=var_sign[D]; 
@@ -1504,6 +1508,7 @@ bool run_rule_6_2(int var0,int D,int *b,int sign0){
       had_clause[clause]=true;
   }
   num=0;
+  /*
   map<int,node>::iterator it;
   for (it=edge[D].begin();it!=edge[D].end();it++){
      int clause=it->first,var,sign; 
@@ -1515,8 +1520,8 @@ bool run_rule_6_2(int var0,int D,int *b,int sign0){
      store_rule_6_2[num][0]=clause;
      store_rule_6_2[num][1]=var; 
      store_rule_6_2[num][2]=sign;      
-  }
-  /*
+  }*/
+  
   for (int var=*vars_signs0;var!=NONE;var=*(vars_signs0+=2)){
       if (var==var0 || var_state[var]!=ACTIVE) continue; 
       int sign=1-*(vars_signs0+1);
@@ -1530,7 +1535,9 @@ bool run_rule_6_2(int var0,int D,int *b,int sign0){
               store_rule_6_2[num][2]=sign;             
               had_clause[clause]=false;
           }
-  } */
+  }  
+  rule6time1+=clock()-begintime;
+  begintime=clock();
   if (num==iNum-1){ 
     for (int index=1;index<=num;index++){ //把这i-1个clause删去...留下最后一个来做rule3
       int clause=store_rule_6_2[index][0]; 
@@ -1541,13 +1548,15 @@ bool run_rule_6_2(int var0,int D,int *b,int sign0){
     for (D1=*clauses;!had_clause[D1];D1=*(++clauses)); 
     if (sign0==POSITIVE) rule3(var0,D,D1,2);
                     else rule3(var0,D1,D,1);
-    rule6_2num++;
+    rule6_2num++; 
+    rule6time2+=clock()-begintime;
     return true;
   }  
   
   for (int index=1;index<=num;index++){  //那就拿出来一个个处理
     int clause=store_rule_6_2[index][0],var1=store_rule_6_2[index][1],sign=store_rule_6_2[index][2]; 
       if (clause_length[clause]>2){
+      //outputLit(clause);
       create_binaryclause(var0,1-sign0,var1,sign,clause,clause); //只保留xy
       if (sign0==POSITIVE) nb_neg_clause_of_length2[var0]++;
                       else nb_pos_clause_of_length2[var0]++;
@@ -1558,12 +1567,14 @@ bool run_rule_6_2(int var0,int D,int *b,int sign0){
       rule6_2num++;
     }
   }
+  rule6time2+=clock()-begintime;
   return flagRule6;
  // return false;
 }
 bool rule6(int var0){
   int flag=true;
   if (!DEBUG_OPEN_RULE6) return false;
+  if (!valid_in_rule6[var0]) return false; 
   if (DEBUG_OPEN_RULE6_1){
     if (pos_num==1){
          if (run_rule_6_1(var0,pos_clause[0],neg_clause,POSITIVE)) return true;  // x (1,i)
@@ -1588,7 +1599,7 @@ bool rule6(int var0){
     }
     flag=false;
   }
-  //valid_in_rule6[var0]=flag;
+  valid_in_rule6[var0]=flag;
   return false;
 }
 //-------------------------------rule 6---------------------------------
@@ -1598,8 +1609,7 @@ int choose_and_instantiate_variable() {  //所有的var赋值操作都在其中
   int a,b,c,clause;
   float poid, max_poid = -1.0;
   my_type pos2, neg2, flag=0;
-  NB_BRANCHE++;    //统计分支个数
-  //A: ;
+  NB_BRANCHE++;    //统计分支个数 
   if (lookahead()==NONE)
     return NONE;
 
@@ -1722,6 +1732,8 @@ void outputNum(){
   printf("----RULE6_1: %d----\n",rule6_1num); 
   printf("----RULE6_2: %d----\n",rule6_2num); 
   printf("----RULE9: %d----\n",rule9num); 
+  printf("----Rule6time1: %lus---\n",rule6time1/CLOCKS_PER_SEC);
+  printf("----Rule6time2: %lus---\n",rule6time2/CLOCKS_PER_SEC);
 }
 int get_current_value(int var){
   if (var_current_value[var]!=DONE) return var_current_value[var]; 
@@ -1753,9 +1765,10 @@ void update_current_value(){
 }   
 bool has_lit[tab_variable_size][2];
 int dpl() {
-  int var, nb;
-  clock_t nowtime;  
+  int var, nb, Enum=0;
+  clock_t nowtime;  /*
   for (int c1=0;c1<NB_CLAUSE;c1++){ 
+    //outputLit(c1);
     memset(has_lit,false,sizeof(has_lit)); 
     edge[c1].clear();
     int *vars_signs=var_sign[c1];
@@ -1775,11 +1788,15 @@ int dpl() {
         num++;
         if (num==2){ 
           edge[c1][c2]=E; 
+          Enum++;
           break;
         }
       }
     }
   }
+  printf("Num of edge: %d\n",Enum);*/
+  memset(valid_in_rule6,true,sizeof(valid_in_rule6));
+  memset(valid_in_clause,true,sizeof(valid_in_clause));
   do {
     nowtime=clock();
     if (((double)(nowtime-begintime)/CLOCKS_PER_SEC)>3600) return -1;  //超时限制 
