@@ -1411,7 +1411,7 @@ bool rule3(int var,int c1,int c2,int tp){
   _push(c1, CLAUSE_STACK); clause_state[c1]=PASSIVE;  //删去c1
   _push(c2, CLAUSE_STACK); clause_state[c2]=PASSIVE;  //删去c2
   temp_num=0;
-  memset(inClause,false,sizeof(inClause));
+  memset(inClause,false,sizeof(int)*(NB_VAR+1)*2);
   vars_signs=var_sign[c1];
   for (int lit=*vars_signs;lit!=NONE;lit=*(vars_signs+=2)){
       if (var_state[lit]!=ACTIVE) continue;
@@ -1462,7 +1462,7 @@ bool had_clause[tab_clause_size];
 bool run_rule_6_1(int var0,int D,int *b,int sign0){ 
   bool flagRule6=false,flagRule6_1; 
   int *vars_signs0=var_sign[D];
-  memset(had_var,false,sizeof(had_var));
+  memset(had_var,false,sizeof(int)*(NB_VAR+1)*2);
   for (int var1=*(vars_signs0);var1!=NONE;var1=*(vars_signs0+=2)){
       if (var_state[var1]!=ACTIVE) continue;
       if (var1==var0) continue;
@@ -1495,14 +1495,14 @@ bool run_rule_6_1(int var0,int D,int *b,int sign0){
   return flagRule6;
 }
 int store_rule_6_2[30][3];  
-bool run_rule_6_2(int var0,int D,int *b,int sign0){    
+bool run_rule_6_2(int var0,int D,int *b,int sign0){     
   //if (!valid_in_clause[D]) return false;
   valid_in_clause[D]=false;
   clock_t begintime=clock();
   int D1=-1,num,iNum;
   bool flagRule6=false; 
   int *vars_signs0=var_sign[D]; 
-  memset(had_var,false,sizeof(int)*(NB_CLAUSE+1)); //优化
+  memset(had_var,false,sizeof(int)*(NB_VAR+1)*2); //优化
   num=0;
   for (int var1=*(vars_signs0);var1!=NONE;var1=*(vars_signs0+=2)){
       if (var_state[var1]!=ACTIVE || var1==var0) continue; 
@@ -1515,7 +1515,7 @@ bool run_rule_6_2(int var0,int D,int *b,int sign0){
   for (int clause=*clauses;clause!=NONE;clause=*(++clauses)){  //扫描i个clause 
       int var1;
       iNum++; 
-    
+      
       if (!valid_in_clause[clause]){
           D1=clause;
           continue; 
