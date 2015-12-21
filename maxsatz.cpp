@@ -142,7 +142,7 @@ int REAL_NB_CLAUSE;
 
 long NB_UNIT=1, NB_MONO=0, NB_BRANCHE=0, NB_BACK = 0;
 int NB_EMPTY=0, UB;
-clock_t rule6time1=0,rule6time2=0;
+//clock_t rule6time1=0,rule6time2=0;
 
 #define NO_CONFLICT -3
 #define NO_REASON -3
@@ -1498,7 +1498,7 @@ int store_rule_6_2[30][3];
 bool run_rule_6_2(int var0,int D,int *b,int sign0){     
   //if (!valid_in_clause[D]) return false;
   valid_in_clause[D]=false;
-  clock_t begintime=clock();
+ // clock_t begintime=clock();
   int D1=-1,num,iNum;
   bool flagRule6=false; 
   int *vars_signs0=var_sign[D]; 
@@ -1515,11 +1515,11 @@ bool run_rule_6_2(int var0,int D,int *b,int sign0){
   for (int clause=*clauses;clause!=NONE;clause=*(++clauses)){  //扫描i个clause 
       int var1;
       iNum++; 
-      
+      /*
       if (!valid_in_clause[clause]){
           D1=clause;
           continue; 
-      }
+      }*/
       vars_signs0=var_sign[clause];
       for (var1=*vars_signs0;var1!=NONE;var1=*(vars_signs0+=2)){
           if (var_state[var1]!=ACTIVE) continue;  
@@ -1535,8 +1535,8 @@ bool run_rule_6_2(int var0,int D,int *b,int sign0){
       }
       if (var1==NONE) D1=clause; //小心处理
   }   
-  rule6time1+=clock()-begintime;
-  begintime=clock();
+ // rule6time1+=clock()-begintime;
+ // begintime=clock();
   if (num==iNum-1){ 
     for (int index=1;index<=num;index++){ //把这i-1个clause删去...留下最后一个来做rule3
       int clause=store_rule_6_2[index][0]; 
@@ -1545,7 +1545,7 @@ bool run_rule_6_2(int var0,int D,int *b,int sign0){
     if (sign0==POSITIVE) rule3(var0,D,D1,2);
                     else rule3(var0,D1,D,1);
     rule6_2num++; 
-    rule6time2+=clock()-begintime;
+    //rule6time2+=clock()-begintime;
     return true;
   }   
   for (int index=1;index<=num;index++){  //那就拿出来一个个处理
@@ -1562,12 +1562,14 @@ bool run_rule_6_2(int var0,int D,int *b,int sign0){
       rule6_2num++;
     }
   }
-  rule6time2+=clock()-begintime;
+  //rule6time2+=clock()-begintime;
   return flagRule6;
  // return false;
 }
+//clock_t rule6time=0;
 bool rule6(int var0){
   int flag=true;
+  //clock_t begintime=clock();
   if (!DEBUG_OPEN_RULE6) return false;
   if (!valid_in_rule6[var0]) return false; 
   if (DEBUG_OPEN_RULE6_1){
@@ -1583,6 +1585,7 @@ bool rule6(int var0){
   if (pos_num==1){
     if (run_rule_6_2(var0,pos_clause[0],neg_clause,POSITIVE)) {
        // puts("!!!!");
+        //rule6time+=clock()-begintime;
         return true;  // x (1,i)
     }
     flag=false;
@@ -1590,11 +1593,13 @@ bool rule6(int var0){
   if (neg_num==1){
     if (run_rule_6_2(var0,neg_clause[0],pos_clause,NEGATIVE)) {
        // puts("!!!!");
+      //  rule6time+=clock()-begintime;
         return true;  // x (i,1)
     }
     flag=false;
   }
   valid_in_rule6[var0]=flag;
+  //rule6time+=clock()-begintime;
   return false;
 }
 //-------------------------------rule 6---------------------------------
@@ -1727,8 +1732,9 @@ void outputNum(){
   printf("----RULE6_1: %d----\n",rule6_1num); 
   printf("----RULE6_2: %d----\n",rule6_2num); 
   printf("----RULE9: %d----\n",rule9num); 
-  printf("----Rule6time1: %lus---\n",rule6time1/CLOCKS_PER_SEC);
-  printf("----Rule6time2: %lus---\n",rule6time2/CLOCKS_PER_SEC);
+  //printf("----Rule6time1: %lus---\n",rule6time1/CLOCKS_PER_SEC);
+  //printf("----Rule6time2: %lus---\n",rule6time2/CLOCKS_PER_SEC);
+ // printf("----Rule6time: %lus---\n",rule6time/CLOCKS_PER_SEC);
 }
 int get_current_value(int var){
   if (var_current_value[var]!=DONE) return var_current_value[var]; 
