@@ -80,7 +80,7 @@ typedef unsigned char my_unsigned_type;
 //-------------DEBUG--------------
 #define MAX_LIT_NUM 30
 #define DEBUG_OPEN_RULE3 true
-#define DEBUG_OPEN_RULE6 false
+#define DEBUG_OPEN_RULE6 true
 #define DEBUG_OPEN_RULE6_1 false
 #define DEBUG_RECUR true
 #define MAX_N_SAT 4
@@ -1378,8 +1378,8 @@ void create_new_clause(){
   clause_state[NB_CLAUSE]=ACTIVE;
   clause_length[NB_CLAUSE]=nb;
   lit_to_fix[NB_CLAUSE]=NONE; //注意此处需要清空 
-  if (nb==1) _push(NB_CLAUSE, UNITCLAUSE_STACK);  
-  valid_in_clause[NB_CLAUSE]=true;
+  if (nb==1) _push(NB_CLAUSE, UNITCLAUSE_STACK);   
+  valid_in_clause[NB_CLAUSE]=true; 
   NB_CLAUSE++;
 }
 int rule3num=0;
@@ -1495,64 +1495,59 @@ bool run_rule_6_1(int var0,int D,int *b,int sign0){
   return flagRule6;
 }
 int store_rule_6_2[30][3];  
-bool run_rule_6_2(int var0,int D,int *b,int sign0){  
+bool run_rule_6_2(int var0,int D,int *b,int sign0){    
+  //if (!valid_in_clause[D]) return false;
+  valid_in_clause[D]=false;
   clock_t begintime=clock();
-  int num,iNum,y,sign;
+  int D1=-1,num,iNum;
   bool flagRule6=false; 
   int *vars_signs0=var_sign[D]; 
-  memset(had_clause,false,sizeof(had_clause));  
-  int *clauses=b; //i个clause一个个看
-  iNum=0; //可以做rule6_2规则的个数,先清零
-  for (int clause=*clauses;clause!=NONE;clause=*(++clauses)){  //扫描i个clause 
-      iNum++;
-      had_clause[clause]=true;
-  }
+  memset(had_var,false,sizeof(int)*(NB_CLAUSE+1)); //优化
   num=0;
-  /*
-  map<int,node>::iterator it;
-  for (it=edge[D].begin();it!=edge[D].end();it++){
-     int clause=it->first,var,sign; 
-     if (!had_clause[clause]) continue;
-     node E=it->second;
-     if (E.v[0]==var0) var=E.v[1],sign=E.s[1];
-                  else var=E.v[0],sign=E.s[0];
-     num++;
-     store_rule_6_2[num][0]=clause;
-     store_rule_6_2[num][1]=var; 
-     store_rule_6_2[num][2]=sign;      
-  }*/
-  
-  for (int var=*vars_signs0;var!=NONE;var=*(vars_signs0+=2)){
-      if (var==var0 || var_state[var]!=ACTIVE) continue; 
-      int sign=1-*(vars_signs0+1);
-      if (sign==POSITIVE) clauses=pos_in[var];
-                     else clauses=neg_in[var];
-      for (int clause=*clauses;clause!=NONE;clause=*(++clauses))
-          if (had_clause[clause]){
-              num++;
-              store_rule_6_2[num][0]=clause;
-              store_rule_6_2[num][1]=var; 
-              store_rule_6_2[num][2]=sign;             
-              had_clause[clause]=false;
+  for (int var1=*(vars_signs0);var1!=NONE;var1=*(vars_signs0+=2)){
+      if (var_state[var1]!=ACTIVE || var1==var0) continue; 
+      num++;
+      had_var[var1][*(vars_signs0+1)]=true;
+  }
+  if (!num) return false;  
+  int *clauses=b; //i个clause一个个看
+  num=iNum=0; //可以做rule6_2规则的个数,先清零
+  for (int clause=*clauses;clause!=NONE;clause=*(++clauses)){  //扫描i个clause 
+      int var1;
+      iNum++; 
+    
+      if (!valid_in_clause[clause]){
+          D1=clause;
+          continue; 
+      }
+      vars_signs0=var_sign[clause];
+      for (var1=*vars_signs0;var1!=NONE;var1=*(vars_signs0+=2)){
+          if (var_state[var1]!=ACTIVE) continue;  
+          int sign=*(vars_signs0+1);
+          if (had_var[var1][1-sign]){ //进入rule6.2 
+            num++;
+            store_rule_6_2[num][0]=clause;
+            store_rule_6_2[num][1]=var1; 
+            store_rule_6_2[num][2]=sign;   
+            valid_in_clause[clause]=false;
+            break; 
           }
-  }  
+      }
+      if (var1==NONE) D1=clause; //小心处理
+  }   
   rule6time1+=clock()-begintime;
   begintime=clock();
   if (num==iNum-1){ 
     for (int index=1;index<=num;index++){ //把这i-1个clause删去...留下最后一个来做rule3
       int clause=store_rule_6_2[index][0]; 
       _push(clause,CLAUSE_STACK), clause_state[clause]=PASSIVE;
-    }
-    int D1;
-    clauses=b;
-    for (D1=*clauses;!had_clause[D1];D1=*(++clauses)); 
+    }   
     if (sign0==POSITIVE) rule3(var0,D,D1,2);
                     else rule3(var0,D1,D,1);
     rule6_2num++; 
     rule6time2+=clock()-begintime;
     return true;
-  }  
-  
+  }   
   for (int index=1;index<=num;index++){  //那就拿出来一个个处理
     int clause=store_rule_6_2[index][0],var1=store_rule_6_2[index][1],sign=store_rule_6_2[index][2]; 
       if (clause_length[clause]>2){
