@@ -81,7 +81,7 @@ typedef unsigned char my_unsigned_type;
 #define MAX_LIT_NUM 30
 #define DEBUG_OPEN_RULE3 true
 #define DEBUG_OPEN_RULE6 true
-#define DEBUG_OPEN_RULE6_1 false
+#define DEBUG_OPEN_RULE6_1 true
 #define DEBUG_RECUR true
 #define MAX_N_SAT 4
 int needRecur[tab_variable_size];  //用于标记是否需要递推确定值 
@@ -1464,16 +1464,19 @@ bool rule3(int var,int c1,int c2,int tp){
 //----valid的变量才进入操作---- 
 int rule6_1num=0,rule6_2num=0;
 int had_var[tab_variable_size][2]; //0负，1正 
-bool had_clause[tab_clause_size]; 
+int rule6_vector[tab_variable_size];
 bool run_rule_6_1(int var0,int D,int *b,int sign0){ 
   bool flagRule6=false,flagRule6_1; 
-  int *vars_signs0=var_sign[D];
-  memset(had_var,false,sizeof(int)*(NB_VAR+1)*2);
+  int *vars_signs0=var_sign[D],Dnum=0; 
   for (int var1=*(vars_signs0);var1!=NONE;var1=*(vars_signs0+=2)){
       if (var_state[var1]!=ACTIVE) continue;
       if (var1==var0) continue;
+      if (*(vars_signs0+1)==POSITIVE) rule6_vector[Dnum]=var1;
+                                 else rule6_vector[Dnum]=var1+NB_VAR;
       had_var[var1][*(vars_signs0+1)]=true;
+      Dnum++;
   }
+  if (!Dnum) return false;
   int *clauses=b; //i个clause一个个看
   for (int clause=*clauses;clause!=NONE;clause=*(++clauses)){  //扫描i个clause
       vars_signs0=var_sign[clause]; 
@@ -1498,10 +1501,14 @@ bool run_rule_6_1(int var0,int D,int *b,int sign0){
       rule6_1num++;
       flagRule6=true;
   }
+  for (int index=0;index<Dnum;index++){
+      int var=rule6_vector[index];
+      if (var<NB_VAR) had_var[var][POSITIVE]=false;
+                 else had_var[var-NB_VAR][NEGATIVE]=false;
+  }
   return flagRule6;
 }
 int store_rule_6_2[MAX_LIT_NUM][3];  
-int rule6_vector[tab_variable_size];
 bool run_rule_6_2(int var0,int D,int *b,int sign0){      
   int D1=-1,num,iNum,Dnum;
   bool flagRule6=false; 
@@ -1571,16 +1578,6 @@ bool rule6(int var0){
   int flag=true; 
   if (!DEBUG_OPEN_RULE6) return false;
   if (DEBUG_OPEN_RULE3 && !valid_in_rule6[var0]) return false; 
-  if (DEBUG_OPEN_RULE6_1){
-    if (pos_num==1){
-         if (run_rule_6_1(var0,pos_clause[0],neg_clause,POSITIVE)) return true;  // x (1,i)
-         flag=false;
-    }
-    if (neg_num==1){
-         if (run_rule_6_1(var0,neg_clause[0],pos_clause,NEGATIVE)) return true;  // x (i,1)
-         flag=false;
-    }
-  } 
   if (pos_num==1){
     if (run_rule_6_2(var0,pos_clause[0],neg_clause,POSITIVE)) { 
         return true;  // x (1,i)
@@ -1593,6 +1590,16 @@ bool rule6(int var0){
     }
     flag=false;
   }
+  if (DEBUG_OPEN_RULE6_1){
+    if (pos_num==1){
+         if (run_rule_6_1(var0,pos_clause[0],neg_clause,POSITIVE)) return true;  // x (1,i)
+         flag=false;
+    }
+    if (neg_num==1){
+         if (run_rule_6_1(var0,neg_clause[0],pos_clause,NEGATIVE)) return true;  // x (i,1)
+         flag=false;
+    }
+  } 
   valid_in_rule6[var0]=flag; 
   return false;
 }
@@ -1743,17 +1750,12 @@ int get_current_value(int var){
   }
   if (needRecur[var]==1) return var_current_value[var]=NEGATIVE;
                    else  return var_current_value[var]=POSITIVE;
-}
-void get_current_value1(int var){
-
-}
+} 
 void update_current_value(){
   for (int var=0;var<NB_VAR;var++)
      if (needRecur[var]>0) var_current_value[var]=DONE;
-  for (int var=0;var<NB_VAR;var++){
-     if (DEBUG_RECUR) get_current_value(var);
-                 else get_current_value1(var);
-  }
+  for (int var=0;var<NB_VAR;var++)
+      get_current_value(var); 
 }    
 int dpl() {
   int var, nb;
@@ -1767,7 +1769,7 @@ int dpl() {
     if (((double)(nowtime-begintime)/CLOCKS_PER_SEC)>10000) return -1;  //超时限制 
     if (VARIABLE_STACK_fill_pointer==NB_VAR) { //VARIABLE_STACK中元素个数等于样例的变量个数了
        UB=NB_EMPTY;
-       update_current_value();
+       if (DEBUG_RECUR) update_current_value();
        nb=verify_solution(var_current_value); //验证解  
        if (nb!=NB_EMPTY) printf("problem nb...");
        printf("o %d\n", UB); //输出upper bound
