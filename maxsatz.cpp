@@ -1378,12 +1378,17 @@ void create_new_clause(){
   clause_state[NB_CLAUSE]=ACTIVE;
   clause_length[NB_CLAUSE]=nb;
   lit_to_fix[NB_CLAUSE]=NONE; //注意此处需要清空 
-  if (nb==1) _push(NB_CLAUSE, UNITCLAUSE_STACK);   
- // valid_in_clause[NB_CLAUSE]=true; 
+  if (nb==1) _push(NB_CLAUSE, UNITCLAUSE_STACK);    
   NB_CLAUSE++;
 }
 int rule3num=0;
-bool inClause[tab_variable_size*2];
+bool inClause[tab_variable_size*2]; 
+void recovery_inClause(int num){
+  for (int index=0;index<num;index++){
+    int var=temp_clause[index][0];
+    inClause[var]=false; 
+  }
+}
 bool rule3(int var,int c1,int c2,int tp){
   if (!DEBUG_OPEN_RULE3) return false; 
   rule3num++;
@@ -1406,12 +1411,10 @@ bool rule3(int var,int c1,int c2,int tp){
                                   else recur[var][recur_num[var]++]=lit+NB_VAR;  //为负
       }
   }
-  //x=C2
   //-----------------构造递推关系 
   _push(c1, CLAUSE_STACK); clause_state[c1]=PASSIVE;  //删去c1
   _push(c2, CLAUSE_STACK); clause_state[c2]=PASSIVE;  //删去c2
-  temp_num=0;
-  memset(inClause,false,sizeof(int)*(NB_VAR+1)*2);
+  temp_num=0; 
   vars_signs=var_sign[c1];
   for (int lit=*vars_signs;lit!=NONE;lit=*(vars_signs+=2)){
       if (var_state[lit]!=ACTIVE) continue;
@@ -1437,15 +1440,22 @@ bool rule3(int var,int c1,int c2,int tp){
         temp_clause[temp_num][0]=lit;
         temp_clause[temp_num][1]=c2; //0~NB_VAR-1 为正
         temp_num++;
-        if (inClause[lit+NB_VAR]) return true;
+        if (inClause[lit+NB_VAR]){
+          recovery_inClause(temp_num);
+          return true;
+        }
       }else{
         if (inClause[lit+NB_VAR]) continue; 
         temp_clause[temp_num][0]=lit+NB_VAR; //为~lit
         temp_clause[temp_num][1]=c2;
         temp_num++;
-        if (inClause[lit]) return true;
+        if (inClause[lit]){
+          recovery_inClause(temp_num);
+          return true;
+        }
       }
   } 
+  recovery_inClause(temp_num);
   create_new_clause();
   return true;
 }
@@ -1560,7 +1570,7 @@ bool run_rule_6_2(int var0,int D,int *b,int sign0){
 bool rule6(int var0){
   int flag=true; 
   if (!DEBUG_OPEN_RULE6) return false;
-  if (!valid_in_rule6[var0]) return false; 
+  if (DEBUG_OPEN_RULE3 && !valid_in_rule6[var0]) return false; 
   if (DEBUG_OPEN_RULE6_1){
     if (pos_num==1){
          if (run_rule_6_1(var0,pos_clause[0],neg_clause,POSITIVE)) return true;  // x (1,i)
@@ -1665,7 +1675,7 @@ int choose_and_instantiate_variable() {  //所有的var赋值操作都在其中
       }
       else{
          if (nb_neg_clause_of_length1[var]>nb_pos_clause_of_length1[var]) { //记下较少的unit个数
-              cont+=nb_pos_clause_of_length1[var];
+             cont+=nb_pos_clause_of_length1[var];
          }
            else
              cont+=nb_neg_clause_of_length1[var];
@@ -1750,6 +1760,8 @@ int dpl() {
   clock_t nowtime;  
   memset(valid_in_rule6,true,sizeof(valid_in_rule6));
   memset(had_var,false,sizeof(had_var)); 
+  memset(needRecur,0,sizeof(needRecur));
+  memset(inClause,false,sizeof(inClause));
   do {
     nowtime=clock();
     if (((double)(nowtime-begintime)/CLOCKS_PER_SEC)>10000) return -1;  //超时限制 
@@ -1811,7 +1823,6 @@ int main(int argc, char *argv[]) {
   case TRUE:
     if (argc>2) UB=atoi(argv[2]); else UB=NB_CLAUSE;  //Upperbound = NuberOfClause 或者 用户输入
     init();  //初始化
-    memset(needRecur,0,sizeof(needRecur));
     if (dpl()==-1){
          printf("maxsatz14bis+fl %s %5.3f %ld %ld %d %d %d %d\n",
                 saved_input_file, ((double)(endtime-begintime)/CLOCKS_PER_SEC),
