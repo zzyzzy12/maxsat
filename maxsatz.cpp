@@ -79,7 +79,7 @@ typedef unsigned char my_unsigned_type;
 #define ACTIVE 1
 //-------------DEBUG--------------
 #define MAX_LIT_NUM 30
-#define DEBUG_OPEN_RULE3 true
+#define DEBUG_OPEN_RULE3 false
 #define DEBUG_OPEN_RULE6 true
 #define DEBUG_OPEN_RULE6_1 true
 #define DEBUG_RECUR true
@@ -1573,18 +1573,86 @@ bool run_rule_6_2(int var0,int D,int *b,int sign0){
     }
   } 
   return flagRule6; 
-} 
+} /*
+bool isSingleton(int var,int sign){
+  int *clauses,num=0;
+  if (sign==POSITIVE) clauses=pos_in[var];
+                 else clauses=neg_in[var];
+  for (int clause=*clauses;clause!=NONE;clause=*(++clauses))
+     if (clause_state[clause]==ACTIVE)
+        num++;
+  return num==1;
+}
+bool run_rule_6_3(int var0,int D,int sign0){
+  int y=-1,sign;
+  int *vars_signs=var_sign[D]; 
+  for (int var=*vars_signs;var!=NONE;var=*(vars_signs+=2)){
+      if (var_state[var]!=ACTIVE) continue;
+      if (y==-1) y=var,sign=*(vars_signs+1);
+            else return false;
+  } 
+  puts("!!!");
+  if (y==-1 || !isSingleton(y,1-sign)) return false;  
+  _push(var0, VARIABLE_STACK);
+  var_state[var0] = PASSIVE;
+  needRecur[var0]=1; //标记,需要递推
+  var_current_value[var0] = NEGATIVE; // 随意赋值
+  var_rest_value[var0] = NONE;
+  //-----------------构造递推关系
+  if (DEBUG_RECUR){ 
+      recur_num[var0]=0;   
+      if (sign0!=sign) recur[var0][recur_num[var0]++]=y;
+                  else recur[var0][recur_num[var0]++]=y+NB_VAR;
+  }
+  //-----------------构造递推关系 
+  _push(D, CLAUSE_STACK); clause_state[D]=PASSIVE;  //删去c1  
+  int *clauses;
+  if (sign==POSITIVE) clauses=neg_clause;
+                 else clauses=pos_clause;
+  for (int c1=*clauses;c1!=NONE;c1=*(++clauses)){
+    temp_num=1; 
+    if (sign==POSITIVE) temp_clause[0][0]=y;
+                   else temp_clause[0][0]=y+NB_VAR;
+    temp_clause[0][1]=NONE;
+    vars_signs=var_sign[c1];
+    for (int lit=*vars_signs;lit!=NONE;lit=*(vars_signs+=2)){
+        if (var_state[lit]!=ACTIVE) continue;
+        valid_in_rule6[lit]=true; // for-rule-6 
+        if (*(vars_signs+1)==POSITIVE){
+           temp_clause[temp_num][0]=lit;
+           temp_clause[temp_num][1]=c1; //0~NB_VAR-1 为正
+           inClause[lit]=true;
+           temp_num++;
+        }else{
+           temp_clause[temp_num][0]=lit+NB_VAR; //为~lit
+           temp_clause[temp_num][1]=c1;
+           inClause[lit+NB_VAR]=true;
+           temp_num++;
+        } 
+    }
+    create_new_clause();
+    recovery_inClause(temp_num);
+  } 
+  return true;
+}*/
+int rule6num0=0;
 bool rule6(int var0){
   int flag=true; 
   if (!DEBUG_OPEN_RULE6) return false;
   if (DEBUG_OPEN_RULE3 && !valid_in_rule6[var0]) return false; 
   if (pos_num==1){
+    rule6num0++;
+   // printf("X%d:\n",var0);
+  //  outputClause(var0);
     if (run_rule_6_2(var0,pos_clause[0],neg_clause,POSITIVE)) { 
         return true;  // x (1,i)
     }
     flag=false;
   }
   if (neg_num==1){
+    rule6num0++;
+   // printf("X%d:\n",var0);
+   // outputClause(var0);
     if (run_rule_6_2(var0,neg_clause[0],pos_clause,NEGATIVE)) { 
         return true;  // x (i,1)
     }
@@ -1600,6 +1668,9 @@ bool rule6(int var0){
          flag=false;
     }
   } 
+  
+  //if (pos_num==1 && run_rule_6_3(var0,pos_clause[0],POSITIVE)) return true; 
+  //if (neg_num==1 && run_rule_6_3(var0,neg_clause[0],NEGATIVE)) return true; 
   valid_in_rule6[var0]=flag; 
   return false;
 }
@@ -1730,6 +1801,7 @@ void outputNum(){
   printf("----NB_BRANCHE: %ld----\n",NB_BRANCHE);
   printf("----RULE2: %d----\n",rule2num);
   printf("----RULE3: %d----\n",rule3num);
+  printf("----RULE6_0: %d----\n",rule6num0); 
   printf("----RULE6_1: %d----\n",rule6_1num); 
   printf("----RULE6_2: %d----\n",rule6_2num); 
   printf("----RULE9: %d----\n",rule9num);  
