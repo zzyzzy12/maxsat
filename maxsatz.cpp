@@ -289,45 +289,18 @@ int rule9(int var0,int *C){
      if (D==-1) D=clause;
            else return TRUE; 
   }
-  if (D==-1) return TRUE; 
-  printf("D's ID is %d\n",D);
-  outputLit(D);
-  printf("var0's ID is %d\n",var0);
- // puts("YEAH");
-  if (UB!=1) return false;
+  if (D==-1) return TRUE;  
   int *vars_signs=var_sign[D];
+ // puts("!!!");
   for (int var=*vars_signs;var!=NONE;var=*(vars_signs+=2)){
-      if (var_state[var]!=ACTIVE || var==var0) continue; 
-        if (*(vars_signs+1)==POSITIVE){
-            printf("X%d: ->  NEGATIVE\n",var);
-        }else{
-            printf("~X%d: -> POSITIVE\n",var);
-        }
-        outputClause(var);
-      if (*(vars_signs+1)==POSITIVE){
-        clauses=pos_in[var];
-        for (int clause=*clauses;clause!=NONE;clause=*(++clauses)){
-          if (clause_state[clause]==ACTIVE)// && clause_length[clause]==1){
-             printf("%d\n",clause_length[clause]);
-            //rule9num++;
-            //return NONE;
-          //}
-        }
-        //if (assign_value(var,NEGATIVE,NONE)==NONE) return NONE; 
-      }//else{
-        {
-        clauses=neg_in[var];
-        for (int clause=*clauses;clause!=NONE;clause=*(++clauses)){
-          if (clause_state[clause]==ACTIVE)// && clause_length[clause]==1){
-            printf("%d\n",clause_length[clause]);
-           // rule9num++;
-           // return NONE;
-          //}
-        }
-        //if (assign_value(var,POSITIVE,NONE)==NONE) return NONE;
+      if (var_state[var]!=ACTIVE || var==var0) continue;  
+      if (*(vars_signs+1)==POSITIVE){ 
+        if (assign_value(var,NEGATIVE,NONE)==NONE) return NONE; 
+      }else{ 
+        if (assign_value(var,POSITIVE,NONE)==NONE) return NONE;
       }
   }
- // rule9num++;
+ // rule9num++; 
   return TRUE;
 }
 //-------------------------------rule 9---------------------------------
@@ -365,7 +338,7 @@ int backtracking() {  //进行回朔
 
       if (NB_EMPTY<UB) { 
         /*
-         if (var_current_value[var]==NEGATIVE){
+        if (var_current_value[var]==NEGATIVE){
              if (rule9(var,pos_in[var])==NONE) return NONE;
         }else{
              if (rule9(var,neg_in[var])==NONE) return NONE;
@@ -1573,75 +1546,13 @@ bool run_rule_6_2(int var0,int D,int *b,int sign0){
     }
   } 
   return flagRule6; 
-} /*
-bool isSingleton(int var,int sign){
-  int *clauses,num=0;
-  if (sign==POSITIVE) clauses=pos_in[var];
-                 else clauses=neg_in[var];
-  for (int clause=*clauses;clause!=NONE;clause=*(++clauses))
-     if (clause_state[clause]==ACTIVE)
-        num++;
-  return num==1;
-}
-bool run_rule_6_3(int var0,int D,int sign0){
-  int y=-1,sign;
-  int *vars_signs=var_sign[D]; 
-  for (int var=*vars_signs;var!=NONE;var=*(vars_signs+=2)){
-      if (var_state[var]!=ACTIVE) continue;
-      if (y==-1) y=var,sign=*(vars_signs+1);
-            else return false;
-  } 
-  puts("!!!");
-  if (y==-1 || !isSingleton(y,1-sign)) return false;  
-  _push(var0, VARIABLE_STACK);
-  var_state[var0] = PASSIVE;
-  needRecur[var0]=1; //标记,需要递推
-  var_current_value[var0] = NEGATIVE; // 随意赋值
-  var_rest_value[var0] = NONE;
-  //-----------------构造递推关系
-  if (DEBUG_RECUR){ 
-      recur_num[var0]=0;   
-      if (sign0!=sign) recur[var0][recur_num[var0]++]=y;
-                  else recur[var0][recur_num[var0]++]=y+NB_VAR;
-  }
-  //-----------------构造递推关系 
-  _push(D, CLAUSE_STACK); clause_state[D]=PASSIVE;  //删去c1  
-  int *clauses;
-  if (sign==POSITIVE) clauses=neg_clause;
-                 else clauses=pos_clause;
-  for (int c1=*clauses;c1!=NONE;c1=*(++clauses)){
-    temp_num=1; 
-    if (sign==POSITIVE) temp_clause[0][0]=y;
-                   else temp_clause[0][0]=y+NB_VAR;
-    temp_clause[0][1]=NONE;
-    vars_signs=var_sign[c1];
-    for (int lit=*vars_signs;lit!=NONE;lit=*(vars_signs+=2)){
-        if (var_state[lit]!=ACTIVE) continue;
-        valid_in_rule6[lit]=true; // for-rule-6 
-        if (*(vars_signs+1)==POSITIVE){
-           temp_clause[temp_num][0]=lit;
-           temp_clause[temp_num][1]=c1; //0~NB_VAR-1 为正
-           inClause[lit]=true;
-           temp_num++;
-        }else{
-           temp_clause[temp_num][0]=lit+NB_VAR; //为~lit
-           temp_clause[temp_num][1]=c1;
-           inClause[lit+NB_VAR]=true;
-           temp_num++;
-        } 
-    }
-    create_new_clause();
-    recovery_inClause(temp_num);
-  } 
-  return true;
-}*/
-int rule6num0=0;
+} 
 bool rule6(int var0){
   int flag=true; 
   if (!DEBUG_OPEN_RULE6) return false;
   if (DEBUG_OPEN_RULE3 && !valid_in_rule6[var0]) return false; 
   if (pos_num==1){
-    rule6num0++;
+   // rule6num0++;
    // printf("X%d:\n",var0);
   //  outputClause(var0);
     if (run_rule_6_2(var0,pos_clause[0],neg_clause,POSITIVE)) { 
@@ -1650,7 +1561,7 @@ bool rule6(int var0){
     flag=false;
   }
   if (neg_num==1){
-    rule6num0++;
+   // rule6num0++;
    // printf("X%d:\n",var0);
    // outputClause(var0);
     if (run_rule_6_2(var0,neg_clause[0],pos_clause,NEGATIVE)) { 
@@ -1668,20 +1579,42 @@ bool rule6(int var0){
          flag=false;
     }
   } 
-  
-  //if (pos_num==1 && run_rule_6_3(var0,pos_clause[0],POSITIVE)) return true; 
-  //if (neg_num==1 && run_rule_6_3(var0,neg_clause[0],NEGATIVE)) return true; 
   valid_in_rule6[var0]=flag; 
   return false;
 }
 //-------------------------------rule 6---------------------------------
 int rule2num=0; 
+int weight(int var0,int sign0){
+  int ans=0,D=-1;
+  int *clauses;
+  if (sign0==POSITIVE) clauses=pos_in[var0];
+                  else clauses=neg_in[var0];
+  for (int clause=*clauses;clause!=NONE;clause=*(++clauses)){
+    if (clause_state[clause]!=ACTIVE) continue;
+    if (D==-1) D=clause;
+          else return 0;
+  }
+  if (D==-1) return 0;
+  int *vars_signs=var_sign[D];
+  for (int var=*vars_signs;var!=NONE;var=*(vars_signs+=2)){
+      if (var_state[var]!=ACTIVE) continue;
+      int sign=*(vars_signs+1);
+      if (sign==POSITIVE) ans+=nb_neg_clause_of_length1[var]*2+
+                               nb_neg_clause_of_length2[var]*4+
+                               nb_neg_clause_of_length3[var];
+                    else  ans+=nb_pos_clause_of_length1[var]*2+
+                               nb_pos_clause_of_length2[var]*4+
+                               nb_pos_clause_of_length3[var];
+  } 
+  return ans;
+}
 int choose_and_instantiate_variable() {  //所有的var赋值操作都在其中
   int var, nb=0, chosen_var=NONE,cont=0, cont1;
   int a,b,c,clause;
   float poid, max_poid = -1.0;
   my_type pos2, neg2, flag=0;
   NB_BRANCHE++;    //统计分支个数 
+  //printf("%ld\n",NB_BRANCHE);
   if (lookahead()==NONE)
     return NONE;
 
@@ -1763,15 +1696,17 @@ int choose_and_instantiate_variable() {  //所有的var赋值操作都在其中
   if (cont+NB_EMPTY>=UB)
     return NONE;
   for (var = 0; var < NB_VAR; var++) {
-    if (var_state[var] == ACTIVE) {
+    if (var_state[var] == ACTIVE) { 
        reduce_if_positive[var]=nb_neg_clause_of_length1[var]*2+
                                nb_neg_clause_of_length2[var]*4+
                                nb_neg_clause_of_length3[var];
+      // reduce_if_positive[var]=(reduce_if_positive[var])*100+weight(var,POSITIVE);
        reduce_if_negative[var]=nb_pos_clause_of_length1[var]*2+
                                nb_pos_clause_of_length2[var]*4+
                                nb_pos_clause_of_length3[var];
+      // reduce_if_negative[var]=(reduce_if_negative[var])*100+weight(var,NEGATIVE);
        poid=reduce_if_positive[var]*reduce_if_negative[var]*64+
-                               reduce_if_positive[var]+reduce_if_negative[var];
+            reduce_if_positive[var]+reduce_if_negative[var];
        if (poid>max_poid) {
              chosen_var=var;
              max_poid=poid;
@@ -1800,11 +1735,10 @@ my_type var_best_value[tab_variable_size]; // Best assignment of variables  保�
 void outputNum(){
   printf("----NB_BRANCHE: %ld----\n",NB_BRANCHE);
   printf("----RULE2: %d----\n",rule2num);
-  printf("----RULE3: %d----\n",rule3num);
-  printf("----RULE6_0: %d----\n",rule6num0); 
+  printf("----RULE3: %d----\n",rule3num); 
   printf("----RULE6_1: %d----\n",rule6_1num); 
   printf("----RULE6_2: %d----\n",rule6_2num); 
-  printf("----RULE9: %d----\n",rule9num);  
+ // printf("----RULE9: %d----\n",rule9num);  
 }
 int get_current_value(int var){
   if (var_current_value[var]!=DONE) return var_current_value[var]; 
