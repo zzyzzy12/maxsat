@@ -338,12 +338,12 @@ int backtracking() {  //进行回朔
       SAVED_CLAUSES_fill_pointer=saved;  //更新SAVED_CLAUSES_fill_pointer
 
       if (NB_EMPTY<UB) { 
-        
+        /*
         if (var_current_value[var]==NEGATIVE){
              if (rule9(var,pos_in[var])==NONE) return NONE;
         }else{
              if (rule9(var,neg_in[var])==NONE) return NONE;
-        } 
+        } */
          var_current_value[var] = var_rest_value[var];
          var_rest_value[var] = NONE;
          _push(var, VARIABLE_STACK);  // 把var压回去
@@ -1587,9 +1587,13 @@ bool rule6(int var0){
 int rule2num=0; 
 int weight(int var0,int sign0){
   int ans=0,D=-1;
-  int *clauses;
-  if (sign0==POSITIVE) clauses=pos_in[var0];
-                  else clauses=neg_in[var0];
+  int *clauses,value;
+  if (sign0==POSITIVE) clauses=pos_in[var0],value=nb_neg_clause_of_length1[var0]*2+
+                                                  nb_neg_clause_of_length2[var0]*4+
+                                                  nb_neg_clause_of_length3[var0];
+                  else clauses=neg_in[var0],value=nb_pos_clause_of_length1[var0]*2+
+                                                  nb_pos_clause_of_length2[var0]*4+
+                                                  nb_pos_clause_of_length3[var0];
   for (int clause=*clauses;clause!=NONE;clause=*(++clauses)){
     if (clause_state[clause]!=ACTIVE) continue;
     if (D==-1) D=clause;
@@ -1600,12 +1604,14 @@ int weight(int var0,int sign0){
   for (int var=*vars_signs;var!=NONE;var=*(vars_signs+=2)){
       if (var_state[var]!=ACTIVE) continue;
       int sign=*(vars_signs+1);
-      if (sign==POSITIVE) ans+=nb_neg_clause_of_length1[var]*2+
-                               nb_neg_clause_of_length2[var]*4+
-                               nb_neg_clause_of_length3[var];
-                    else  ans+=nb_pos_clause_of_length1[var]*2+
-                               nb_pos_clause_of_length2[var]*4+
-                               nb_pos_clause_of_length3[var];
+      if (sign==POSITIVE) reduce_if_positive[var]+=value;
+                          //ans+=nb_neg_clause_of_length1[var]*2+
+                          //     nb_neg_clause_of_length2[var]*4+
+                          //     nb_neg_clause_of_length3[var];
+                    else  reduce_if_negative[var]+=value;
+                          //ans+=nb_pos_clause_of_length1[var]*2+
+                          //     nb_pos_clause_of_length2[var]*4+
+                          //     nb_pos_clause_of_length3[var];
   } 
   return ans;
 }
@@ -1696,16 +1702,21 @@ int choose_and_instantiate_variable() {  //所有的var赋值操作都在其中
   } 
   if (cont+NB_EMPTY>=UB)
     return NONE;
+  for (var = 0; var < NB_VAR; var++)
+    reduce_if_positive[var]=0,
+    reduce_if_negative[var]=0;
   for (var = 0; var < NB_VAR; var++) {
     if (var_state[var] == ACTIVE) { 
-       reduce_if_positive[var]=nb_neg_clause_of_length1[var]*2+
+       reduce_if_positive[var]+=4*(nb_neg_clause_of_length1[var]*2+
                                nb_neg_clause_of_length2[var]*4+
-                               nb_neg_clause_of_length3[var];
-       reduce_if_positive[var]=(reduce_if_positive[var])*1+weight(var,POSITIVE)/6;
-       reduce_if_negative[var]=nb_pos_clause_of_length1[var]*2+
+                               nb_neg_clause_of_length3[var]);
+       weight(var,POSITIVE);
+       //reduce_if_positive[var]=(reduce_if_positive[var])*1+weight(var,POSITIVE)/6;
+       reduce_if_negative[var]+=4*(nb_pos_clause_of_length1[var]*2+
                                nb_pos_clause_of_length2[var]*4+
-                               nb_pos_clause_of_length3[var];
-       reduce_if_negative[var]=(reduce_if_negative[var])*1+weight(var,NEGATIVE)/6;
+                               nb_pos_clause_of_length3[var]);
+       weight(var,NEGATIVE); 
+       //reduce_if_negative[var]=(reduce_if_negative[var])*1+weight(var,NEGATIVE)/6;
        poid=reduce_if_positive[var]*reduce_if_negative[var]*64+
             reduce_if_positive[var]+reduce_if_negative[var];
        if (poid>max_poid) {
