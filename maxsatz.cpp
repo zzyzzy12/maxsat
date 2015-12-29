@@ -300,6 +300,7 @@ int rule9(int var0,int *C){
         if (assign_value(var,POSITIVE,NONE)==NONE) return NONE;
       }
   }
+  puts("!!!!!");
  // rule9num++; 
   return TRUE;
 }
@@ -337,12 +338,12 @@ int backtracking() {  //进行回朔
       SAVED_CLAUSES_fill_pointer=saved;  //更新SAVED_CLAUSES_fill_pointer
 
       if (NB_EMPTY<UB) { 
-        /*
+        
         if (var_current_value[var]==NEGATIVE){
              if (rule9(var,pos_in[var])==NONE) return NONE;
         }else{
              if (rule9(var,neg_in[var])==NONE) return NONE;
-        } */
+        } 
          var_current_value[var] = var_rest_value[var];
          var_rest_value[var] = NONE;
          _push(var, VARIABLE_STACK);  // 把var压回去
@@ -1594,7 +1595,7 @@ int weight(int var0,int sign0){
     if (D==-1) D=clause;
           else return 0;
   }
-  if (D==-1) return 0;
+  if (D==-1) return 0; //var0是(1,i)的形式
   int *vars_signs=var_sign[D];
   for (int var=*vars_signs;var!=NONE;var=*(vars_signs+=2)){
       if (var_state[var]!=ACTIVE) continue;
@@ -1613,7 +1614,7 @@ int choose_and_instantiate_variable() {  //所有的var赋值操作都在其中
   int a,b,c,clause;
   float poid, max_poid = -1.0;
   my_type pos2, neg2, flag=0;
-  NB_BRANCHE++;    //统计分支个数 
+  NB_BRANCHE++;    //统计分支个数  
   //printf("%ld\n",NB_BRANCHE);
   if (lookahead()==NONE)
     return NONE;
@@ -1700,11 +1701,11 @@ int choose_and_instantiate_variable() {  //所有的var赋值操作都在其中
        reduce_if_positive[var]=nb_neg_clause_of_length1[var]*2+
                                nb_neg_clause_of_length2[var]*4+
                                nb_neg_clause_of_length3[var];
-      // reduce_if_positive[var]=(reduce_if_positive[var])*100+weight(var,POSITIVE);
+       reduce_if_positive[var]=(reduce_if_positive[var])*1+weight(var,POSITIVE)/6;
        reduce_if_negative[var]=nb_pos_clause_of_length1[var]*2+
                                nb_pos_clause_of_length2[var]*4+
                                nb_pos_clause_of_length3[var];
-      // reduce_if_negative[var]=(reduce_if_negative[var])*100+weight(var,NEGATIVE);
+       reduce_if_negative[var]=(reduce_if_negative[var])*1+weight(var,NEGATIVE)/6;
        poid=reduce_if_positive[var]*reduce_if_negative[var]*64+
             reduce_if_positive[var]+reduce_if_negative[var];
        if (poid>max_poid) {
