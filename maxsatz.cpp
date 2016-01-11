@@ -79,9 +79,9 @@ typedef unsigned char my_unsigned_type;
 #define ACTIVE 1
 //-------------DEBUG--------------
 #define MAX_LIT_NUM 30
-#define DEBUG_OPEN_RULE3 false
+#define DEBUG_OPEN_RULE3 true
 #define DEBUG_OPEN_RULE6 true
-#define DEBUG_OPEN_RULE6_1 true
+#define DEBUG_OPEN_RULE6_1 false
 #define DEBUG_RECUR true
 #define MAX_N_SAT 4
 int needRecur[tab_variable_size];  //用于标记是否需要递推确定值 
@@ -300,7 +300,7 @@ int rule9(int var0,int *C){
         if (assign_value(var,POSITIVE,NONE)==NONE) return NONE;
       }
   }
-  puts("!!!!!");
+ // puts("!!!!!");
  // rule9num++; 
   return TRUE;
 }
@@ -1480,6 +1480,9 @@ bool run_rule_6_1(int var0,int D,int *b,int sign0){
       if (var<NB_VAR) had_var[var][POSITIVE]=false;
                  else had_var[var-NB_VAR][NEGATIVE]=false;
   }
+  if (flagRule6==true){
+     // outputClause(var0);
+  }
   return flagRule6;
 }
 int store_rule_6_2[MAX_LIT_NUM][3];  
@@ -1704,18 +1707,18 @@ int choose_and_instantiate_variable() {  //所有的var赋值操作都在其中
     return NONE;
   for (var = 0; var < NB_VAR; var++)
     reduce_if_positive[var]=0,
-    reduce_if_negative[var]=0;
+    reduce_if_negative[var]=0; 
   for (var = 0; var < NB_VAR; var++) {
     if (var_state[var] == ACTIVE) { 
-       reduce_if_positive[var]+=4*(nb_neg_clause_of_length1[var]*2+
+       reduce_if_positive[var]+=(nb_neg_clause_of_length1[var]*2+
                                nb_neg_clause_of_length2[var]*4+
                                nb_neg_clause_of_length3[var]);
-       weight(var,POSITIVE);
+       //weight(var,POSITIVE);
        //reduce_if_positive[var]=(reduce_if_positive[var])*1+weight(var,POSITIVE)/6;
-       reduce_if_negative[var]+=4*(nb_pos_clause_of_length1[var]*2+
+       reduce_if_negative[var]+=(nb_pos_clause_of_length1[var]*2+
                                nb_pos_clause_of_length2[var]*4+
                                nb_pos_clause_of_length3[var]);
-       weight(var,NEGATIVE); 
+       //weight(var,NEGATIVE); 
        //reduce_if_negative[var]=(reduce_if_negative[var])*1+weight(var,NEGATIVE)/6;
        poid=reduce_if_positive[var]*reduce_if_negative[var]*64+
             reduce_if_positive[var]+reduce_if_negative[var];
