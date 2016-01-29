@@ -81,9 +81,8 @@ typedef unsigned char my_unsigned_type;
 #define MAX_LIT_NUM 30
 #define DEBUG_OPEN_RULE3 true
 #define DEBUG_OPEN_RULE6 true
-#define DEBUG_OPEN_RULE6_1 false
-#define DEBUG_RECUR true
-#define MAX_N_SAT 4
+#define DEBUG_OPEN_RULE6_1 true
+#define DEBUG_RECUR true 
 int needRecur[tab_variable_size];  //用于标记是否需要递推确定值 
 //--------------------------------
 
@@ -1556,6 +1555,7 @@ bool rule6(int var0){
   if (!DEBUG_OPEN_RULE6) return false;
   if (DEBUG_OPEN_RULE3 && !valid_in_rule6[var0]) return false; 
   if (pos_num==1){
+    //puts("!!!!");
    // rule6num0++;
    // printf("X%d:\n",var0);
   //  outputClause(var0);
@@ -1565,6 +1565,7 @@ bool rule6(int var0){
     flag=false;
   }
   if (neg_num==1){
+    //puts("!!!");
    // rule6num0++;
    // printf("X%d:\n",var0);
    // outputClause(var0);
@@ -1618,6 +1619,35 @@ int weight(int var0,int sign0){
   } 
   return ans;
 }
+//-------------- genaral rule3 ---------------
+bool inC[tab_variable_size*2];
+bool judgeGR3(int *clause1,int *clause2){
+  int num=0;
+  memset(inC,false,sizeof(bool)*NB_VAR*2);
+  for (int c1=*clause1;c1!=NONE;c1=*(++clause1)){ 
+     int *vars_signs=var_sign[c1];
+     for (int var=*vars_signs;var!=NONE;var=*(vars_signs+=2)){
+          if (*(vars_signs+1)==NEGATIVE) var+=NB_VAR;
+          inC[var]=true;
+     }
+  } 
+  for (int c2=*clause2;c2!=NONE;c2=*(++clause2)){ 
+     int *vars_signs=var_sign[c2],var;
+     for (var=*vars_signs;var!=NONE;var=*(vars_signs+=2)){
+          if (*(vars_signs+1)==NEGATIVE) var+=NB_VAR;
+          if (inC[var]) break;
+     }
+     if (var==NONE) num++;
+  }  
+  return num==1;
+}
+bool gRule3(int x){ 
+  if (judgeGR3(pos_in[x],neg_in[x])) return true;
+  if (judgeGR3(neg_in[x],pos_in[x])) return true;
+  return false;
+}
+//-------------- genaral rule3 ---------------
+int gRul3_num=0;
 int choose_and_instantiate_variable() {  //所有的var赋值操作都在其中
   int var, nb=0, chosen_var=NONE,cont=0, cont1;
   int a,b,c,clause;
@@ -1695,6 +1725,7 @@ int choose_and_instantiate_variable() {  //所有的var赋值操作都在其中
 
       }
       else{
+         if (gRule3(var)) gRul3_num++;
          if (nb_neg_clause_of_length1[var]>nb_pos_clause_of_length1[var]) { //记下较少的unit个数
              cont+=nb_pos_clause_of_length1[var];
          }
@@ -1753,6 +1784,7 @@ void outputNum(){
   printf("----RULE3: %d----\n",rule3num); 
   printf("----RULE6_1: %d----\n",rule6_1num); 
   printf("----RULE6_2: %d----\n",rule6_2num); 
+  printf("----gRULE3: %d----\n",gRul3_num); 
  // printf("----RULE9: %d----\n",rule9num);  
 }
 int get_current_value(int var){
