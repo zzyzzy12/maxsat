@@ -119,6 +119,7 @@ typedef long long int lli_type;
 #define DEBUG_OPEN_RULE6_1 true
 #define DEBUG_RECUR true
 #define MAX_LIT_NUM 4
+#define DONE -2
 //------Debug------
 my_type var_current_value[tab_variable_size]; // Current assignment of variables
 my_type var_rest_value[tab_variable_size]; // Restore vaule of variables
@@ -726,7 +727,9 @@ void print_values(int nb_var) {
   fprintf(fp_out, "\n");
   fclose(fp_out);
 }
-
+//-----------------------------
+int needRecur[tab_variable_size];
+//-----------------------------
 int backtracking() {
   int var, index,clause, saved;
   int *vars_signs, var_s, sign, v;
@@ -745,8 +748,10 @@ int backtracking() {
       }
       nb_undo_learned[var] = 0;
     }
-    if (var_rest_value[var] == NONE)
+    if (var_rest_value[var] == NONE){
+      needRecur[var]=0;
       var_state[var] = ACTIVE;
+    }
     else {
       for (index = saved_clause_stack[var]; 
 	   index < CLAUSE_STACK_fill_pointer; index++)
@@ -796,8 +801,10 @@ int backtracking() {
 	  return NONE;
 	remove_clauses(var);
 	return TRUE;
-      } else
-	var_state[var] = ACTIVE;
+      } else{
+          needRecur[var]=0;
+	        var_state[var] = ACTIVE;
+      }
     }
   } 
 
@@ -845,6 +852,7 @@ void reset_context(int saved_clause_stack_fill_pointer,
       index<VARIABLE_STACK_fill_pointer; index++) {
     var=VARIABLE_STACK[index];
     reason[var]=NO_REASON;
+    needRecur[var]=0;
     var_state[var]=ACTIVE;
   }
   VARIABLE_STACK_fill_pointer=saved_variable_stack_fill_pointer;
@@ -2671,6 +2679,7 @@ int rules1_and_2() {
 }
 //------------new var------------
 int pos_num,neg_num;
+int pos_clause[tab_variable_size],neg_clause[tab_variable_size];
 int rec[tab_variable_size][105];
 //------------new var
 int get_neg_clause_nb(int var) {
@@ -2682,6 +2691,7 @@ int get_neg_clause_nb(int var) {
   MY_UNITCLAUSE_STACK_fill_pointer=0;
   for(clause=*clauses; clause!=NONE; clause=*(++clauses)) {
     if ((clause_state[clause] == ACTIVE) && (clause_length[clause]>0)) {
+      neg_clause[neg_num++]=clause;
       switch(clause_length[clause]) {
       case 1:
 	neg_clause1_nb += clause_weight[clause];
@@ -2696,10 +2706,11 @@ int get_neg_clause_nb(int var) {
       }
     }
   }
+  neg_clause[neg_num]=NONE;
   nb_neg_clause_of_length1[var] = neg_clause1_nb;
   nb_neg_clause_of_length2[var] = neg_clause2_nb;
   nb_neg_clause_of_length3[var] = neg_clause3_nb;
-  return neg_num=neg_clause1_nb+neg_clause2_nb + neg_clause3_nb;
+  return neg_clause1_nb+neg_clause2_nb + neg_clause3_nb;
 }
 
 #define OTHER_LIT_FIXED 1
@@ -2743,6 +2754,7 @@ int get_pos_clause_nb(int var) {
   clauses =pos_in[var];
   for(clause=*clauses; clause!=NONE; clause=*(++clauses)) {
     if ((clause_state[clause] == ACTIVE) && (clause_length[clause]>0)) {
+      pos_clause[pos_num++]=clause;
       switch(clause_length[clause]) {
       case 1:
 	pos_clause1_nb+=treat_complementary_unitclauses(var, clause);
@@ -2756,10 +2768,11 @@ int get_pos_clause_nb(int var) {
       }
     }
   }
+  pos_clause[pos_num]=NONE;
   nb_pos_clause_of_length1[var] = pos_clause1_nb;
   nb_pos_clause_of_length2[var] = pos_clause2_nb;
   nb_pos_clause_of_length3[var] = pos_clause3_nb;
-  return pos_num=pos_clause1_nb+pos_clause2_nb + pos_clause3_nb;
+  return pos_clause1_nb+pos_clause2_nb + pos_clause3_nb;
 }
 
 int satisfy_literal(int lit) {
@@ -3031,9 +3044,8 @@ void search_unit_from_binary() {
 //----------------NEW----------------
 //--------------rule 3----------------- 
 int temp_clause[tab_variable_size*2][2];
-int temp_num,recur_num[tab_variable_size],needRecur[tab_variable_size]; 
+int temp_num,recur_num[tab_variable_size]; 
 int recur[tab_variable_size][50];
-int pos_clause[tab_variable_size],neg_clause[tab_variable_size];
 bool valid_in_rule6[tab_variable_size]; 
 //bool valid_in_clause[tab_clause_size];
 void outputLit(int c){
@@ -3328,18 +3340,8 @@ int choose_and_instantiate_variable() {
 
   if (NB_BRANCHE==1)
     INIT_NB_CLAUSE_PREPROC=NB_CLAUSE;
-  
-  // if (UB-NB_EMPTY==1)
   if (unitclause_process() == NONE)
-    return NONE;
-  /*
-   rules1_and_2();
-  if (NB_EMPTY>=UB)
-    return NONE;
-  */
-  
-  // search_unit_from_binary();
-  
+    return NONE; 
   for (var = 0; var < NB_VAR; var++) {
     if (var_state[var] == ACTIVE) {
       reduce_if_negative[var]=0;
@@ -3429,16 +3431,40 @@ int choose_and_instantiate_variable() {
   else
     return assign_value(chosen_var, FALSE, TRUE);
 }
-
+int get_current_value(int var){
+  if (var_current_value[var]!=DONE) return var_current_value[var]; 
+  for (int index=0;index<recur_num[var];index++){
+      int lit=recur[var][index],value;
+      if (lit<NB_VAR) value=get_current_value(lit);
+                 else value=get_current_value(lit-NB_VAR);
+      if (needRecur[var]==1){
+        if (lit<NB_VAR  && value==POSITIVE) return var_current_value[var]=POSITIVE;
+        if (lit>=NB_VAR && value==NEGATIVE) return var_current_value[var]=POSITIVE;
+      }else{
+        if (lit<NB_VAR  && value==POSITIVE) return var_current_value[var]=NEGATIVE;
+        if (lit>=NB_VAR && value==NEGATIVE) return var_current_value[var]=NEGATIVE;     
+      }
+  }
+  if (needRecur[var]==1) return var_current_value[var]=NEGATIVE;
+                   else  return var_current_value[var]=POSITIVE;
+} 
+void update_current_value(){
+  for (int var=0;var<NB_VAR;var++)
+     if (needRecur[var]>0) var_current_value[var]=DONE;
+  for (int var=0;var<NB_VAR;var++)
+      get_current_value(var); 
+}  
 void dpl() {
   lli_type nb;
   int i;
-  
+  memset(valid_in_rule6,true,sizeof(valid_in_rule6));
+  memset(had_var,false,sizeof(had_var)); 
+  memset(needRecur,0,sizeof(needRecur));
+  memset(inClause,false,sizeof(inClause));  
   do {
     if (VARIABLE_STACK_fill_pointer==NB_VAR) {
-      UB = NB_EMPTY;
-      //   if (UB==201)
-      //	printf("sdf");
+      UB = NB_EMPTY; 
+      if (DEBUG_RECUR) update_current_value();
       nb = verify_solution();
       if (nb != NB_EMPTY)
 	printf("ERROR: Solution verification fails, real_empty = %lli, NB_EMPTY = %lli.\n", 
